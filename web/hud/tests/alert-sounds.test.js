@@ -60,3 +60,13 @@ test('every line the phone can say has a recording, in one voice', async () => {
   }
   assert.equal(typeof made.voice, 'string');
 });
+
+test('the same line asked for twice plays once', async () => {
+  const { createClipPlayer } = await import('../js/voice-clips.js');
+  let t = 0;
+  const p = createClipPlayer({ ctx: () => ({}), base: '', fetchFn: () => Promise.resolve({ ok: false }), clock: () => t });
+  assert.equal(p.play('slope_ahead'), true);
+  assert.equal(p.play('slope_ahead'), false, 'danger beeper + alerts both asked: once');
+  t = 9000;
+  assert.equal(p.play('slope_ahead'), true, 'later it may play again');
+});

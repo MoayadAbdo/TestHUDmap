@@ -4,8 +4,11 @@ import { RETURN_REASONS } from './core/alerts.js';
  * Plays the recorded alert lines (sounds/*.m4a, one voice for everyone; see tools/make-voice-clips.mjs).
  * One line at a time; an urgent line cuts the one playing. Missing clips are skipped (the visor still shows it).
  */
-export function createClipPlayer({ ctx, base, ext = 'm4a', fetchFn = (u) => fetch(u) }) {
+export const SAME_LINE_MS = 8000;    // the same line asked for twice (two alert systems, a flicker) plays once
+
+export function createClipPlayer({ ctx, base, ext = 'm4a', fetchFn = (u) => fetch(u), clock = () => performance.now() }) {
   const buffers = new Map();
+  const lastAsked = new Map();
   const queue = [];
   let playing = null;
 
@@ -34,6 +37,9 @@ export function createClipPlayer({ ctx, base, ext = 'm4a', fetchFn = (u) => fetc
     /** Load the clips now, so the first warning plays at once. */
     preload: (ids) => ids.forEach(load),
     play(id, { urgent = false } = {}) {
+      const t = clock();
+      if (t - (lastAsked.get(id) ?? -Infinity) < SAME_LINE_MS) return false;
+      lastAsked.set(id, t);
       if (urgent) {
         queue.length = 0;
         try { playing?.stop(); } catch { /* already done */ }
@@ -41,6 +47,7 @@ export function createClipPlayer({ ctx, base, ext = 'm4a', fetchFn = (u) => fetc
       }
       queue.push(id);
       next();
+      return true;
     },
   };
 }

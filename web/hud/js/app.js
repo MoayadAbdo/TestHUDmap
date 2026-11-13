@@ -25,6 +25,8 @@ const TELEMETRY_MS = 1000;
 const PHOTO_MS = 2000;
 const MESSAGE_MS = 12000;
 const STEEP_DEG = 12;
+// the suit already says these out loud: the AI should know, not repeat them
+const ANNOUNCED = ' (The suit already announced this out loud; do not repeat it unless the astronaut asks.)';
 const SLOPE_LOOK_M = 15;           // the steep-ground alert looks this far along the planned path
 const HOME_PLAN_MS = 3000;         // re-measure the walk home this often
 const SOLAR_MS = 5 * 60000;        // a solar particle event in the demo lasts 5 minutes
@@ -134,7 +136,7 @@ export function createHudApp({
   function sampleLogged(sample) {
     if (!sample) return;
     message = { text: `SAMPLE LOGGED · ${sample.name} (${science.done}/${science.total})`, fromGround: false, until: clock() + MESSAGE_MS };
-    voice.sendContext(`Sample logged at stop ${sample.id}, ${sample.name}. ${science.done} of ${science.total} samples done.`);
+    voice.sendContext(`Sample logged at stop ${sample.id}, ${sample.name}. ${science.done} of ${science.total} samples done.${ANNOUNCED}`);
   }
 
   function arrive(stop, t, allDone) {
@@ -143,7 +145,7 @@ export function createHudApp({
     if (allDone) message = { text: 'All stops done: walk back to base', fromGround: false, until: t + MESSAGE_MS };
     const sentence = (label, value) => (value ? ` ${label}: ${String(value).replace(/[.\s]+$/, '')}.` : '');
     voice.sendContext(`The astronaut reached stop ${stop.id} of ${stopCount}: ${stop.name}.`
-      + sentence('Task', stop.task) + sentence('Hazard', stop.hazard) + sentence('Science', stop.science));
+      + sentence('Task', stop.task) + sentence('Hazard', stop.hazard) + sentence('Science', stop.science) + ANNOUNCED);
   }
 
   // Field / Mars walk: say when the GPS is weak or stuck, at most every 12 s
@@ -244,7 +246,7 @@ export function createHudApp({
       nav.goHome();
       step = nav.update(position.at, t);
       const why = RETURN_REASONS[returnReason] ?? 'Safety limit reached';
-      voice.sendContext(`${why}. The astronaut must return to base now, along the route.`);
+      voice.sendContext(`${why}. The astronaut must return to base now, along the route.${ANNOUNCED}`);
     }
     alerts = result.alerts;
   }
