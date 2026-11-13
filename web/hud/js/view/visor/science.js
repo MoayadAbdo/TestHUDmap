@@ -27,8 +27,8 @@ export function drawScanTarget(ctx, w, h, u, s, clear) {
   ctx.stroke();
   ctx.setLineDash([]);
   const labelY = Math.min(p.y - r - 2.2 * u, h * 0.64);          // stays above the next-stop box
-  say(ctx, '◎ SAMPLE · LOOK HERE 2 s', p.x, labelY, 2.1 * u, { align: 'center', color: NAV, weight: 800 });
-  say(ctx, `${Math.round(t.distM)} m`, p.x, p.y + r + 2 * u, 1.8 * u, { align: 'center', color: INK, weight: 700 });
+  say(ctx, '◎ SAMPLE · LOOK HERE 2 s', p.x, labelY, 2.1 * u, { align: 'center', color: NAV, weight: 600 });
+  say(ctx, `${Math.round(t.distM)} m`, p.x, p.y + r + 2 * u, 1.8 * u, { align: 'center', color: INK, weight: 600 });
 }
 
 /** While you look at the rock: a ring filling around the centre of the view. */
@@ -36,7 +36,7 @@ export function drawScanProgress(ctx, cx, cy, u, s) {
   const p = s.scan?.progress ?? 0;
   if (p <= 0) return;
   const r = 3.4 * u;
-  ctx.strokeStyle = 'rgba(79, 227, 234, 0.25)';
+  ctx.strokeStyle = 'rgba(95, 224, 143, 0.25)';
   ctx.lineWidth = 0.7 * u;
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -45,5 +45,5 @@ export function drawScanProgress(ctx, cx, cy, u, s) {
   ctx.beginPath();
   ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2);
   ctx.stroke();
-  say(ctx, `SCANNING ${Math.round(p * 100)}%`, cx, cy + r + 2.4 * u, 2 * u, { align: 'center', color: NAV, weight: 800 });
+  say(ctx, `SCANNING ${Math.round(p * 100)}%`, cx, cy + r + 2.4 * u, 2 * u, { align: 'center', color: NAV, weight: 600 });
 }

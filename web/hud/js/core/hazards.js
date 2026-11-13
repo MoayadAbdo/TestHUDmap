@@ -19,7 +19,7 @@ export function dangerLevel(slopeDeg, roughM) {
 
 const ZONE_RGBA = {
   nogo: [255, 64, 64, 165], careful: [255, 190, 60, 110], rough: [255, 236, 170, 140],
-  looser: [90, 160, 255, 130], sulfate: [211, 107, 255, 170],
+  looser: [200, 200, 200, 120], sulfate: [211, 107, 255, 170],
 };
 
 /**

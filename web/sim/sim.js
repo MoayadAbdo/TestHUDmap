@@ -360,9 +360,9 @@ function addStops(mission) {
     const p = S.toLocal(st.mars[0], st.mars[1]);
     p.y = heightAt(p.x, p.z);
     const grp = new THREE.Group(); grp.position.copy(p);
-    const beamMat = new THREE.MeshBasicMaterial({ color: "#22d3ee", transparent: true, opacity: 0.35, depthWrite: false, blending: THREE.AdditiveBlending });
+    const beamMat = new THREE.MeshBasicMaterial({ color: "#5fe08f", transparent: true, opacity: 0.35, depthWrite: false, blending: THREE.AdditiveBlending });
     const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 40, 16, 1, true), beamMat); beam.position.y = 20; grp.add(beam);
-    const ringMat = new THREE.MeshBasicMaterial({ color: "#22d3ee", transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthWrite: false });
+    const ringMat = new THREE.MeshBasicMaterial({ color: "#5fe08f", transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthWrite: false });
     const ring = new THREE.Mesh(new THREE.RingGeometry(ARRIVE_M - 0.4, ARRIVE_M, 64).rotateX(-Math.PI / 2), ringMat); ring.position.y = 0.15; grp.add(ring);
     const label = makeLabel(`${st.id} · ${st.name}`); label.position.y = 4; label.visible = !S.opts.hud; grp.add(label);
     S.scene.add(grp);
@@ -370,7 +370,7 @@ function addStops(mission) {
     const ang = i * 1.7 + 0.5, rx = p.x + Math.cos(ang) * 3.2, rz = p.z + Math.sin(ang) * 3.2;
     const rock = new THREE.Mesh(rockGeometry(100 + i), new THREE.MeshLambertMaterial({ color: "#a07a5c", emissive: "#000000" }));
     rock.scale.setScalar(0.9); rock.position.set(rx, heightAt(rx, rz) + 0.25, rz);   // big enough to find and look at
-    const glow = new THREE.Mesh(rockGeometry(100 + i), new THREE.MeshBasicMaterial({ color: "#22d3ee", wireframe: true, transparent: true, opacity: 0.7 }));
+    const glow = new THREE.Mesh(rockGeometry(100 + i), new THREE.MeshBasicMaterial({ color: "#5fe08f", wireframe: true, transparent: true, opacity: 0.7 }));
     glow.scale.setScalar(1.15); rock.add(glow);
     S.scene.add(rock);
     return { st, pos: p, beamMat, ringMat, ring, rock, glow, label };
@@ -523,7 +523,7 @@ function update(dt, now) {
   const next = nextStopIndex();
   S.stops.forEach((s, i) => {
     const isNext = i === next && !S.visited[i];
-    const col = S.visited[i] ? "#4ade80" : isNext ? "#22d3ee" : "#7c8aa0";
+    const col = S.visited[i] ? "#9aa3ad" : isNext ? "#5fe08f" : "#7c8aa0";
     s.beamMat.color.set(col); s.ringMat.color.set(col);
     // the light beam fades out when you stand next to it, so it doesn't fill the view (or cover the stop card)
     const near = Math.min(1, Math.max(0, (Math.hypot(S.pos.x - s.pos.x, S.pos.z - s.pos.z) - 4) / 20));

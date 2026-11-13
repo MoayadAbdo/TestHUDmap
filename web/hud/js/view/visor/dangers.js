@@ -34,10 +34,10 @@ export function drawDangerSigns(ctx, w, h, u, s, clear) {
     ctx.lineTo(top.x - r * 1.1, top.y + r * 0.8);
     ctx.closePath();
     ctx.fill();
-    say(ctx, '!', top.x, top.y + 0.1 * r, 1.6 * r, { align: 'center', color: '#1a0808', weight: 800 });
+    say(ctx, '!', top.x, top.y + 0.1 * r, 1.6 * r, { align: 'center', color: '#1a0808', weight: 600 });
     const label = sign.kind === 'slope' ? `${Math.round(sign.deg)}° SLOPE` : 'ROUGH GROUND';
-    say(ctx, label, top.x, top.y - r - 1.6 * u * near, 2.2 * u * near, { align: 'center', color, weight: 800 });
-    say(ctx, `${Math.round(sign.distM)} m`, top.x, top.y - r - 3.8 * u * near, 1.9 * u * near, { align: 'center', color: INK, weight: 700 });
+    say(ctx, label, top.x, top.y - r - 1.6 * u * near, 2.2 * u * near, { align: 'center', color, weight: 600 });
+    say(ctx, `${Math.round(sign.distM)} m`, top.x, top.y - r - 3.8 * u * near, 1.9 * u * near, { align: 'center', color: INK, weight: 600 });
   }
 }
 
@@ -66,7 +66,7 @@ export function drawPathProfile(ctx, cx, y, u, s) {
   const text = !steep ? 'Clear ahead: no slope over 12° in 60 m'
     : steep.startM < 2 ? `${what} now: ${Math.round(steep.maxDeg)}° for ${Math.round(steep.lengthM)} m, short steps`
       : `${what} in ${Math.round(steep.startM)} m: ${Math.round(steep.maxDeg)}° for ${Math.round(steep.lengthM)} m`;
-  say(ctx, text, cx, y + h + 2.4 * u, 1.9 * u, { align: 'center', color: steep ? (steep.maxDeg > NO_GO_DEG ? RED : CAUTION) : INK, weight: 700 });
+  say(ctx, text, cx, y + h + 2.4 * u, 1.9 * u, { align: 'center', color: steep ? (steep.maxDeg > NO_GO_DEG ? RED : CAUTION) : INK, weight: 600 });
   say(ctx, `${profile[profile.length - 1].d} m`, x0 + w, y - 1 * u, 1.5 * u, { align: 'right', color: INK });
 }
 
@@ -92,5 +92,5 @@ export function drawEdgeGlow(ctx, w, h, u, s) {
     else ctx.fillRect(0, h - band, w, band);
   }
   const where = sides[0] === 'bottom' ? 'AHEAD' : sides.length > 1 ? 'BEHIND' : sides[0] === 'left' ? 'LEFT' : 'RIGHT';
-  say(ctx, `NO-GO SLOPE ${where} · ${Math.round(near.distM)} m`, w / 2, h * 0.58, 2 * u, { align: 'center', color: RED, weight: 800 });
+  say(ctx, `NO-GO SLOPE ${where} · ${Math.round(near.distM)} m`, w / 2, h * 0.58, 2 * u, { align: 'center', color: RED, weight: 600 });
 }

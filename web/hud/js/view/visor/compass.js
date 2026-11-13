@@ -20,7 +20,7 @@ export function drawCompass(ctx, cx, y, width, u, heading, targetBearing, color 
     ctx.moveTo(x, y);
     ctx.lineTo(x, y - tall);
     ctx.stroke();
-    if (NAMES[deg]) say(ctx, NAMES[deg], x, y - 4.2 * u, 2.6 * u, { align: 'center', weight: 700, color: INK });
+    if (NAMES[deg]) say(ctx, NAMES[deg], x, y - 4.2 * u, 2.6 * u, { align: 'center', weight: 600, color: INK });
     else if (deg % 30 === 0) say(ctx, String(deg), x, y - 3.6 * u, 1.9 * u, { align: 'center', color: AMBER_SOFT });
   }
   ctx.globalAlpha = 1;
@@ -31,7 +31,7 @@ export function drawCompass(ctx, cx, y, width, u, heading, targetBearing, color 
   ctx.lineTo(cx - 1.1 * u, y + 2.2 * u);
   ctx.lineTo(cx + 1.1 * u, y + 2.2 * u);
   ctx.fill();
-  say(ctx, `${Math.round(((heading % 360) + 360) % 360)}°`, cx, y + 4 * u, 2.4 * u, { align: 'center', weight: 700 });
+  say(ctx, `${Math.round(((heading % 360) + 360) % 360)}°`, cx, y + 4 * u, 2.4 * u, { align: 'center', weight: 600 });
 
   if (targetBearing == null) return;
   const rel = wrap180(targetBearing - heading);

@@ -105,6 +105,6 @@ function drawPin(ctx, ground, u, view, forward, color, s) {
   ctx.lineTo(ground.x - r, topY);
   ctx.fill();
   ctx.shadowBlur = 0;
-  say(ctx, (s.targetName ?? '').toUpperCase(), ground.x, topY - 5 * u, 2.8 * u, { align: 'center', color, weight: 700 });
+  say(ctx, (s.targetName ?? '').toUpperCase(), ground.x, topY - 5 * u, 2.8 * u, { align: 'center', color, weight: 600 });
   say(ctx, `${s.distanceLabel} · ${s.etaMin} MIN`, ground.x, topY - 2.2 * u - 0.6 * u, 2.2 * u, { align: 'center', color: INK });
 }

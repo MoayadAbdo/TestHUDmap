@@ -11,7 +11,7 @@ export const ZONES_KEY = {
     { color: '#ff4040', label: 'no-go slope (over 20°)' },
     { color: '#ffbe3c', label: 'careful (12–20°)' },
     { color: '#ffecaa', label: 'rough ground' },
-    { color: '#5aa0ff', label: 'looser ground (THEMIS)' },
+    { color: '#c8c8c8', label: 'looser ground (THEMIS)' },
     { color: '#d36bff', label: 'sulfates (CRISM)' },
   ],
 };

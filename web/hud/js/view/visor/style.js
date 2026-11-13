@@ -2,31 +2,31 @@
  * Visor colours have one meaning each, so the astronaut reads the colour before the words:
  *   INK      numbers and names to read (warm white: readable on bright sky and dark ground)
  *   AMBER    labels and frames (the suit's own look)
- *   NAV      where to go: arrow, path, pin, next stop (cyan: never used for data)
+ *   NAV      where to go: arrow, path, pin, next stop (green: never used for data)
  *   CAUTION  be careful (steep ground)
  *   RED      act now (return to base, oxygen, radiation)
- * Every text gets a dark outline and a dark shadow (not a coloured glow, which blurs it),
+ * Text is a clean technical face with a thin dark edge (no glow, no heavy outline),
  * and every group sits on a dark plate, so it stays readable over the bright Mars sky.
  */
 export const INK = '#fff4e2';
 export const AMBER = '#ffb547';
 export const AMBER_SOFT = 'rgba(255, 196, 120, 0.9)';
 export const AMBER_FAINT = 'rgba(255, 181, 71, 0.28)';
-export const NAV = '#4fe3ea';
+export const NAV = '#5fe08f';
 export const CAUTION = '#ffd24a';
 export const RED = '#ff4d4d';
 export const PANEL = 'rgba(10, 5, 2, 0.58)';
-export const FONT = "'Rajdhani', 'Saira Condensed', 'Arial Narrow', system-ui, sans-serif";
+export const FONT = "'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif";
 
-export function say(ctx, text, x, y, size, { color = INK, weight = 600, align = 'left', baseline = 'middle', glow = false } = {}) {
+export function say(ctx, text, x, y, size, { color = INK, weight = 500, align = 'left', baseline = 'middle', glow = false } = {}) {
   ctx.font = `${weight} ${size}px ${FONT}`;
   ctx.textAlign = align;
   ctx.textBaseline = baseline;
   ctx.lineJoin = 'round';
-  ctx.lineWidth = Math.max(2, size * 0.24);
-  ctx.strokeStyle = 'rgba(10, 4, 0, 0.88)';
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
-  ctx.shadowBlur = size * 0.35;
+  ctx.lineWidth = Math.max(1.2, size * 0.12);          // thin edge: readable on bright sky, not cartoon-like
+  ctx.strokeStyle = 'rgba(10, 4, 0, 0.7)';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+  ctx.shadowBlur = size * 0.15;
   ctx.strokeText(text, x, y);
   ctx.shadowBlur = 0;
   if (glow) {                       // only for the few things that must pop (alerts, the target)

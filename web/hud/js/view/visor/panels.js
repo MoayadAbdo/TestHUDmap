@@ -6,7 +6,7 @@ const STATUS_WORD = { ok: 'OK', warn: 'CHECK', danger: 'ALERT' };
 export const PANEL_W_U = 27;
 
 function header(ctx, text, x, y, u, align = 'left') {
-  say(ctx, text, x, y, 2.1 * u, { weight: 700, align, color: AMBER });
+  say(ctx, text, x, y, 2.1 * u, { weight: 600, align, color: AMBER });
 }
 
 /** Dose: 0.4 µSv, 12 µSv, 1.2 mSv — never stuck at "0" for the first minutes. */
@@ -22,20 +22,24 @@ export function doseText(usv) {
  */
 export function drawVitals(ctx, x, y, u, s) {
   const w = 25 * u;
-  // the same panel in the hand-held view and the VR box; oxygen is Rama's battery (fill, notch = needed to get home)
-  const dy = 3 * u;
-  plate(ctx, x - 1.6 * u, y - 2.6 * u, w + 3.2 * u, 25.2 * u + dy, { radius: 1 * u, edge: s.level === 'danger' ? RED : null });
+  // the same panel in the hand-held view and the VR box. Oxygen: time left + a segmented gauge, yellow while fine,
+  // orange when getting close to what the walk home needs (Rama's energy model), red when it's time to turn back
+  const st = batteryState(s);
+  plate(ctx, x - 1.6 * u, y - 2.6 * u, w + 3.2 * u, 25.2 * u, { radius: 1 * u, edge: s.level === 'danger' ? RED : null });
   header(ctx, 'OXYGEN', x, y, u);
-  drawOxygenChip(ctx, x, y + 4.4 * u, u, s);
-  y += dy;
+  const tag = st.word ?? (s.energy ? `${marginText(s.energy.margin)} walks home` : `${Math.round(s.o2Pct)}%`);
+  say(ctx, tag, x + w, y, 1.9 * u, { align: 'right', color: st.word ? st.color : AMBER_SOFT, weight: 600 });
+  say(ctx, `${hm(s.o2MinutesLeft)} left`, x, y + 3.9 * u, 3.3 * u, { color: st.color === BATTERY_GOOD ? INK : st.color, weight: 600 });
+  say(ctx, `${Math.round(s.o2Pct)}%`, x + w, y + 3.9 * u, 2.2 * u, { align: 'right', color: INK, weight: 500 });
+  bar(ctx, x, y + 6.6 * u, w, 1 * u, s.o2Pct / 100, { color: st.color });
 
   const radColor = s.radHigh ? RED : INK;
   header(ctx, 'RADIATION', x, y + 10.4 * u, u);
-  say(ctx, `${s.radUsvH ?? '--'} µSv/h`, x + w, y + 10.4 * u, 2.4 * u, { align: 'right', color: radColor, weight: 700 });
+  say(ctx, `${s.radUsvH ?? '--'} µSv/h`, x + w, y + 10.4 * u, 2.4 * u, { align: 'right', color: radColor, weight: 600 });
   say(ctx, `dose this walk ${doseText(s.radDoseUsv)}`, x, y + 13.3 * u, 1.9 * u, { color: AMBER_SOFT, weight: 600 });
 
   header(ctx, 'OUTSIDE', x, y + 17 * u, u);
-  say(ctx, `${s.tempC ?? '--'} °C`, x + w, y + 17 * u, 2.4 * u, { align: 'right', weight: 700 });
+  say(ctx, `${s.tempC ?? '--'} °C`, x + w, y + 17 * u, 2.4 * u, { align: 'right', weight: 600 });
   const time = s.daylightMin != null ? `Mars ${s.marsTime}  ·  daylight ${hm(s.daylightMin)}` : `Mars ${s.marsTime}`;
   say(ctx, time, x, y + 20.2 * u, 1.9 * u, { color: AMBER_SOFT, weight: 600 });
 }
@@ -43,7 +47,7 @@ export function drawVitals(ctx, x, y, u, s) {
 /** Earth delay and link, small under the mini-map (focus view). */
 export function drawDelayTag(ctx, cx, y, u, s) {
   const bars = s.link?.bars ?? 0;
-  say(ctx, `EARTH ${s.lightMin?.toFixed(1) ?? '--'} MIN AWAY`, cx, y, 1.8 * u, { align: 'center', color: AMBER_SOFT, weight: 700 });
+  say(ctx, `EARTH ${s.lightMin?.toFixed(1) ?? '--'} MIN AWAY`, cx, y, 1.8 * u, { align: 'center', color: AMBER_SOFT, weight: 600 });
   for (let i = 0; i < 4; i++) {
     const bh = (0.8 + i * 0.6) * u;
     ctx.fillStyle = i < bars ? AMBER : AMBER_FAINT;
@@ -152,7 +156,7 @@ export function drawIntegrity(ctx, right, y, u, s) {
     ctx.beginPath();
     ctx.arc(right - 8 * u, ry, 0.65 * u, 0, Math.PI * 2);
     ctx.fill();
-    say(ctx, STATUS_WORD[state] ?? '--', right, ry, 2.1 * u, { align: 'right', color, weight: 700 });
+    say(ctx, STATUS_WORD[state] ?? '--', right, ry, 2.1 * u, { align: 'right', color, weight: 600 });
   });
 }
 
@@ -177,11 +181,11 @@ export function drawLayer(ctx, right, y, u, layer) {
 }
 
 /** Battery colour from the Return Energy Margin (core/energy.js): plenty / getting close / turn back. */
-export const BATTERY_GOOD = '#7cf29a';
+export const BATTERY_GOOD = '#ffd24a';   // fine: yellow (orange = getting close, red = turn back)
 export function batteryState(s) {
   const m = s.energy?.margin;
   if (s.mustReturn || s.o2Pct < 30 || (Number.isFinite(m) && m < 1)) return { color: RED, word: 'HEAD HOME', pulse: true };
-  if (Number.isFinite(m) && m < 1.5) return { color: CAUTION, word: 'HOME SOON', pulse: false };
+  if (Number.isFinite(m) && m < 1.5) return { color: '#ff9a3c', word: 'HOME SOON', pulse: false };
   return { color: BATTERY_GOOD, word: null, pulse: false };
 }
 
@@ -239,12 +243,12 @@ export function drawOxygenChip(ctx, x, y, u, s) {
   }
   ctx.restore();
   // the number
-  say(ctx, `${Math.round(s.o2Pct ?? 0)}%`, x + bw / 2, y + 0.1 * u, 2.6 * u, { align: 'center', color: INK, weight: 800 });
+  say(ctx, `${Math.round(s.o2Pct ?? 0)}%`, x + bw / 2, y + 0.1 * u, 2.6 * u, { align: 'center', color: INK, weight: 600 });
   // beside the nub: the margin (×n walks home) or what to do; under the battery: time left now and the effort
   const tag = st.word ?? (s.energy ? marginText(s.energy.margin) : '');
-  if (tag) say(ctx, tag, x + bw + 2.2 * u, y, 1.9 * u, { color: st.word ? st.color : AMBER_SOFT, weight: 800 });
+  if (tag) say(ctx, tag, x + bw + 2.2 * u, y, 1.9 * u, { color: st.word ? st.color : AMBER_SOFT, weight: 600 });
   const sub = s.energy ? `${hm(s.o2MinutesLeft)}  ⚡${s.energy.effortW} W` : `${hm(s.o2MinutesLeft)} left`;
-  say(ctx, sub, x + 0.3 * u, y + bh / 2 + 2 * u, 1.9 * u, { color: st.color === BATTERY_GOOD ? INK : st.color, weight: 700 });
+  say(ctx, sub, x + 0.3 * u, y + bh / 2 + 2 * u, 1.9 * u, { color: st.color === BATTERY_GOOD ? INK : st.color, weight: 600 });
 }
 
 /** Clean VR view: link bars and the Earth delay in one line. */

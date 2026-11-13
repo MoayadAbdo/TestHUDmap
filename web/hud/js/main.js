@@ -232,7 +232,7 @@ async function start(mode, view, motionAsked) {
   };
   addEventListener('keydown', (e) => { if ((e.key === 'h' || e.key === 'H') && !e.repeat) app.showPlaceInfo(); });   // H = "What's here?"
   console.info('[hud] mission', url, 'live', live.real ? 'real' : 'stand-in', 'voice', voice.real ? 'real' : 'stand-in');
-  await Promise.race([document.fonts?.load?.('600 20px Rajdhani'), new Promise((resolve) => setTimeout(resolve, 1500))]);
+  await Promise.race([document.fonts?.load?.("500 20px 'Barlow Semi Condensed'"), new Promise((resolve) => setTimeout(resolve, 1500))]);
   app.start();
   if (params.get('hud') === 'full') app.demo.toggleDetail();   // ?hud=full starts with every panel
   if (sim3d) app.notify(moveInput ? 'Walk in place to move · tap to talk · double tap to auto-walk' : 'Double tap to start walking');

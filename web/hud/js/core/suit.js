@@ -5,12 +5,15 @@ export function createSuit({ o2StartPct = 100, o2PctPerMin = 0.25, powerPctPerMi
   let lastMs = startMs;
   let speed = 1;
   let effort = 1;                 // × the nominal rate: harder walking burns more oxygen (core/energy.js)
+  let avgEffort = 1;              // the same, averaged over ~90 s: time left reads steady, not jumping with each step
+  const AVG_MIN = 1.5;
 
   return {
     update(nowMs) {
       const minutes = (nowMs - lastMs) / 60000;
       lastMs = nowMs;
       o2 = Math.max(0, o2 - o2PctPerMin * speed * effort * minutes);
+      avgEffort += (effort - avgEffort) * Math.min(1, minutes / AVG_MIN);
       power = Math.max(0, power - powerPctPerMin * speed * minutes);
       return o2;
     },
@@ -21,7 +24,7 @@ export function createSuit({ o2StartPct = 100, o2PctPerMin = 0.25, powerPctPerMi
       return power;
     },
     get minutesLeft() {
-      return o2 / (o2PctPerMin * speed * effort);
+      return o2 / (o2PctPerMin * speed * avgEffort);
     },
     setSpeed(value) {
       speed = value;

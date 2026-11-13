@@ -73,7 +73,7 @@ export function drawMiniMap(ctx, cx, cy, radius, u, s) {
   ctx.stroke();
 
   const north = (-(s.heading ?? 0) * Math.PI) / 180;
-  say(ctx, 'N', cx + Math.sin(north) * (radius - 2.2 * u), cy - Math.cos(north) * (radius - 2.2 * u), 2.2 * u, { align: 'center', weight: 700 });
+  say(ctx, 'N', cx + Math.sin(north) * (radius - 2.2 * u), cy - Math.cos(north) * (radius - 2.2 * u), 2.2 * u, { align: 'center', weight: 600 });
 
   ctx.fillStyle = AMBER;
   ctx.shadowColor = AMBER;
@@ -85,5 +85,5 @@ export function drawMiniMap(ctx, cx, cy, radius, u, s) {
   ctx.lineTo(cx - 1.1 * u, cy + 1.2 * u);
   ctx.fill();
   ctx.shadowBlur = 0;
-  say(ctx, `MAP ${RANGE_M} M`, cx, cy + radius + 2.2 * u, 1.7 * u, { align: 'center', color: AMBER_SOFT, weight: 700 });
+  say(ctx, `MAP ${RANGE_M} M`, cx, cy + radius + 2.2 * u, 1.7 * u, { align: 'center', color: AMBER_SOFT, weight: 600 });
 }

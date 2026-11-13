@@ -135,3 +135,14 @@ test('suit panels: in after standing still 3 s, out when walking, pinned with th
   d.reset();
   assert.equal(run(1000, 1), 0);
 });
+
+test('oxygen time left reads steady when effort changes step to step', async () => {
+  const { createSuit } = await import('../js/core/suit.js');
+  const suit = createSuit({ o2StartPct: 100, o2PctPerMin: 0.25, startMs: 0 });
+  const before = suit.minutesLeft;
+  suit.setEffort(2);                 // one hard step
+  suit.update(1000);
+  assert.ok(suit.minutesLeft > before * 0.95, `${Math.round(suit.minutesLeft)} vs ${Math.round(before)}: no jump`);
+  for (let t = 2000; t <= 600000; t += 1000) suit.update(t);
+  assert.ok(suit.minutesLeft < before * 0.6, 'after minutes of hard walking it does come down');
+});

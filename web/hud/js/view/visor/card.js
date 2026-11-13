@@ -16,14 +16,14 @@ export function drawStopCard(ctx, w, h, u, card, photo, { sample = null } = {}) 
   brackets(ctx, x - U, y - U, cw + 2 * U, ch + 2 * U, 2.2 * U, AMBER);
 
   const pad = 2.4 * U;
-  say(ctx, `STOP ${card.id}`, x + pad, y + pad + 0.4 * U, 1.9 * U, { color: AMBER_SOFT, weight: 700 });
+  say(ctx, `STOP ${card.id}`, x + pad, y + pad + 0.4 * U, 1.9 * U, { color: AMBER_SOFT, weight: 600 });
   // science sample for this stop: done, or how to take it
   if (sample) {
     const done = sample.done;
     say(ctx, done ? '✓ SAMPLE LOGGED' : sample.scan ? '◎ SAMPLE: LOOK AT THE ROCK 2 s' : '◎ SAMPLE: PHOTO',
-      x + cw - pad, y + pad + 0.4 * U, 1.9 * U, { align: 'right', color: done ? '#4ade80' : NAV, weight: 800 });
+      x + cw - pad, y + pad + 0.4 * U, 1.9 * U, { align: 'right', color: done ? '#4ade80' : NAV, weight: 600 });
   }
-  say(ctx, card.name.toUpperCase(), x + pad, y + pad + 3.6 * U, 3.8 * U, { color: NAV, weight: 700 });
+  say(ctx, card.name.toUpperCase(), x + pad, y + pad + 3.6 * U, 3.8 * U, { color: NAV, weight: 600 });
 
   const top = y + pad + 7.4 * U;
   const footer = 3 * U;
@@ -46,7 +46,7 @@ export function drawStopCard(ctx, w, h, u, card, photo, { sample = null } = {}) 
     ctx.strokeRect(x + pad, top, pw, ph);
     const credit = creditLine(card.photo_credit);   // under the photo, never over it
     if (credit) {
-      ctx.font = `500 ${1.45 * U}px Rajdhani, system-ui, sans-serif`;
+      ctx.font = `500 ${1.45 * U}px 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif`;
       const [line] = wrap(ctx, credit, pw, 1);
       say(ctx, line, x + pad, top + ph + 1.3 * U, 1.45 * U, { color: AMBER_SOFT, weight: 500 });
     }
@@ -62,9 +62,9 @@ export function drawStopCard(ctx, w, h, u, card, photo, { sample = null } = {}) 
     const lineH = size * 1.22 * U;
     const roomLines = Math.floor((bottom - (ty + 2.8 * U)) / lineH);
     if (roomLines < 1) break;
-    say(ctx, label, textX, ty, 1.8 * U, { color: AMBER_SOFT, weight: 700 });
+    say(ctx, label, textX, ty, 1.8 * U, { color: AMBER_SOFT, weight: 600 });
     ty += 2.8 * U;
-    ctx.font = `600 ${size * U}px Rajdhani, system-ui, sans-serif`;
+    ctx.font = `600 ${size * U}px 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif`;
     for (const line of wrap(ctx, value, tw, Math.min(maxLines, roomLines))) {
       say(ctx, line, textX, ty, size * U, { color, weight: 600 });
       ty += lineH;

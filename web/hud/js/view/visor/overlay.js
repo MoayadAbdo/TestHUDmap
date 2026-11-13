@@ -21,17 +21,17 @@ export function drawAlerts(ctx, cx, y, u, s) {
   const h = 9.4 * u;
   plate(ctx, cx - w / 2, y, w, h, { fill: color === RED ? 'rgba(70, 6, 4, 0.82)' : 'rgba(60, 40, 0, 0.8)', edge: color, radius: 1.2 * u });
   ctx.globalAlpha = flash;
-  say(ctx, `▲ ${title} ▲`, cx, y + 3.2 * u, 3.4 * u, { align: 'center', color, weight: 700, glow: true });
+  say(ctx, `▲ ${title} ▲`, cx, y + 3.2 * u, 3.4 * u, { align: 'center', color, weight: 600, glow: true });
   ctx.globalAlpha = 1;
   if (action) say(ctx, action, cx, y + 7 * u, 2.2 * u, { align: 'center', color: INK, weight: 600 });
   const rest = known.slice(1).filter((a) => !(known[0] === 'RETURN_TO_BASE' && ['SOLAR_STORM', 'O2_LEAK', 'LOW_O2'].includes(a) && s.returnReason));
-  if (rest.length) say(ctx, rest.map((a) => CHIP[a]).join('  ·  '), cx, y + h + 1.8 * u, 1.9 * u, { align: 'center', color: AMBER_SOFT, weight: 700 });
+  if (rest.length) say(ctx, rest.map((a) => CHIP[a]).join('  ·  '), cx, y + h + 1.8 * u, 1.9 * u, { align: 'center', color: AMBER_SOFT, weight: 600 });
   return h / u + (rest.length ? 3.2 : 0.8);
 }
 
 export function drawMessage(ctx, cx, y, u, w, text) {
   if (!text) return;
-  ctx.font = `600 ${2.5 * u}px Rajdhani, system-ui, sans-serif`;
+  ctx.font = `600 ${2.5 * u}px 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif`;
   const lines = wrap(ctx, text, w * 0.42, 2);
   const width = Math.max(...lines.map((l) => ctx.measureText(l).width)) + 3 * u;
   plate(ctx, cx - width / 2, y - 1.8 * u, width, lines.length * 3 * u + 0.8 * u, { radius: 0.8 * u });
@@ -47,11 +47,11 @@ export function drawNextStop(ctx, cx, y, u, s) {
   const top = home ? 'RETURN TO' : `NEXT · ${s.stopLabel.toUpperCase()}`;
   const name = s.targetName.toUpperCase();
   const dist = `${s.distanceLabel} · ${s.etaMin} MIN`;
-  ctx.font = `700 ${3.4 * u}px Rajdhani, system-ui, sans-serif`;
+  ctx.font = `600 ${3.4 * u}px 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif`;
   const w = Math.max(ctx.measureText(name).width, 24 * u) + 6 * u;
-  plate(ctx, cx - w / 2, y - 2.2 * u, w, 10.2 * u, { radius: 1 * u, edge: home ? RED : 'rgba(79, 227, 234, 0.45)' });
-  say(ctx, top, cx, y, 1.9 * u, { align: 'center', color: AMBER_SOFT, weight: 700 });
-  say(ctx, name, cx, y + 3.4 * u, 3.4 * u, { align: 'center', color, weight: 700 });
+  plate(ctx, cx - w / 2, y - 2.2 * u, w, 10.2 * u, { radius: 1 * u, edge: home ? RED : 'rgba(95, 224, 143, 0.45)' });
+  say(ctx, top, cx, y, 1.9 * u, { align: 'center', color: AMBER_SOFT, weight: 600 });
+  say(ctx, name, cx, y + 3.4 * u, 3.4 * u, { align: 'center', color, weight: 600 });
   say(ctx, dist, cx, y + 6.6 * u, 2.3 * u, { align: 'center', color: INK, weight: 600 });
 }
 
@@ -61,7 +61,7 @@ export function drawVoice(ctx, cx, y, u, w, s) {
     if (s.listening) { dot(cx - 5.4 * u, y); say(ctx, 'LISTENING', cx - 3.8 * u, y, 1.9 * u, { color: INK }); }
     return;
   }
-  ctx.font = `600 ${2.4 * u}px Rajdhani, system-ui, sans-serif`;
+  ctx.font = `600 ${2.4 * u}px 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif`;
   const lines = wrap(ctx, s.aiText, w * 0.44, 2);
   const boxW = w * 0.5;
   const boxH = lines.length * 3 * u + 2 * u;
@@ -72,10 +72,10 @@ export function drawVoice(ctx, cx, y, u, w, s) {
 }
 
 export function drawWaiting(ctx, cx, cy, u, text) {
-  ctx.font = `700 ${3 * u}px Rajdhani, system-ui, sans-serif`;
+  ctx.font = `600 ${3 * u}px 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif`;
   const w = ctx.measureText(text).width + 6 * u;
   plate(ctx, cx - w / 2, cy - 3 * u, w, 6 * u, { radius: 1 * u });
-  say(ctx, text, cx, cy, 3 * u, { align: 'center', weight: 700 });
+  say(ctx, text, cx, cy, 3 * u, { align: 'center', weight: 600 });
 }
 
 /** Always-on arrow under the view centre: the way to go along the path (0 = straight ahead, + = right). */
@@ -101,7 +101,7 @@ export function drawDirectionArrow(ctx, cx, cy, u, deg, color = NAV, { label = t
   ctx.restore();
   ctx.shadowBlur = 0;
   const turn = label ? turnWord(deg) : '';
-  if (turn) say(ctx, turn, cx, cy + r + 2.2 * u, 2.4 * u, { align: 'center', color, weight: 700 });
+  if (turn) say(ctx, turn, cx, cy + r + 2.2 * u, 2.4 * u, { align: 'center', color, weight: 600 });
 }
 
 /** One word for the way to go: '' when roughly ahead. */
@@ -115,7 +115,7 @@ export function turnWord(deg) {
 /** Small key hint at the bottom (hand-held only: a VR box has no keyboard). */
 export function drawFooter(ctx, x, y, u, s) {
   const text = s.detail === 'full' ? 'I · FOCUS VIEW' : 'I · ALL PANELS';
-  say(ctx, text, x, y, 1.7 * u, { color: AMBER_SOFT, weight: 700 });
+  say(ctx, text, x, y, 1.7 * u, { color: AMBER_SOFT, weight: 600 });
 }
 
 export { AMBER };
