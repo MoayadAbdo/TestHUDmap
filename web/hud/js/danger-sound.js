@@ -1,11 +1,10 @@
 /**
- * Danger you can hear (no reading needed in the VR box): a parking-sensor beep that speeds up as no-go ground gets
- * closer, and the phone's own voice for "Steep slope ahead, 15 metres" (built in: no internet, no credits).
- * Everything is passed in, so it can be tested without speakers.
+ * Danger you can hear near no-go ground (no reading needed in the VR box): a parking-sensor beep that speeds up as
+ * it gets closer, and a recorded warning line. beep(freq) and say(clipId) are passed in, so it can be tested.
  */
 const SAY_AGAIN_MS = 25000;
 
-export function createDangerSound({ beep = makeBeep(), speak = makeSpeak(), clock = () => performance.now() } = {}) {
+export function createDangerSound({ beep, say, clock = () => performance.now() }) {
   let nextBeep = 0;
   let lastSaid = -Infinity;
   let wasNear = false;
@@ -23,20 +22,18 @@ export function createDangerSound({ beep = makeBeep(), speak = makeSpeak(), cloc
       const ahead = steep && steep.startM >= 2 && steep.startM <= 20;
       if ((ahead || (near && !wasNear)) && t - lastSaid > SAY_AGAIN_MS) {
         lastSaid = t;
-        speak(ahead
-          ? `Steep slope ahead, ${Math.round(steep.startM)} metres`
-          : 'No-go slope close by, watch your step');
+        say(ahead ? 'slope_ahead' : 'slope_close');
       }
       wasNear = Boolean(near);
     },
   };
 }
 
-function makeBeep() {
-  let ctx = null;
+/** A short beep on the shared audio channel. */
+export function makeBeep(getCtx) {
   return (freq) => {
     try {
-      ctx ??= new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = getCtx();
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       o.frequency.value = freq;
@@ -47,19 +44,4 @@ function makeBeep() {
       o.stop(ctx.currentTime + 0.1);
     } catch { /* no audio: the glow still shows it */ }
   };
-}
-
-function makeSpeak() {
-  return (text) => {
-    try {
-      const u = new SpeechSynthesisUtterance(text);
-      u.rate = 1.05;
-      window.speechSynthesis?.speak(u);
-    } catch { /* no speech: the visor still shows it */ }
-  };
-}
-
-/** iPhone only speaks after a tap: call this inside the Start tap. */
-export function unlockSpeech() {
-  try { window.speechSynthesis?.speak(new SpeechSynthesisUtterance('')); } catch { /* fine */ }
 }

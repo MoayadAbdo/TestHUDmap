@@ -49,17 +49,18 @@ test('no stop cards on the way home', () => {
   assert.equal(n.update(at(0, 100), 3000).arrived, null);
 });
 
-test('stop card stays while you are there, closes when you walk away', () => {
+test('stop card is a short notice: gone after 10 s even at the stop; leaving closes it sooner', () => {
   const card = createStopCard();
   card.show(stops[0], 0);
-  card.update(at(0, 100), 60_000, EARTH_RADIUS_M);
-  assert.equal(card.stop?.name, 'One', 'still standing at the stop after 60 s');
-  card.update(at(0, 140), 61_000, EARTH_RADIUS_M);
+  card.update(at(0, 100), 8000, EARTH_RADIUS_M);
+  assert.equal(card.stop?.name, 'One', 'still there after 8 s');
+  card.update(at(0, 100), 10_001, EARTH_RADIUS_M);
+  assert.equal(card.stop, null, 'not sticky: closed after 10 s');
+  card.show(stops[0], 20_000);
+  card.update(at(0, 140), 21_000, EARTH_RADIUS_M);
   assert.equal(card.stop?.name, 'One', 'one GPS jump away is not leaving');
-  card.update(at(0, 100), 62_000, EARTH_RADIUS_M);
-  card.update(at(0, 140), 63_000, EARTH_RADIUS_M);
-  card.update(at(0, 140), 66_500, EARTH_RADIUS_M);
-  assert.equal(card.stop, null, '40 m away for 3.5 s: closed');
+  card.update(at(0, 140), 23_500, EARTH_RADIUS_M);
+  assert.equal(card.stop, null, 'walked away: closed');
 });
 
 test('stop card: no flicker in the first seconds, never stuck open', () => {

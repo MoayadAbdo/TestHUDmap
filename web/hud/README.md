@@ -93,3 +93,13 @@ While you walk you only see what you need to walk. **Stand still for 3 seconds**
 start walking and they fade out. **I** key or Ground Control's **Visor: all panels / auto** pins them on.
 Ground Control's **Reset to default** (and the demo panel's) puts everything back: map and visor on Photo,
 automatic panels, no emergency, oxygen refilled, Mars delay and Drive off.
+
+## Spoken alerts (one voice for everyone)
+Alert lines are recorded once (`web/hud/sounds/*.m4a`, voice in `sounds/clips.json`) so every phone sounds the same,
+offline and with no credits. To change the voice or the lines (macOS): `node web/hud/tools/make-voice-clips.mjs Daniel`
+(any voice from `say -v '?'`). Ground Control's own words aren't recorded: the phone says "Message from Ground Control"
+and shows the text. iPhone: silent switch off.
+
+## Stop card
+A compact notice in the bottom-left corner: it closes by itself after 10 s or when you walk on; tap / C closes it,
+C brings it back while you're at the stop.

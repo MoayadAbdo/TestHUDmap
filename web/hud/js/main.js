@@ -11,8 +11,10 @@ import { createStepDetector } from './core/steps.js';
 import { createTerrainGrid } from './core/terrain-grid.js';
 import { dangerOptions } from './core/danger-watch.js';
 import { ZONES_KEY, zonesCanvas } from './zone-layers.js';
-import { createDangerSound, unlockSpeech } from './danger-sound.js';
-import { createAlertSounds, makeSpeaker, makeTones } from './alert-sounds.js';
+import { createDangerSound, makeBeep } from './danger-sound.js';
+import { createAlertSounds, makeTones } from './alert-sounds.js';
+import { audioContext, unlockAudio } from './audio.js';
+import { ALL_CLIPS, createClipPlayer } from './voice-clips.js';
 import { startWakeWord } from './wake-word.js';
 import { createDemoPanel } from './view/demo-panel.js';
 import { createRenderer } from './view/renderer.js';
@@ -138,9 +140,16 @@ async function start(mode, view, motionAsked) {
   if (dangers.zones && grid && world3d?.setGroundOverlay) {        // zones from several layers on the 3D ground
     zonesCanvas(grid, new URL('layers/layers.json', assetsBase).href).then((c) => world3d.setGroundOverlay(c));
   }
-  const sound = dangers.glow ? createDangerSound() : null;                // near no-go ground: beeps
-  const alertSounds = params.get('sound') === '0' ? null
-    : createAlertSounds({ tone: makeTones(), speak: makeSpeaker(), isTalking: () => voice.part.listening });
+  // sound: tones + recorded lines in one voice for everyone (sounds/*.m4a), on the one audio channel
+  const muted = params.get('sound') === '0';
+  const clips = createClipPlayer({ ctx: audioContext, base: new URL('./sounds/', document.baseURI).href });
+  if (!muted) {
+    const stopIds = mission.stops.filter((s) => !s.is_base).map((s) => s.id);
+    clips.preload([...ALL_CLIPS, ...stopIds.map((id) => `arrive_${id}`), ...stopIds.map((_, i) => `sample_${i + 1}`)]);
+  }
+  const sound = dangers.glow && !muted ? createDangerSound({ beep: makeBeep(audioContext), say: (id) => clips.play(id) }) : null;
+  const alertSounds = muted ? null
+    : createAlertSounds({ tone: makeTones(audioContext), speak: (id, o) => clips.play(id, o), isTalking: () => voice.part.listening });
   const canvas = document.getElementById('hud');
   const layerSwitch = createLayerSwitch({ sim: source.world3d ?? source.sim, notify: (t) => app.notify(t) });
   const getFrame = () => {
@@ -224,7 +233,7 @@ document.getElementById('go').addEventListener('click', () => {
   startError.textContent = '';
   const mode = chosen('mode');
   const motionAsked = requestMotionPermission();
-  unlockSpeech();                       // iPhone only speaks after a tap
+  unlockAudio();                        // phones keep audio silent until a tap
   // ask for the microphone inside the tap, so "Hey suit" works later without touching the phone
   navigator.mediaDevices?.getUserMedia?.({ audio: true }).then((s) => s.getTracks().forEach((t) => t.stop())).catch(() => {});
   start(mode, chosen('view'), motionAsked).catch((error) => {

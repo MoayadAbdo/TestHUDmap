@@ -74,7 +74,7 @@ export function drawVisorHud(ctx, w, h, s, images) {
   }
   ctx.globalAlpha = 1;
 
-  if (s.card) drawStopCard(ctx, w, h, u, s.card, images.get(s.card.photo), { underAlert: s.alerts.length > 0, sample: s.cardSample });
+  if (s.card) drawStopCard(ctx, w, h, u, s.card, images.get(s.card.photo), { sample: s.cardSample });
   else if (s.waiting) drawWaiting(ctx, cx, h / 2, u, s.waiting);
   else drawNextStop(ctx, cx, 74 * row, u, s);
   const profile = Boolean(s.dangers?.show?.profile && !s.card && !s.waiting);
@@ -84,11 +84,10 @@ export function drawVisorHud(ctx, w, h, s, images) {
   const alertH = drawAlerts(ctx, cx, 21 * row, u, s);
   drawMessage(ctx, cx, 21 * row + (alertH ? alertH + 2.4 : 1.5) * u, u, w, s.message);
   // always visible: which way to go along the path (under the card when one is open)
-  const arrowRow = s.card ? (s.alerts.length ? 82 : 78) : 64;   // below the card, which sits lower under an alert
-  // under an open card there's no room for the TURN word as well as the AI's text: the arrow alone says it
-  if (!s.waiting) drawDirectionArrow(ctx, cx, arrowRow * row, u, s.arrowDeg, navColor, { label: !s.card });
-  drawVoice(ctx, cx, (s.card || profile ? 89.5 : 86) * row, u, w, s);
-  if (s.view !== 'vr' && !s.waiting) drawFooter(ctx, left, 88 * row, u, s);
+  // the stop card sits bottom-left: the arrow and the AI's words move right while it's open
+  if (!s.waiting) drawDirectionArrow(ctx, s.card ? w * 0.66 : cx, 64 * row, u, s.arrowDeg, navColor);
+  drawVoice(ctx, s.card ? w * 0.73 : cx, (profile ? 89.5 : 86) * row, u, s.card ? w * 0.8 : w, s);
+  if (s.view !== 'vr' && !s.waiting && !s.card) drawFooter(ctx, left, 88 * row, u, s);
 }
 
 export { AMBER };

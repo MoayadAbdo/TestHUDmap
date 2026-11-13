@@ -1,16 +1,10 @@
+import { clipFor } from './voice-clips.js';
+
 /**
- * Alerts you can hear, for the VR box where reading is hard: a tone for each kind of event and the phone's own
- * voice saying what happened (built in: no internet, no credits). Real dangers always speak; the rest waits
- * while you're talking to the AI. Everything is passed in, so it can be tested without speakers.
+ * Alerts you can hear, for the VR box where reading is hard: a tone for each kind of event and a recorded line in
+ * one voice for everyone (sounds/*.m4a). Real dangers always speak; the rest waits while you're talking to the AI.
+ * Everything is passed in, so it can be tested without speakers. say(clipId, { urgent }) plays a recorded line.
  */
-const SPOKEN = {
-  RETURN_TO_BASE: (s) => `Return to base. ${s.returnReason ?? ''}`,
-  SOLAR_STORM: () => 'Solar storm. Radiation rising.',
-  O2_LEAK: () => 'Suit oxygen leak.',
-  LOW_O2: () => 'Oxygen low.',
-  SLOPE_NO_GO: () => 'No-go slope ahead. Do not go on.',
-  SLOPE_AHEAD: () => 'Steep ground ahead. Slow down.',
-};
 const DANGER = new Set(['RETURN_TO_BASE', 'SOLAR_STORM', 'O2_LEAK', 'LOW_O2', 'SLOPE_NO_GO']);
 const REPEAT_MS = 30000;                 // the same warning at most every 30 s (no nagging when it flickers)
 
@@ -22,12 +16,13 @@ export function createAlertSounds({ tone, speak, isTalking = () => false, clock 
   let on = true;
   const lastSaid = new Map();
 
-  function say(key, text, { urgent = false } = {}) {
+  function say(clip, { urgent = false } = {}) {
+    if (!clip) return;
     const t = clock();
-    if (t - (lastSaid.get(key) ?? -Infinity) < REPEAT_MS) return;
+    if (t - (lastSaid.get(clip) ?? -Infinity) < REPEAT_MS) return;
     if (isTalking() && !urgent) return;
-    lastSaid.set(key, t);
-    speak(text, { urgent });
+    lastSaid.set(clip, t);
+    speak(clip, { urgent });
   }
 
   return {
@@ -39,19 +34,20 @@ export function createAlertSounds({ tone, speak, isTalking = () => false, clock 
         for (const a of now) {
           if (alerts.has(a)) continue;
           tone(DANGER.has(a) ? 'danger' : 'warn');
-          if (SPOKEN[a]) say(a, SPOKEN[a](s), { urgent: DANGER.has(a) });
+          say(clipFor(a, s.returnReason), { urgent: DANGER.has(a) });
         }
         if (s.card && s.card.id !== cardId) {
           tone('arrive');
-          say(`stop${s.card.id}`, `Stop ${s.card.id} reached: ${s.card.name}.${s.card.task ? ` ${s.card.task}` : ''}`);
+          say(`arrive_${s.card.id}`);
         }
         if (s.message && s.message !== message && s.message.startsWith('Ground Control:')) {
           tone('message');
-          say(`msg:${s.message}`, `Message from ${s.message}`, { urgent: true });
+          say('gc_message', { urgent: true });           // the words are on the visor
         }
+        if (s.message && s.message !== message && s.message.startsWith('All stops done')) say('all_done');
         if (samples != null && (s.science?.done ?? 0) > samples) {
           tone('sample');
-          say(`sample${s.science.done}`, `Sample logged. ${s.science.done} of ${s.science.total}.`);
+          say(`sample_${s.science.done}`);
         }
       }
       alerts = now;
@@ -65,8 +61,7 @@ export function createAlertSounds({ tone, speak, isTalking = () => false, clock 
 }
 
 /** Short tones from WebAudio: arrive (rising), sample (bright), message (two notes), warn (one), danger (three fast). */
-export function makeTones() {
-  let ctx = null;
+export function makeTones(getCtx) {
   const NOTES = {
     arrive: [[660, 0], [880, 0.12]],
     sample: [[988, 0], [1319, 0.1], [1760, 0.2]],
@@ -76,7 +71,7 @@ export function makeTones() {
   };
   return (kind) => {
     try {
-      ctx ??= new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = getCtx();
       for (const [freq, at] of NOTES[kind] ?? []) {
         const o = ctx.createOscillator();
         const g = ctx.createGain();
@@ -91,17 +86,5 @@ export function makeTones() {
         o.stop(t0 + 0.15);
       }
     } catch { /* no audio: the visor still shows it */ }
-  };
-}
-
-/** The phone's own voice. Urgent lines cut in; others queue. */
-export function makeSpeaker() {
-  return (text, { urgent = false } = {}) => {
-    try {
-      if (urgent) window.speechSynthesis?.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.rate = 1.05;
-      window.speechSynthesis?.speak(u);
-    } catch { /* no speech: the visor still shows it */ }
   };
 }
