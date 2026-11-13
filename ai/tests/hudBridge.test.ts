@@ -134,3 +134,11 @@ describe("HudVoiceBridge visor errors", () => {
     expect(bridge.getVoiceState()).toBe("disconnected");
   });
 });
+
+import { visorErrorText } from "../src/hud/visorErrorText";
+describe("visor error text names the cause", () => {
+  it("wrong agent id", () => expect(visorErrorText("connection", "ElevenLabs API returned 404 Agent not found")).toMatch(/agent ID not found/));
+  it("private agent or blocked site", () => expect(visorErrorText("connection", "returned 403 Forbidden")).toMatch(/private/));
+  it("no credits", () => expect(visorErrorText("connection", "quota exceeded")).toMatch(/credits/));
+  it("unknown connection error keeps the short text", () => expect(visorErrorText("connection", "network down")).toBe("AI offline: no connection"));
+});
