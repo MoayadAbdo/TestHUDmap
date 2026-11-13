@@ -1,4 +1,4 @@
-"""Build everything the web app reads, in order: stop photos, mission.json, 3D ground, panoramas.
+"""Build everything the web app reads, in order: stop photos, mission.json, 3D ground, panoramas, map layers.
 
 Usage:
   python builder/build_all.py                     # every step
@@ -7,9 +7,11 @@ Usage:
 import argparse
 
 import build_official_mission
+import layers
 import panoramas
 import stop_photos
 import terrain
+import use_real_heights
 
 PANORAMA_SEARCH = 8         # if a stop's sol has no full circle, try the next sols (same spot only)
 
@@ -18,6 +20,8 @@ STEPS = {
     "mission": build_official_mission.main,
     "terrain": terrain.main,
     "panoramas": lambda: panoramas.main(["--all", "--search", str(PANORAMA_SEARCH)]),
+    "layers": layers.main,
+    "real_heights": use_real_heights.main,   # 3D ground from the 1 m DEM (needs layers)
 }
 
 

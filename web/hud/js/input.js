@@ -10,7 +10,7 @@ export const CLICKER_KEYS = new Set([' ', 'Enter', 'PageDown', 'PageUp', 'ArrowR
 export const SIM_CLICKER_KEYS = new Set([' ', 'Enter', 'PageDown', 'PageUp', 'ArrowLeft', 'ArrowRight', 'v', 'V',
   'MediaPlayPause', 'AudioVolumeUp', 'AudioVolumeDown']);
 
-export function bindInput({ canvas, win = window, clock = () => performance.now(), onTap, onLongPress, onClicker, onCard, clickerKeys = CLICKER_KEYS }) {
+export function bindInput({ canvas, win = window, clock = () => performance.now(), onTap, onLongPress, onClicker, onCard, onLayer, clickerKeys = CLICKER_KEYS }) {
   let pressStart = 0;
   canvas.addEventListener('pointerdown', () => {
     pressStart = clock();
@@ -21,6 +21,7 @@ export function bindInput({ canvas, win = window, clock = () => performance.now(
   });
   win.addEventListener('keydown', (e) => {
     if ((e.key === 'c' || e.key === 'C') && !e.repeat) { onCard?.(); return; }   // close / reopen the stop card
+    if ((e.key === 'l' || e.key === 'L') && !e.repeat) { onLayer?.(); return; }  // next map layer on the ground
     if (!clickerKeys.has(e.key) || e.repeat) return;
     e.preventDefault();
     onClicker();

@@ -120,3 +120,22 @@ export function drawIntegrity(ctx, right, y, u, s) {
   });
 }
 
+
+/** Short text for a legend entry: "magenta: polyhydrated sulfates (1.9 µm)" → "polyhydrated sulfates". */
+export const legendText = (label) => String(label).split(':').pop().split('(')[0].trim();
+
+/** Which map layer is painted on the ground, with its colour key (right column, under suit integrity). */
+export function drawLayer(ctx, right, y, u, layer) {
+  if (!layer) return;
+  header(ctx, 'LAYER', right, y, u, 'right');
+  say(ctx, layer.name.split(' (')[0], right, y + 3.4 * u, 2.4 * u, { align: 'right' });
+  say(ctx, `${layer.instrument} · ${layer.resolution_m} m`, right, y + 6.2 * u, 1.9 * u, { align: 'right', color: AMBER_SOFT });
+  const legend = (layer.legend ?? []).filter((l) => l.color !== '#000000');
+  const items = legend.length > 3 ? [legend[0], legend[legend.length - 1]] : legend;    // long ramps: ends only
+  items.forEach((item, i) => {
+    const ry = y + (9 + i * 2.8) * u;
+    ctx.fillStyle = item.color;
+    ctx.fillRect(right - 2 * u, ry - 0.9 * u, 2 * u, 1.8 * u);
+    say(ctx, legendText(item.label), right - 2.8 * u, ry, 1.9 * u, { align: 'right', color: AMBER_SOFT, weight: 500 });
+  });
+}

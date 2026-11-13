@@ -151,6 +151,13 @@ export function createHudApp({
     alerts = result.alerts;
   }
 
+  // 3D Mars (sim / Mars walk): how far below the eye the real ground is at a point, so arrows sit on it
+  const world3d = source.world3d ?? source.sim;
+  function eyeAt(at) {
+    const drop = world3d?.eyeDrop?.(...world.toMars(at));
+    return Number.isFinite(drop) ? Math.max(0.3, drop) : null;
+  }
+
   /** The walking path from here to the target (not the straight line), and what the visor needs from it. */
   function guideFrom(position) {
     return pathGuide(planner.plan(position.at, step.target.at), world.r);
@@ -282,8 +289,8 @@ export function createHudApp({
         hud.etaMin = Math.max(1, Math.round(etaMinutes(guide.lengthM, walkSpeed)));
         hud.targetName = step.target.isBase ? 'Base' : step.target.name;
         hud.targetLabel = `${hud.targetName}, about ${hud.etaMin} min`;
-        const path = guide.samples.map((p) => ({ ...p, steep: planner.slopeAt(p.at) > STEEP_DEG }));
-        hud.scene = buildScene({ world, position, heading, isVisited: nav.isVisited, target: step.target, path });
+        const path = guide.samples.map((p) => ({ ...p, steep: planner.slopeAt(p.at) > STEEP_DEG, eye: eyeAt(p.at) }));
+        hud.scene = buildScene({ world, position, heading, isVisited: nav.isVisited, target: step.target, path, eyeAt });
       }
       return { background: source.getBackground(), hud };
     },

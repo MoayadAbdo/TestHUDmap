@@ -4,7 +4,7 @@ import { drawVisorFrame } from './frame.js';
 import { drawGroundGuide } from './ground.js';
 import { drawMiniMap } from './minimap.js';
 import { drawAlerts, drawDirectionArrow, drawMessage, drawNextStop, drawVoice, drawWaiting } from './overlay.js';
-import { PANEL_W_U, drawBiosigns, drawComms, drawIntegrity, drawLocation, drawRadiation, drawSuit } from './panels.js';
+import { PANEL_W_U, drawBiosigns, drawComms, drawIntegrity, drawLayer, drawLocation, drawRadiation, drawSuit } from './panels.js';
 import { AMBER, RED } from './style.js';
 
 /** One eye of the amber helmet visor. Sizes follow the eye's short side; rows follow its height. */
@@ -32,6 +32,7 @@ export function drawVisorHud(ctx, w, h, s, images) {
   drawComms(ctx, right, 14 * row, u, s);
   drawMiniMap(ctx, right - 13 * u, 40 * row, 12 * u, u, s);
   drawIntegrity(ctx, right, 58 * row, u, s);
+  drawLayer(ctx, right, 79 * row, u, s.layer);
 
   if (s.card) drawStopCard(ctx, w, h, u, s.card, images.get(s.card.photo));
   else if (s.waiting) drawWaiting(ctx, cx, h / 2, u, s.waiting);

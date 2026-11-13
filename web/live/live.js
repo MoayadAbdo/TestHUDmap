@@ -60,6 +60,7 @@ function onData(msg) {
   if (msg.type === "want-video") callViewer(this);
   if (msg.type === "demo") window.hud?.demo?.[msg.name]?.();
   if (msg.type === "move") window.hud?.move?.(msg);                 // Ground Control drives the sim (WASD)
+  if (msg.type === "layer") window.hud?.layer?.(msg.id);            // Ground Control picks the visor's map layer
   if (msg.type === "event") {
     if (msg.name === "dust") window.hud?.sim?.event?.("dust");
     const text = { dust: "DUST STORM: visibility dropping", solar: "SOLAR STORM: return to base", o2leak: "O2 LEAK: return to base now" }[msg.name];

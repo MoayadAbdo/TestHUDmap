@@ -43,17 +43,18 @@ export function drawGroundGuide(ctx, w, h, u, s, clear = { minX: 0, maxX: w }, p
 
   const flow = ((s.timeMs / 1000) * 1.2) % SPACING_M;
   ctx.shadowColor = color;
-  for (let d = 1.5 + flow; d < Math.min(lengthM - 1, FARTHEST_M); d += SPACING_M) {
+  for (let d = 2.5 + flow; d < Math.min(lengthM - 1, FARTHEST_M); d += SPACING_M) {   // from 2.5 m: not under your feet
     const here = along(path, d);
     const next = along(path, d + 0.5);
     const len = Math.hypot(next.forward - here.forward, next.right - here.right) || 1;
     const dir = { forward: (next.forward - here.forward) / len, right: (next.right - here.right) / len };
     const left = { forward: dir.right, right: -dir.forward };
+    const onGround = { ...view, eyeHeightM: here.eye ?? 1.6 };      // real 3D ground height when the sim gives it
     const at = (ahead, across) => projectGround({
       forward: here.forward + dir.forward * ahead + left.forward * across,
       right: here.right + dir.right * ahead + left.right * across,
-    }, view);
-    const corners = [at(0.8, 0), at(-0.5, 0.75), at(-0.1, 0), at(-0.5, -0.75)];
+    }, onGround);
+    const corners = [at(0.7, 0), at(-0.45, 0.55), at(-0.1, 0), at(-0.45, -0.55)];
     if (corners.some((c) => !inside(c, clear))) continue;   // never over the side panels
     ctx.fillStyle = here.steep ? STEEP : color;
     ctx.globalAlpha = Math.max(0.12, 0.9 - d / FARTHEST_M);
@@ -66,7 +67,7 @@ export function drawGroundGuide(ctx, w, h, u, s, clear = { minX: 0, maxX: w }, p
   ctx.globalAlpha = 1;
   ctx.shadowBlur = 0;
 
-  const ground = projectGround(target, view);   // null when the stop is behind you or under your feet
+  const ground = projectGround(target, { ...view, eyeHeightM: target.eye ?? 1.6 });   // null when behind you or under your feet
   if (ground && inside(ground, pinClear) && guideSide(target, view, pinClear) === 'guide') drawPin(ctx, ground, u, view, target.forward, color, s);
   if (Math.abs(s.arrowDeg ?? 0) > TURN_HINT_DEG) drawTurnHint(ctx, w, h, u, s.arrowDeg < 0 ? -1 : 1, color);
 }

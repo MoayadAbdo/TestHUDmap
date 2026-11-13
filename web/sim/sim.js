@@ -111,7 +111,37 @@ async function loadTerrain(base) {
   const tex = await new THREE.TextureLoader().loadAsync(base + "terrain/ortho.jpg");
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 8;
-  return { meta, heights, tex };
+  const layers = await fetch(base + "layers/layers.json").then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  return { meta, heights, tex, layers: layers?.layers ?? [] };
+}
+
+// ---------- map layers on the ground (photo, slope, minerals, heat), from mission/layers/layers.json ----------
+const LAYER_CYCLE = ["photo", "slope", "minerals_frt0000b6f1", "thermal"];
+const PHOTO_TINT = "#f6bf92";
+function layerList() {
+  const sameBox = (b) => b && S.T && ["north", "south", "west", "east"].every((k) => Math.abs(b[k] - S.T.meta.bounds[k]) < 1e-6);
+  return LAYER_CYCLE.map((id) => S.layerData.find((l) => l.id === id)).filter((l) => l && sameBox(l.bounds));
+}
+async function layerTexture(layer) {
+  if (S.layerTex[layer.id]) return S.layerTex[layer.id];
+  const img = new Image();
+  img.src = S.opts.assetsBase + "layers/" + layer.file;
+  await img.decode();
+  const photo = S.photoTex.image;
+  const c = document.createElement("canvas");
+  c.width = photo.width; c.height = photo.height;
+  const g = c.getContext("2d");
+  g.filter = "grayscale(1) brightness(0.9)";
+  g.drawImage(photo, 0, 0, c.width, c.height);          // the photo stays visible under the colours
+  g.filter = "none";
+  g.imageSmoothingEnabled = layer.resolution_m < 10;     // 18 m / 100 m pixels stay honest blocks
+  g.globalCompositeOperation = layer.kind === "spectral" ? "screen" : "source-over";
+  g.globalAlpha = layer.kind === "spectral" ? 0.95 : 0.62;
+  g.drawImage(img, 0, 0, c.width, c.height);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  return (S.layerTex[layer.id] = tex);
 }
 
 function setupWorld(T) {
@@ -145,6 +175,7 @@ function setupWorld(T) {
        vec3 d2 = texture2D(detailMap, vMapUv * detailRepeat * 0.137 + 0.31).rgb;
        diffuseColor.rgb *= d1 * d2 * 2.9;`);
   };
+  S.groundMat = mat; S.photoTex = T.tex; S.layerData = T.layers; S.layerTex = {}; S.layerId = "photo";
   const ground = new THREE.Mesh(geo, mat);
   ground.receiveShadow = true;
   ground.position.set(-bx, 0, -bz);
@@ -624,6 +655,24 @@ export const sim = {
   /** Walk by yourself along the route, pausing at each beacon. You only look around. */
   setAutopilot(on) { S.autopilot = !!on; S.pauseUntil = 0; if (on) S.rIdx = nearestRouteIndex(); },
   isAutopilot() { return S.autopilot; },
+  /** Map layers that can be painted on the ground: [{ id, name, instrument, mission, resolution_m, legend, credit }]. */
+  layerList() { return layerList(); },
+  /** Paint a layer on the ground ("photo" = normal view). Returns the layer, or null if unknown. */
+  async setLayer(id) {
+    const layer = layerList().find((l) => l.id === id);
+    if (!layer || !S.groundMat) return null;
+    S.groundMat.map = layer.id === "photo" ? S.photoTex : await layerTexture(layer);
+    S.groundMat.color.set(layer.id === "photo" ? PHOTO_TINT : "#ffffff");
+    S.groundMat.needsUpdate = true;
+    S.layerId = layer.id;
+    return layer;
+  },
+  /** How far below the eye the ground is at this Mars point (metres), so HUD arrows sit on the real ground. */
+  eyeDrop(lat, lon) {
+    if (!S.toLocal || !S.T) return null;
+    const v = S.toLocal(lat, lon);
+    return S.pos.y - heightAt(v.x, v.z);
+  },
   /** Steer without walking for real: forward / right in -1..1 (back / left when negative), turn in -1..1, run,
    *  boost = speed × while steering (0 = the sim's own speed). */
   setMoveInput({ forward = 0, right = 0, turn = 0, run = false, boost = 0 } = {}) {

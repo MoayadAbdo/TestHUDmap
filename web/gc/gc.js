@@ -4,6 +4,7 @@
 import { createDelayedView } from "./delayed-view.js";
 import { createDrive } from "./drive.js";
 import { createLinkChoice } from "./link-choice.js";
+import { addMapLayers, stopLabel } from "./map-layers.js";
 import { startLocalLink } from "./local-link.js";
 import { createPeerLink } from "./peer-link.js";
 
@@ -32,10 +33,11 @@ const map = L.map("map", { crs: L.CRS.EPSG4326, zoomControl: true, attributionCo
   .setView(mission.anchor.mars, 16);
 L.tileLayer(hirise, { maxNativeZoom: 16, maxZoom: 18, attribution: "NASA/JPL/UArizona HiRISE · Mars Trek" }).addTo(map);
 L.polyline(mission.route.map((p) => p.mars ?? [p.lat, p.lon]), { color: "#ffb54a", weight: 3, opacity: 0.9 }).addTo(map);
-for (const s of mission.stops) {
-  L.circleMarker(s.mars, { radius: 7, color: s.is_base ? "#4ade80" : "#22d3ee", fillOpacity: 0.85 })
-    .bindTooltip(`${s.id} · ${s.name}`, { permanent: true, direction: "right", className: "" }).addTo(map);
-}
+const stopMarkers = mission.stops.map((s) => L.circleMarker(s.mars, { radius: 7, color: s.is_base ? "#4ade80" : "#22d3ee", fillOpacity: 0.85 })
+  .bindTooltip(`${s.id} · ${s.name}`, { permanent: true, direction: "right", className: "" }).addTo(map));
+// layers: slope, minerals, heat, CTX; "Show on visor" paints the same layer on the astronaut's 3D ground
+addMapLayers({ map, L, onShowOnVisor: (l) => sendToAstronaut({ type: "layer", id: l.id }, `LAYER ${l.name} on the visor`) })
+  .then((layers) => { if (layers) mission.stops.forEach((s, i) => stopMarkers[i].setTooltipContent(stopLabel(s, layers))); });
 const trail = L.polyline([], { color: "#22d3ee", weight: 2, dashArray: "4 4" }).addTo(map);
 const astro = L.marker(mission.anchor.mars, { icon: L.divIcon({ className: "", html: '<div class="astro"></div>', iconSize: [18, 18] }) }).addTo(map);
 let followed = false;

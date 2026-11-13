@@ -1,7 +1,7 @@
 /** Hidden buttons to fire every alert and move through the walk during a demo. Long-press the screen to show it. */
 import { vrSettings, saveVrSettings } from './vr-layout.js';
 
-export function createDemoPanel({ element, app, renderer, live }) {
+export function createDemoPanel({ element, app, renderer, live, layers }) {
   const tune = (key, step) => () => { vrSettings[key] += step; saveVrSettings(); dispatchEvent(new Event('resize')); app.notify?.(`VR eye size ${vrSettings.size.toFixed(2)} · spacing ${vrSettings.spacing.toFixed(2)}`); };
   const actions = [
     ['Oxygen ×20', () => app.demo.oxygenFast()],
@@ -9,6 +9,7 @@ export function createDemoPanel({ element, app, renderer, live }) {
     ['Steep ground', () => app.demo.steepGround()],
     ['Next stop (sim)', () => app.demo.nextStop()],
     ['Stop card: close / show', () => app.toggleCard?.()],
+    ['Next map layer (3D)', () => layers?.next()],
     ['Set base here (field)', () => app.notify?.(app.demo.setBaseHere() ? 'Setting base here…' : 'Base: field mode with GPS only')],
     ['Ground Control message', () => (live.pushMessage ? live.pushMessage('Copy, looking good. Keep to the route.') : app.demo.message('Test message'))],
     ['VR / hand-held', () => renderer.setView(renderer.view === 'vr' ? 'single' : 'vr')],

@@ -35,6 +35,9 @@ Use Android Chrome.
   - Gamepad on the phone: left stick walks, right stick turns, shoulder buttons run, **A** talks, **B** auto-walk, **Y** stop card.
   - From the laptop: Ground Control → **Drive (WASD)** switch, same keys, with its own speed (3× by default). The phone stops if the link drops.
   - Too slow? Hold **Shift** to run (2.5×), or add `&speed=3` to the HUD link (3× for all walking).
+- **Map layers on the 3D ground** (sim / Mars walk): **L** key, gamepad **X**, or the demo panel cycles
+  Photo → Slope (HiRISE 1 m DEM) → Minerals (CRISM) → Heat (THEMIS). Ground Control's map has all layers
+  (plus two more CRISM scenes and CTX) and a **Show on visor** button. The 3D ground uses the real 1 m heights.
 - **Long-press** (about 1 second): show or hide the demo panel. It can speed up oxygen, set it to 25%,
   fake steep ground, jump to the next stop (sim), set the base here (field), send a Ground Control message,
   and switch VR/hand-held.

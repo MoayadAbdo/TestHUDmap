@@ -1,31 +1,31 @@
 {
-  "source_photo": "NASA MRO HiRISE (curiosity_hirise_mosaic, Mars Trek)",
-  "source_heights": "Curiosity waypoint elevations (114 points) + 1.4 m visual relief from the photo",
-  "credit": "NASA/JPL/UArizona HiRISE via Mars Trek",
-  "bounds": {
-    "north": -4.7955322265625,
-    "south": -4.8175048828125,
-    "west": 137.373046875,
-    "east": 137.3895263671875
-  },
-  "width_m": 973.39,
-  "height_m": 1302.42,
-  "grid": [
-    385,
-    513
-  ],
-  "base": {
-    "lat": -4.803606,
-    "lon": 137.380074,
-    "elev_m": -3640.497
-  },
-  "base_offset_m": [
-    -71.63,
-    -172.64
-  ],
-  "mars_radius_m": 3396190.0,
-  "height_range_m": [
-    -35.16,
-    90.51
-  ]
+ "source_photo": "NASA MRO HiRISE (curiosity_hirise_mosaic, Mars Trek)",
+ "source_heights": "HiRISE stereo DEM: NASA/JPL/University of Arizona (HiRISE), Gale DEM via JPL Mars Trek (trek.nasa.gov) (1 m, resampled to the grid; 0 = base stop)",
+ "credit": "NASA/JPL/UArizona HiRISE via Mars Trek",
+ "bounds": {
+  "north": -4.7955322265625,
+  "south": -4.8175048828125,
+  "west": 137.373046875,
+  "east": 137.3895263671875
+ },
+ "width_m": 973.39,
+ "height_m": 1302.42,
+ "grid": [
+  385,
+  513
+ ],
+ "base": {
+  "lat": -4.803606,
+  "lon": 137.380074,
+  "elev_m": -3640.497
+ },
+ "base_offset_m": [
+  -71.63,
+  -172.64
+ ],
+ "mars_radius_m": 3396190.0,
+ "height_range_m": [
+  -106.9,
+  133.77
+ ]
 }

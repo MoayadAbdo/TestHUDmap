@@ -6,6 +6,7 @@ import { createSimSource } from './sources/sim-source.js';
 import { createMarsWalkSource } from './sources/marswalk-source.js';
 import { SIM_CLICKER_KEYS, bindInput } from './input.js';
 import { createMoveInput } from './move-input.js';
+import { createLayerSwitch } from './layer-switch.js';
 import { startWakeWord } from './wake-word.js';
 import { createDemoPanel } from './view/demo-panel.js';
 import { createRenderer } from './view/renderer.js';
@@ -105,8 +106,10 @@ async function start(mode, view, motionAsked) {
     : { label: 'Local only (stand-in)', bars: 1 };
   app = createHudApp({ mission, source, live: live.part, voice: voice.part, link });
   const canvas = document.getElementById('hud');
-  const renderer = createRenderer({ canvas, getFrame: app.frame, view });
-  const demo = createDemoPanel({ element: document.getElementById('demo'), app, renderer, live: live.part });
+  const layerSwitch = createLayerSwitch({ sim: source.world3d ?? source.sim, notify: (t) => app.notify(t) });
+  const getFrame = () => { const f = app.frame(); f.hud.layer = layerSwitch.current; return f; };
+  const renderer = createRenderer({ canvas, getFrame, view });
+  const demo = createDemoPanel({ element: document.getElementById('demo'), app, renderer, live: live.part, layers: layerSwitch });
   if (params.get('demo') === '1') demo.show();
   renderer.preload(mission.stops.map((s) => s.photo).filter(Boolean));
 
@@ -118,10 +121,10 @@ async function start(mode, view, motionAsked) {
     sim3d.setAutopilot(walking);
     app.notify(walking ? 'Walking: tap to stop' : 'Stopped: tap to walk');
   };
-  bindInput({ canvas, onTap: sim3d ? toggleWalk : app.onTap, onLongPress: demo.toggle, onClicker: app.onTap, onCard: app.toggleCard,
+  bindInput({ canvas, onTap: sim3d ? toggleWalk : app.onTap, onLongPress: demo.toggle, onClicker: app.onTap, onCard: app.toggleCard, onLayer: layerSwitch.next,
     clickerKeys: sim3d ? SIM_CLICKER_KEYS : undefined });
   // Sim mode: move without walking for real (WASD, gamepad, or Ground Control driving)
-  const moveInput = sim3d?.setMoveInput ? createMoveInput({ sim: sim3d, onVoice: app.onTap, onToggleWalk: toggleWalk, onCard: app.toggleCard }) : null;
+  const moveInput = sim3d?.setMoveInput ? createMoveInput({ sim: sim3d, onVoice: app.onTap, onToggleWalk: toggleWalk, onCard: app.toggleCard, onLayer: layerSwitch.next }) : null;
   // Mars walk: every frame, put the 3D Mars view where the real GPS puts you
   if (source.world3d) {
     const follow = () => {
@@ -135,6 +138,7 @@ async function start(mode, view, motionAsked) {
   window.hud = {
     getStatus: app.getStatus, demo: app.demo, standInLive: live.real ? null : live.part, sim: source.world3d ?? source.sim ?? null,
     move: (v) => moveInput?.remote(v),
+    layer: (id) => (id ? layerSwitch.set(id) : layerSwitch.next()),   // Ground Control picks the visor's layer
   };
   console.info('[hud] mission', url, 'live', live.real ? 'real' : 'stand-in', 'voice', voice.real ? 'real' : 'stand-in');
   await Promise.race([document.fonts?.load?.('600 20px Rajdhani'), new Promise((resolve) => setTimeout(resolve, 1500))]);

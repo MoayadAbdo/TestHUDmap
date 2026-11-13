@@ -1,0 +1,377 @@
+{
+  "built_by": "builder/layers.py",
+  "layers": [
+    {
+      "id": "photo",
+      "name": "Photo",
+      "kind": "optical",
+      "mission": "MRO",
+      "instrument": "HiRISE",
+      "file": "../terrain/ortho.jpg",
+      "bounds": {
+        "north": -4.7955322265625,
+        "south": -4.8175048828125,
+        "west": 137.373046875,
+        "east": 137.3895263671875
+      },
+      "resolution_m": 0.63,
+      "legend": [],
+      "credit": "NASA/JPL/University of Arizona (HiRISE), via JPL Mars Trek (trek.nasa.gov)",
+      "source_url": "https://trek.nasa.gov/tiles/Mars/EQ/curiosity_hirise_mosaic/1.0.0/default/default028mm/16/{y}/{x}.png",
+      "notes": "HiRISE black-and-white mosaic of the Curiosity site, contrast boosted. Texture of the 3D ground."
+    },
+    {
+      "id": "heights",
+      "name": "Heights (real)",
+      "kind": "topographic",
+      "mission": "MRO",
+      "instrument": "HiRISE stereo DEM",
+      "file": "heights_real.bin",
+      "bounds": {
+        "north": -4.7955322265625,
+        "south": -4.8175048828125,
+        "west": 137.373046875,
+        "east": 137.3895263671875
+      },
+      "resolution_m": 1.0,
+      "legend": [],
+      "credit": "NASA/JPL/University of Arizona (HiRISE), Gale DEM via JPL Mars Trek (trek.nasa.gov)",
+      "source_url": "https://trek.nasa.gov/mars/trekarcgis/rest/services/Gale_DEM_SMG_1m/ImageServer",
+      "notes": "Real ground heights from the 1 m HiRISE DEM. float32 little-endian metres, row 0 = north edge, same grid as terrain/heights.bin, 0 = DEM height at the base stop. Not used by the 3D sim yet.",
+      "grid": [
+        385,
+        513
+      ],
+      "grid_step_m": 2.53,
+      "base_elev_m": -3624.32,
+      "height_range_m": [
+        -106.9,
+        133.77
+      ],
+      "compare": {
+        "real_vs_heights_bin": {
+          "mean_m": 5.64,
+          "mean_abs_m": 21.41,
+          "max_abs_m": 119.35,
+          "rms_m": 31.05,
+          "n": 197505
+        },
+        "real_vs_waypoints": {
+          "mean_m": 0.55,
+          "mean_abs_m": 1.43,
+          "max_abs_m": 4.39,
+          "rms_m": 1.71,
+          "n": 104
+        },
+        "heights_bin_vs_waypoints": {
+          "mean_m": 0.24,
+          "mean_abs_m": 0.97,
+          "max_abs_m": 3.6,
+          "rms_m": 1.27,
+          "n": 104
+        },
+        "dem_minus_rover_elev_m": 16.72
+      }
+    },
+    {
+      "id": "slope",
+      "name": "Slope",
+      "kind": "topographic",
+      "mission": "MRO",
+      "instrument": "HiRISE stereo DEM",
+      "file": "slope.png",
+      "bounds": {
+        "north": -4.7955322265625,
+        "south": -4.8175048828125,
+        "west": 137.373046875,
+        "east": 137.3895263671875
+      },
+      "resolution_m": 1.0,
+      "legend": [
+        {
+          "color": "#0ca30c",
+          "label": "under 8° (easy)"
+        },
+        {
+          "color": "#fab219",
+          "label": "8-15° (careful)"
+        },
+        {
+          "color": "#d03b3b",
+          "label": "over 15° (steep)"
+        }
+      ],
+      "credit": "NASA/JPL/University of Arizona (HiRISE), Gale DEM via JPL Mars Trek (trek.nasa.gov)",
+      "source_url": "https://trek.nasa.gov/mars/trekarcgis/rest/services/Gale_DEM_SMG_1m/ImageServer",
+      "notes": "Ground slope from the 1 m DEM (height change over 2 m), so boxwork ridge walls show up as red. stops[].slope_10m_deg is a flat plane fitted over 10 x 10 m, like the route's slope_deg.",
+      "image_resolution_m": 1.27,
+      "area_share": {
+        "easy": 0.403,
+        "careful": 0.325,
+        "steep": 0.271
+      },
+      "stops": [
+        {
+          "id": 0,
+          "name": "Base",
+          "slope_deg": 9.1,
+          "slope_10m_deg": 7.2,
+          "route_slope_deg": 8.6
+        },
+        {
+          "id": 1,
+          "name": "First ridges",
+          "slope_deg": 7.7,
+          "slope_10m_deg": 9.2,
+          "route_slope_deg": 2.2
+        },
+        {
+          "id": 2,
+          "name": "Steep ridge",
+          "slope_deg": 22.2,
+          "slope_10m_deg": 16.9,
+          "route_slope_deg": 7.5
+        },
+        {
+          "id": 3,
+          "name": "Hollow",
+          "slope_deg": 9.3,
+          "slope_10m_deg": 9.3,
+          "route_slope_deg": 6.5
+        },
+        {
+          "id": 4,
+          "name": "Main site",
+          "slope_deg": 13.2,
+          "slope_10m_deg": 10.7,
+          "route_slope_deg": 14.7
+        },
+        {
+          "id": 5,
+          "name": "Exit",
+          "slope_deg": 7.5,
+          "slope_10m_deg": 9.1,
+          "route_slope_deg": 1.9
+        }
+      ]
+    },
+    {
+      "id": "minerals",
+      "name": "Minerals (water-bearing)",
+      "kind": "spectral",
+      "mission": "MRO",
+      "instrument": "CRISM",
+      "file": "minerals.png",
+      "bounds": {
+        "north": -4.7955322265625,
+        "south": -4.8175048828125,
+        "west": 137.373046875,
+        "east": 137.3895263671875
+      },
+      "resolution_m": 18.0,
+      "legend": [
+        {
+          "color": "#ff00ff",
+          "label": "magenta: polyhydrated sulfates (1.9 and 2.4 µm bands)"
+        },
+        {
+          "color": "#c8e632",
+          "label": "yellow/green: monohydrated sulfates (2.1 µm band)"
+        },
+        {
+          "color": "#3c5aff",
+          "label": "blue: other hydrated minerals"
+        },
+        {
+          "color": "#000000",
+          "label": "dark: weak or no band (low end of this scene's stretch)"
+        }
+      ],
+      "credit": "NASA/JPL/JHUAPL (CRISM), MTRDR browse product, PDS Geosciences Node",
+      "source_url": "https://pds-geosciences.wustl.edu/mro/mro-m-crism-5-rdr-mptargeted-v1/mrocr_4001/browse/2007/2007_112/frt000058a3/frt000058a3_07_brhydj_mtr3.png",
+      "notes": "CRISM HYD browse: red = SINDEX2, green = BD2100_2, blue = BD1900_2. One block = one CRISM pixel (no smoothing). Each scene is stretched on its own, so colours do not compare across scenes. Colours hint at minerals; only the full spectra confirm them (Viviano-Beck et al. 2014). Scene FRT000058A3, 2007-04-22. Product label: Shows information related to bound water in minerals. Polyhydrated sulfates have strong 1900 nm and 2400 nm absorption bands, and may appear magenta in the HYD browse product. Monohydrated sulfates have a strong 2100 nm absorption and a weak 2400 nm absorption band, and may appear yellow/green in the HYD browse product. Blue colors likely indicate other hydrated minerals. See Viviano-Beck et al. [2014] for details. Analysis of CRISM spectra must be used to match absorption band positions and relative strength for positive mineral identification.",
+      "scene": "FRT000058A3",
+      "date": "2007-04-22",
+      "coverage": 1.0
+    },
+    {
+      "id": "minerals_frt0000b6f1",
+      "name": "Minerals (water-bearing), 2008 scene FRT0000B6F1",
+      "kind": "spectral",
+      "mission": "MRO",
+      "instrument": "CRISM",
+      "file": "minerals_frt0000b6f1.png",
+      "bounds": {
+        "north": -4.7955322265625,
+        "south": -4.8175048828125,
+        "west": 137.373046875,
+        "east": 137.3895263671875
+      },
+      "resolution_m": 18.0,
+      "legend": [
+        {
+          "color": "#ff00ff",
+          "label": "magenta: polyhydrated sulfates (1.9 and 2.4 µm bands)"
+        },
+        {
+          "color": "#c8e632",
+          "label": "yellow/green: monohydrated sulfates (2.1 µm band)"
+        },
+        {
+          "color": "#3c5aff",
+          "label": "blue: other hydrated minerals"
+        },
+        {
+          "color": "#000000",
+          "label": "dark: weak or no band (low end of this scene's stretch)"
+        }
+      ],
+      "credit": "NASA/JPL/JHUAPL (CRISM), MTRDR browse product, PDS Geosciences Node",
+      "source_url": "https://pds-geosciences.wustl.edu/mro/mro-m-crism-5-rdr-mptargeted-v1/mrocr_4001/browse/2008/2008_191/frt0000b6f1/frt0000b6f1_07_brhydj_mtr3.png",
+      "notes": "CRISM HYD browse: red = SINDEX2, green = BD2100_2, blue = BD1900_2. One block = one CRISM pixel (no smoothing). Each scene is stretched on its own, so colours do not compare across scenes. Colours hint at minerals; only the full spectra confirm them (Viviano-Beck et al. 2014). Scene FRT0000B6F1, 2008-07-09. Product label: Shows information related to bound water in minerals. Polyhydrated sulfates have strong 1900 nm and 2400 nm absorption bands, and may appear magenta in the HYD browse product. Monohydrated sulfates have a strong 2100 nm absorption and a weak 2400 nm absorption band, and may appear yellow/green in the HYD browse product. Blue colors likely indicate other hydrated minerals. See Viviano-Beck et al. [2014] for details. Analysis of CRISM spectra must be used to match absorption band positions and relative strength for positive mineral identification.",
+      "scene": "FRT0000B6F1",
+      "date": "2008-07-09",
+      "coverage": 1.0
+    },
+    {
+      "id": "minerals_hrl0000baba",
+      "name": "Minerals (water-bearing), 2008 scene HRL0000BABA",
+      "kind": "spectral",
+      "mission": "MRO",
+      "instrument": "CRISM",
+      "file": "minerals_hrl0000baba.png",
+      "bounds": {
+        "north": -4.7955322265625,
+        "south": -4.8175048828125,
+        "west": 137.373046875,
+        "east": 137.3895263671875
+      },
+      "resolution_m": 36.0,
+      "legend": [
+        {
+          "color": "#ff00ff",
+          "label": "magenta: polyhydrated sulfates (1.9 and 2.4 µm bands)"
+        },
+        {
+          "color": "#c8e632",
+          "label": "yellow/green: monohydrated sulfates (2.1 µm band)"
+        },
+        {
+          "color": "#3c5aff",
+          "label": "blue: other hydrated minerals"
+        },
+        {
+          "color": "#000000",
+          "label": "dark: weak or no band (low end of this scene's stretch)"
+        }
+      ],
+      "credit": "NASA/JPL/JHUAPL (CRISM), MTRDR browse product, PDS Geosciences Node",
+      "source_url": "https://pds-geosciences.wustl.edu/mro/mro-m-crism-5-rdr-mptargeted-v1/mrocr_4001/browse/2008/2008_202/hrl0000baba/hrl0000baba_07_brhydj_mtr3.png",
+      "notes": "CRISM HYD browse: red = SINDEX2, green = BD2100_2, blue = BD1900_2. One block = one CRISM pixel (no smoothing). Each scene is stretched on its own, so colours do not compare across scenes. Colours hint at minerals; only the full spectra confirm them (Viviano-Beck et al. 2014). Scene HRL0000BABA, 2008-07-20. Product label: Shows information related to bound water in minerals. Polyhydrated sulfates have strong 1900 nm and 2400 nm absorption bands, and may appear magenta in the HYD browse product. Monohydrated sulfates have a strong 2100 nm absorption and a weak 2400 nm absorption band, and may appear yellow/green in the HYD browse product. Blue colors likely indicate other hydrated minerals. See Viviano-Beck et al. [2014] for details. Analysis of CRISM spectra must be used to match absorption band positions and relative strength for positive mineral identification.",
+      "scene": "HRL0000BABA",
+      "date": "2008-07-20",
+      "coverage": 1.0
+    },
+    {
+      "id": "thermal",
+      "name": "Heat (thermal inertia)",
+      "kind": "thermal",
+      "mission": "Mars Odyssey",
+      "instrument": "THEMIS",
+      "file": "thermal.png",
+      "bounds": {
+        "north": -4.7955322265625,
+        "south": -4.8175048828125,
+        "west": 137.373046875,
+        "east": 137.3895263671875
+      },
+      "resolution_m": 100,
+      "legend": [
+        {
+          "color": "#cde2fb",
+          "label": "350"
+        },
+        {
+          "color": "#86b6ef",
+          "label": "375"
+        },
+        {
+          "color": "#3987e5",
+          "label": "400"
+        },
+        {
+          "color": "#1c5cab",
+          "label": "425"
+        },
+        {
+          "color": "#0d366b",
+          "label": "450"
+        }
+      ],
+      "credit": "NASA/JPL/ASU (THEMIS), thermal inertia mosaic by Fergason et al., USGS Astrogeology",
+      "source_url": "https://asc-astropedia.s3.us-west-2.amazonaws.com/Mars/Odyssey/THEMIS-Global-Thermal-Inertia-Mosaic/Quantitative-32-Bit/THEMIS_TI_Mosaic_Quant_30S120E_100mpp.cub",
+      "notes": "Apparent thermal inertia in J m-2 K-1 s-1/2: how slowly the ground warms by day and cools at night. Loose sand and dust are low, rock and hard ground are high. One block = one 100 m THEMIS pixel (no smoothing). Ramp 350-450 J m-2 K-1 s-1/2.",
+      "unit": "J m-2 K-1 s-1/2",
+      "value_range": [
+        350,
+        443
+      ],
+      "stops": [
+        {
+          "id": 0,
+          "name": "Base",
+          "thermal_inertia": 397
+        },
+        {
+          "id": 1,
+          "name": "First ridges",
+          "thermal_inertia": 396
+        },
+        {
+          "id": 2,
+          "name": "Steep ridge",
+          "thermal_inertia": 396
+        },
+        {
+          "id": 3,
+          "name": "Hollow",
+          "thermal_inertia": 396
+        },
+        {
+          "id": 4,
+          "name": "Main site",
+          "thermal_inertia": 397
+        },
+        {
+          "id": 5,
+          "name": "Exit",
+          "thermal_inertia": 403
+        }
+      ]
+    },
+    {
+      "id": "ctx",
+      "name": "Context (CTX)",
+      "kind": "optical",
+      "mission": "MRO",
+      "instrument": "CTX",
+      "file": "ctx_context.jpg",
+      "bounds": {
+        "north": -4.7845458984375,
+        "south": -4.8284912109375,
+        "west": 137.36480712890625,
+        "east": 137.39776611328125
+      },
+      "resolution_m": 10.2,
+      "legend": [],
+      "credit": "NASA/JPL/MSSS (CTX), Gale crater mosaic via JPL Mars Trek (trek.nasa.gov)",
+      "source_url": "https://trek.nasa.gov/tiles/Mars/EQ/Gale_CTX_BlockAdj_dd/1.0.0/default/default028mm/12/{y}/{x}.png",
+      "notes": "Wider view (2x the terrain box each way) for the Ground Control map. Trek serves this mosaic up to zoom 12 (about 10 m pixels); the CTX images themselves are 5-6 m. Trek's CTX mosaic is 821 m east and 61 m south of the HiRISE mosaic here; this image is moved back by that much (match 0.41), so it lines up with the photo, DEM and rover route.",
+      "shift_m": {
+        "east": 821,
+        "south": 61
+      },
+      "match": 0.41
+    }
+  ]
+}
