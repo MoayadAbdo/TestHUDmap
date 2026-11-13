@@ -10,7 +10,7 @@ import { createLayerSwitch } from './layer-switch.js';
 import { createStepDetector } from './core/steps.js';
 import { createTerrainGrid } from './core/terrain-grid.js';
 import { dangerOptions } from './core/danger-watch.js';
-import { ZONES_KEY, zonesCanvas } from './zone-layers.js';
+import { ZONES_KEY, thermalGrid, zonesCanvas } from './zone-layers.js';
 import { createDangerSound, makeBeep } from './danger-sound.js';
 import { createAlertSounds, makeTones } from './alert-sounds.js';
 import { audioContext, unlockAudio } from './audio.js';
@@ -135,6 +135,7 @@ async function start(mode, view, motionAsked) {
   const grid = terrain ? createTerrainGrid(terrain) : null;
   const dangers = dangerOptions(params.get('dangers'));       // ?dangers=zones,signs,profile,glow (or all)
   app = createHudApp({ mission, source, live: live.part, voice: voice.part, link, terrain, grid, dangers });
+  if (grid) thermalGrid(grid, new URL('layers/layers.json', assetsBase).href).then((ti) => ti && app.setThermal(ti));   // loose ground costs energy
   const world3d = source.world3d ?? source.sim;
   world3d?.on?.('scan', ({ stop }) => app.logScan(stop));      // looked at a stop's rock for 2 s: sample logged
   if (dangers.zones && grid && world3d?.setGroundOverlay) {        // zones from several layers on the 3D ground

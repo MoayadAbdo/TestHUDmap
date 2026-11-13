@@ -177,11 +177,75 @@ export function drawLayer(ctx, right, y, u, layer) {
   });
 }
 
-/** Clean VR view: oxygen time left in one line (red when low). */
+/** Battery colour from the Return Energy Margin (core/energy.js): plenty / getting close / turn back. */
+export const BATTERY_GOOD = '#7cf29a';
+export function batteryState(s) {
+  const m = s.energy?.margin;
+  if (s.mustReturn || s.o2Pct < 30 || (Number.isFinite(m) && m < 1)) return { color: RED, word: 'HEAD HOME', pulse: true };
+  if (Number.isFinite(m) && m < 1.5) return { color: CAUTION, word: 'HOME SOON', pulse: false };
+  return { color: BATTERY_GOOD, word: null, pulse: false };
+}
+
+/** "×4.2" margin text: how many walks home the oxygen left covers (with the reserve). */
+export const marginText = (m) => (!Number.isFinite(m) ? '' : m >= 10 ? '×10+' : `×${m.toFixed(1)}`);
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+/**
+ * Clean VR view, top left: oxygen as a little battery.
+ *   fill + number = oxygen left; the white notch = oxygen needed to walk home + reserve (energy model);
+ *   next to it: the margin (×n walks home); under it: time left at the current effort and the effort in watts.
+ */
 export function drawOxygenChip(ctx, x, y, u, s) {
-  const minutes = Math.max(0, Math.round(s.o2MinutesLeft ?? 0));
-  const color = s.o2Pct < 30 || s.mustReturn ? RED : AMBER;
-  say(ctx, `O2 ${Math.round(s.o2Pct)}%  ${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`, x, y, 2.3 * u, { color, weight: 700 });
+  const st = batteryState(s);
+  const bw = 12.5 * u, bh = 5.2 * u, r = 1.3 * u, pad = 0.55 * u;
+  const by = y - bh / 2;
+  const pulse = st.pulse ? 0.55 + 0.45 * Math.abs(Math.sin((s.timeMs ?? 0) / 260)) : 1;
+  // body + nub
+  roundRect(ctx, x, by, bw, bh, r);
+  ctx.fillStyle = 'rgba(10, 5, 2, 0.6)';
+  ctx.fill();
+  ctx.lineWidth = Math.max(1.5, 0.45 * u);
+  ctx.strokeStyle = st.color;
+  ctx.stroke();
+  roundRect(ctx, x + bw + 0.3 * u, y - 1.2 * u, 0.9 * u, 2.4 * u, 0.4 * u);
+  ctx.fillStyle = st.color;
+  ctx.fill();
+  // fill, in 5 soft cells
+  const iw = bw - 2 * pad, ih = bh - 2 * pad;
+  const frac = Math.max(0, Math.min(1, (s.o2Pct ?? 0) / 100));
+  ctx.save();
+  roundRect(ctx, x + pad, by + pad, iw, ih, r * 0.6);
+  ctx.clip();
+  ctx.globalAlpha *= pulse;
+  ctx.fillStyle = st.color;
+  ctx.fillRect(x + pad, by + pad, iw * frac, ih);
+  ctx.globalAlpha /= pulse;
+  ctx.fillStyle = 'rgba(10, 5, 2, 0.55)';
+  for (let i = 1; i < 5; i++) ctx.fillRect(x + pad + (iw * i) / 5 - 0.15 * u, by + pad, 0.3 * u, ih);
+  // notch: oxygen it takes to get home (+ reserve)
+  const need = s.energy ? (s.energy.homePct + s.energy.reservePct) / 100 : null;
+  if (Number.isFinite(need)) {
+    const nx = x + pad + iw * Math.min(1, need);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(nx - 0.25 * u, by + pad, 0.5 * u, ih);
+  }
+  ctx.restore();
+  // the number
+  say(ctx, `${Math.round(s.o2Pct ?? 0)}%`, x + bw / 2, y + 0.1 * u, 2.6 * u, { align: 'center', color: INK, weight: 800 });
+  // beside the nub: the margin (×n walks home) or what to do; under the battery: time left now and the effort
+  const tag = st.word ?? (s.energy ? marginText(s.energy.margin) : '');
+  if (tag) say(ctx, tag, x + bw + 2.2 * u, y, 1.9 * u, { color: st.word ? st.color : AMBER_SOFT, weight: 800 });
+  const sub = s.energy ? `${hm(s.o2MinutesLeft)}  ⚡${s.energy.effortW} W` : `${hm(s.o2MinutesLeft)} left`;
+  say(ctx, sub, x + 0.3 * u, y + bh / 2 + 2 * u, 1.9 * u, { color: st.color === BATTERY_GOOD ? INK : st.color, weight: 700 });
 }
 
 /** Clean VR view: link bars and the Earth delay in one line. */

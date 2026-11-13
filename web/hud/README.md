@@ -39,6 +39,11 @@ Use Android Chrome.
   - Gamepad on the phone: left stick walks, right stick turns, shoulder buttons run, **A** talks, **B** auto-walk, **Y** stop card.
   - From the laptop: Ground Control → **Drive (WASD)** switch, same keys, with its own speed (3× by default). The phone stops if the link drops.
   - Too slow? Hold **Shift** to run (2.5×), or add `&speed=3` to the HUD link (3× for all walking).
+- **Oxygen battery (energy model)**: top left in the VR view, oxygen is a battery. Its drain follows how hard the
+  astronaut works on THIS ground: P = P_stand + η·(P0 − P_stand)·v/v0 + m·g·v·sinθ/ε (P0 272 W, Apollo EVA average;
+  η from DEM roughness and THEMIS loose ground; uphill ε 0.25). The white notch is the oxygen it takes to walk home
+  (cheapest energy path on the 1 m DEM, over 20° blocked, 1 L O₂ ≈ 20.1 kJ) plus a 10 min reserve; ×n is the
+  Return Energy Margin. Under 1 the HUD sends you home (red, HEAD HOME); under 1.5 it turns yellow. Code: `js/core/energy.js`.
 - **Safest path**: the ground arrows, the direction arrow and the mini-map's solid line follow a path planned on the
   real 1 m height map (A*: steep ground costs more, over 25° is never used). On the real route it cuts the walking
   over 15° from up to 28 m per leg to 0–6 m. Without the map (`?safe=0`) the arrows follow Curiosity's route.

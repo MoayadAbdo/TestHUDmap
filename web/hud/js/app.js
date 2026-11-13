@@ -1,4 +1,4 @@
-import { RETURN_REASONS, alertLevel, evaluateAlerts } from './core/alerts.js';
+import { LIMITS, RETURN_REASONS, alertLevel, evaluateAlerts } from './core/alerts.js';
 import { createBiosigns } from './core/biosigns.js';
 import { EARTH_RADIUS_M, MARS_RADIUS_M, bearingDeg, distanceM } from './core/geo.js';
 import { arrowAngle, createNavigator, etaMinutes } from './core/nav.js';
@@ -10,6 +10,7 @@ import { evaClock } from './core/eva-clock.js';
 import { createDetailAuto } from './core/detail-auto.js';
 import { createSafePlanner } from './core/safe-path.js';
 import { createDangerWatch } from './core/danger-watch.js';
+import { createEnergyModel } from './core/energy.js';
 import { createScience } from './core/science.js';
 import { relativeTo } from './core/ar.js';
 import { buildScene } from './core/scene.js';
@@ -47,6 +48,13 @@ export function createHudApp({
     startMs: clock(),
   });
   const body = createBiosigns();
+  // terrain-aware oxygen: effort from slope, roughness and loose ground; energy (and O₂) to walk home
+  const energy = createEnergyModel({
+    grid, heights: terrain?.heights ?? null, baseMars: mission.anchor?.mars ?? null,
+    o2PctPerMin: mission.suit?.o2_pct_per_min ?? 0.25, reserveMin: LIMITS.reserveMinutes,
+  });
+  let energyNow = null;             // { effortW, homeKJ, homeO2L, homePct, reservePct, margin }
+  let lastGrade = null;             // { mars, h } for the slope under the feet
   const baseFix = createBaseFix({ clock });
   const stopCount = mission.stops.length;
 
@@ -152,6 +160,19 @@ export function createHudApp({
   /** Walking slows on slopes (suit + 0.38 g): about half speed at 20°. */
   const slowdown = (deg) => 1 / (1 + Math.max(0, deg) / 20);
 
+  /** Grade of the ground just walked (sinθ, + uphill) from the height map; 0 off the map or standing still. */
+  function gradeUnderFeet(mars) {
+    const c = grid?.cellOf(mars);
+    const h = c == null ? null : terrain?.heights?.[c];
+    if (!Number.isFinite(h)) { lastGrade = null; return 0; }
+    if (!lastGrade) { lastGrade = { mars, h, sinT: 0 }; return 0; }
+    const run = distanceM(lastGrade.mars, mars, MARS_RADIUS_M);
+    if (run < 1.5) return lastGrade.sinT;                      // wait for a few steps: one cell is noisy
+    const sinT = Math.max(-0.7, Math.min(0.7, (h - lastGrade.h) / Math.hypot(run, h - lastGrade.h)));
+    lastGrade = { mars, h, sinT };
+    return sinT;
+  }
+
   /** Steepest ground in the next few metres of the path the arrows show (not the rover's line). */
   function slopeAlongPath(position) {
     const guide = guideFrom(position);
@@ -177,7 +198,8 @@ export function createHudApp({
     suit.update(t);
     const position = source.getPosition();
     if (hazard && t > hazard.until) hazard = null;
-    radDoseUsv += (radRate(t) * (t - lastTickMs)) / 3600000;
+    const dtMs = t - lastTickMs;
+    radDoseUsv += (radRate(t) * dtMs) / 3600000;
     lastTickMs = t;
     if (!position || !ensureWorld(position)) return;
     gpsHealth(position, t);
@@ -198,6 +220,10 @@ export function createHudApp({
       homeM = pathLength(world.home.plan(position.at, world.base.at), world.r);
     }
     slopeNow = slope;
+    const mars = world.toMars(position.at);
+    energy.update({ speedMps, sinT: gradeUnderFeet(mars), mars }, dtMs);
+    suit.setEffort(energy.effortFactor);
+    energyNow = energy.readout({ o2Pct: suit.o2Pct, mars, fallbackM: (homeM ?? step.baseDistanceM) * world.marsPerFrameMetre });
     bio = body.update({ speedMps, slopeDeg: Math.min(slope, 30), lowOxygen: suit.o2Pct < 30 });
     const result = evaluateAlerts({
       slopeAheadDeg: slope,
@@ -206,6 +232,7 @@ export function createHudApp({
       walkBackMinutes: etaMinutes(homeM ?? step.baseDistanceM, walkSpeed * slowdown(slope)),
       alreadyReturning: mustReturn,
       hazard: hazard?.name ?? null,
+      returnMargin: energyNow?.margin,
     });
     if (result.mustReturn && !mustReturn) {
       mustReturn = true;
@@ -265,6 +292,11 @@ export function createHudApp({
         rad_now_uSv_h: Math.round(radRate(clock()) * 10) / 10,
         rad_dose_uSv: Math.round(radDoseUsv * 10) / 10,
         walk_home_min: homeM == null ? null : Math.round(etaMinutes(homeM, walkSpeed)),
+        effort_w: energyNow?.effortW ?? null,
+        o2_home_pct: energyNow ? Math.round(energyNow.homePct * 10) / 10 : null,
+        o2_home_l: energyNow?.homeO2L ?? null,
+        energy_home_kj: energyNow?.homeKJ ?? null,
+        return_margin: Number.isFinite(energyNow?.margin) ? Math.round(energyNow.margin * 10) / 10 : null,
         hazard: hazard?.name ?? null,
         eva_min: Math.round((clock() - startedAt) / 60000),
         samples_done: science.done,
@@ -294,6 +326,9 @@ export function createHudApp({
       must_return: s.must_return,
       return_reason: s.return_reason,
       walk_home_min: s.walk_home_min,
+      effort_w: s.effort_w,
+      o2_home_pct: s.o2_home_pct,
+      return_margin: s.return_margin,
       eva_min: s.eva_min,
       stop_name: s.stop_name,
       science: { done: science.done, total: science.total, last: science.last?.name ?? null },
@@ -348,6 +383,10 @@ export function createHudApp({
       sampleLogged(sample);
       return sample;
     },
+    /** THEMIS thermal inertia per terrain-grid cell (loose ground costs more energy). */
+    setThermal(ti) {
+      energy.setThermal(ti);
+    },
     /** Tap while a stop card is open: close it. Returns true if it closed one. */
     dismissCard() {
       if (!card.stop) return false;
@@ -382,6 +421,7 @@ export function createHudApp({
       const c = conditions();
       const hud = {
         o2Pct: suit.o2Pct,
+        energy: energyNow,
         radUsvH: Math.round(radRate(t) * 10) / 10,
         radHigh: hazard?.name === 'solar',
         level: alertLevel(alerts),

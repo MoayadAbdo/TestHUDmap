@@ -21,10 +21,11 @@ export const RETURN_REASONS = {
  * hazard: an emergency in progress ('solar', 'o2leak', 'ground'), which ends the walk at once.
  * Returns { alerts, mustReturn, reason } — reason is a key of RETURN_REASONS (null while walking).
  */
-export function evaluateAlerts({ slopeAheadDeg, o2Pct, o2MinutesLeft, walkBackMinutes, alreadyReturning, hazard = null }, limits = LIMITS) {
+export function evaluateAlerts({ slopeAheadDeg, o2Pct, o2MinutesLeft, walkBackMinutes, alreadyReturning, hazard = null, returnMargin = null }, limits = LIMITS) {
   let reason = null;
   if (hazard) reason = hazard;
-  else if (o2MinutesLeft < walkBackMinutes + limits.reserveMinutes) reason = 'reserve';
+  // Return Energy Margin (core/energy.js) when the ground is known; otherwise the old time check
+  else if (Number.isFinite(returnMargin) ? returnMargin < 1 : o2MinutesLeft < walkBackMinutes + limits.reserveMinutes) reason = 'reserve';
   else if (o2Pct < limits.lowO2Pct) reason = 'low_o2';
   const mustReturn = Boolean(alreadyReturning || reason);
 
