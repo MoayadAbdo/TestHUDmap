@@ -699,6 +699,36 @@ export const sim = {
   scanTargets() {
     return (S.stops ?? []).map((s, index) => ({ index, mars: S.toLatLon(s.rock.position.x, s.rock.position.z), scanned: S.scanned[index] }));
   },
+  /**
+   * Where a spot `forward` / `right` metres from the astronaut (along where they face) appears in the view, `lift`
+   * metres above the real ground: { x, y } in 0..1 and scale (view heights per metre), or null if behind / off.
+   * Exact, from the 3D camera, so HUD arrows and pins stay on the ground on slopes and when looking up or down.
+   */
+  projectRelative(forward, right, lift = 0) {
+    if (!S.camera || !S.T) return null;
+    const h = S.heading * DEG;
+    const x = S.pos.x + Math.sin(h) * forward + Math.cos(h) * right;
+    const z = S.pos.z - Math.cos(h) * forward + Math.sin(h) * right;
+    S.camera.updateMatrixWorld();
+    const p = new THREE.Vector3(x, heightAt(x, z) + lift, z);
+    const dist = p.distanceTo(S.camera.position);
+    const v = p.project(S.camera);
+    if (v.z > 1 || v.z < -1) return null;
+    const fovY = S.camera.fov * DEG;
+    return { x: (v.x + 1) / 2, y: (1 - v.y) / 2, scale: 1 / (2 * Math.tan(fovY / 2) * Math.max(0.5, dist)) };
+  },
+  /** Where stop index's science rock is in the view right now: { x, y } in 0..1 of the view, size (0..1 of height),
+   *  or null when it's behind you. Exact, from the 3D camera (the HUD's own maths drifts on slopes). */
+  rockOnScreen(index) {
+    const s = S.stops?.[index];
+    if (!s || !S.camera) return null;
+    S.camera.updateMatrixWorld();
+    const c = s.rock.position.clone();
+    const top = c.clone(); top.y += 0.9;
+    const pc = c.project(S.camera), pt = top.project(S.camera);
+    if (pc.z > 1 || pc.z < -1) return null;
+    return { x: (pc.x + 1) / 2, y: (1 - pc.y) / 2, size: Math.abs(pt.y - pc.y) / 2 };
+  },
   /** Scanning now: { index, progress 0..1 } or null. */
   scanProgress() {
     return S.scanIndex >= 0 && S.scanT > 0 ? { index: S.scanIndex, progress: Math.min(1, S.scanT / SCAN_SECONDS) } : null;

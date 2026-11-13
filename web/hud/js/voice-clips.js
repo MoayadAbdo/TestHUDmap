@@ -4,14 +4,14 @@ import { RETURN_REASONS } from './core/alerts.js';
  * Plays the recorded alert lines (sounds/*.m4a, one voice for everyone; see tools/make-voice-clips.mjs).
  * One line at a time; an urgent line cuts the one playing. Missing clips are skipped (the visor still shows it).
  */
-export function createClipPlayer({ ctx, base, fetchFn = (u) => fetch(u) }) {
+export function createClipPlayer({ ctx, base, ext = 'm4a', fetchFn = (u) => fetch(u) }) {
   const buffers = new Map();
   const queue = [];
   let playing = null;
 
   async function load(id) {
     if (!buffers.has(id)) {
-      buffers.set(id, fetchFn(`${base}${id}.m4a`).then((r) => (r.ok ? r.arrayBuffer() : null))
+      buffers.set(id, fetchFn(`${base}${id}.${ext}`).then((r) => (r.ok ? r.arrayBuffer() : null))
         .then((b) => (b ? new Promise((ok, fail) => ctx().decodeAudioData(b, ok, fail)) : null)).catch(() => null));
     }
     return buffers.get(id);

@@ -56,7 +56,7 @@ test('every line the phone can say has a recording, in one voice', async () => {
   const ids = Object.keys(clipTexts(mission));
   for (const id of [...ALL_CLIPS, 'arrive_1', 'arrive_5', 'sample_1', 'sample_5', clipFor('RETURN_TO_BASE', 'Solar storm: radiation rising')]) {
     assert.ok(ids.includes(id), `${id} is in the script`);
-    assert.ok(fs.existsSync(new URL(`../sounds/${id}.m4a`, import.meta.url)), `${id}.m4a was recorded`);
+    assert.ok(fs.existsSync(new URL(`../sounds/${id}.${made.ext ?? 'm4a'}`, import.meta.url)), `${id} was recorded`);
   }
   assert.equal(typeof made.voice, 'string');
 });

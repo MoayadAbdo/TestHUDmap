@@ -23,6 +23,18 @@ export function projectGround({ forward, right }, { centerX, centerY, horizonY, 
   return { x: centerX + (focalPx * right) / depth, y: (centerY ?? horizonY) + (focalPx * down) / depth, scale: focalPx / depth };
 }
 
+/**
+ * One projection for the visor: the 3D sim's camera when it can say (exact on slopes), else the flat-ground maths.
+ * view = { w, h, project?(forward, right, lift), ...projectGround options }. lift = metres above the ground.
+ */
+export function placeOnView(pt, view, lift = 0) {
+  if (view.project) {
+    const r = view.project(pt.forward, pt.right, lift);
+    return r && { x: r.x * view.w, y: r.y * view.h, scale: r.scale * view.h };
+  }
+  return projectGround(pt, { ...view, eyeHeightM: (view.eyeHeightM ?? pt.eye ?? 1.6) - lift });
+}
+
 /** Screen row of the horizon for a camera tilted pitchDeg (up +). */
 export const horizonRow = (centerY, focalPx, pitchDeg) => centerY + focalPx * Math.tan(rad(pitchDeg));
 

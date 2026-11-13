@@ -1,4 +1,4 @@
-import { focalForFov, projectGround } from '../../core/ar.js';
+import { focalForFov, placeOnView, projectGround } from '../../core/ar.js';
 import { INK, NAV, RED, say } from './style.js';
 
 const FOV_DEG = 62;
@@ -14,7 +14,7 @@ export function guideSide(target, view, clear, coneDeg = GUIDE_CONE_DEG) {
   const relDeg = (Math.atan2(target.right, target.forward) * 180) / Math.PI;
   const turn = relDeg < 0 ? 'left' : 'right';
   if (Math.abs(relDeg) > coneDeg) return turn;
-  const at = projectGround(target, { centerY: 0, ...view });
+  const at = view.project ? placeOnView(target, view) : projectGround(target, { centerY: 0, ...view });
   return at && at.x >= clear.minX && at.x <= clear.maxX ? 'guide' : turn;
 }
 
@@ -35,7 +35,7 @@ export function drawGroundGuide(ctx, w, h, u, s, clear = { minX: 0, maxX: w }, p
   const target = scene.stops.find((p) => p.isTarget) ?? (scene.base.isTarget ? scene.base : null);
   if (!target) return;
   const color = s.mustReturn ? RED : NAV;
-  const view = { centerX: w / 2, centerY: h / 2, focalPx: focalForFov(w, FOV_DEG), pitchDeg: s.pitch ?? 0, minTopY: h * 0.3 };
+  const view = { w, h, project: s.project, centerX: w / 2, centerY: h / 2, focalPx: focalForFov(w, FOV_DEG), pitchDeg: s.pitch ?? 0, minTopY: h * 0.3 };
   const inside = (c, zone) => c && c.x >= zone.minX && c.x <= zone.maxX;
   const path = scene.path ?? [];
   const lengthM = path.length ? path[path.length - 1].d : 0;
@@ -49,10 +49,10 @@ export function drawGroundGuide(ctx, w, h, u, s, clear = { minX: 0, maxX: w }, p
     const dir = { forward: (next.forward - here.forward) / len, right: (next.right - here.right) / len };
     const left = { forward: dir.right, right: -dir.forward };
     const onGround = { ...view, eyeHeightM: here.eye ?? 1.6 };      // real 3D ground height when the sim gives it
-    const at = (ahead, across) => projectGround({
+    const at = (ahead, across) => placeOnView({
       forward: here.forward + dir.forward * ahead + left.forward * across,
       right: here.right + dir.right * ahead + left.right * across,
-    }, onGround);
+    }, onGround, 0.05);
     const corners = [at(0.7, 0), at(-0.45, 0.55), at(-0.1, 0), at(-0.45, -0.55)];
     if (corners.some((c) => !inside(c, clear))) continue;   // never over the side panels
     ctx.fillStyle = here.steep ? STEEP : color;
@@ -66,7 +66,7 @@ export function drawGroundGuide(ctx, w, h, u, s, clear = { minX: 0, maxX: w }, p
   ctx.globalAlpha = 1;
   ctx.shadowBlur = 0;
 
-  const ground = projectGround(target, { ...view, eyeHeightM: target.eye ?? 1.6 });   // null when behind you or under your feet
+  const ground = placeOnView(target, { ...view, eyeHeightM: target.eye ?? 1.6 });   // null when behind you or under your feet
   if (ground && inside(ground, pinClear) && guideSide(target, view, pinClear) === 'guide') drawPin(ctx, ground, u, view, target.forward, color, s);
 }
 

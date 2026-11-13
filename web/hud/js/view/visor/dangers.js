@@ -1,4 +1,4 @@
-import { focalForFov, projectGround } from '../../core/ar.js';
+import { focalForFov, placeOnView } from '../../core/ar.js';
 import { CAREFUL_DEG, NO_GO_DEG } from '../../core/hazards.js';
 import { CAUTION, INK, PANEL, RED, plate, say } from './style.js';
 
@@ -9,11 +9,10 @@ const OK = '#4ade80';
 /** Warning signs standing over the nearest dangers: "⚠ 22° SLOPE · 15 m" / "ROUGH GROUND · 12 m". */
 export function drawDangerSigns(ctx, w, h, u, s, clear) {
   const signs = s.dangers?.signs ?? [];
-  const view = { centerX: w / 2, centerY: h / 2, focalPx: focalForFov(w, FOV_DEG), pitchDeg: s.pitch ?? 0 };
+  const view = { w, h, project: s.project, centerX: w / 2, centerY: h / 2, focalPx: focalForFov(w, FOV_DEG), pitchDeg: s.pitch ?? 0 };
   for (const sign of signs) {
-    const eye = sign.eye ?? 1.6;
-    const ground = projectGround(sign, { ...view, eyeHeightM: eye });
-    const top = projectGround(sign, { ...view, eyeHeightM: eye - SIGN_HEIGHT_M });
+    const ground = placeOnView(sign, view);
+    const top = placeOnView(sign, view, SIGN_HEIGHT_M);
     if (!ground || !top || ground.x < clear.minX || ground.x > clear.maxX) continue;
     const color = sign.kind === 'slope' ? RED : CAUTION;
     const near = Math.max(0.8, Math.min(1.25, 25 / sign.distM));       // closer signs are bigger, far ones stay readable

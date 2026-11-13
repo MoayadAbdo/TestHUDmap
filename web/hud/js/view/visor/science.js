@@ -7,11 +7,18 @@ const FOV_DEG = 62;
 export function drawScanTarget(ctx, w, h, u, s, clear) {
   const t = s.scan?.target;
   if (!t || s.card) return;
-  const view = { centerX: w / 2, centerY: h / 2, focalPx: focalForFov(w, FOV_DEG), pitchDeg: s.pitch ?? 0, eyeHeightM: (t.eye ?? 1.6) - 0.4 };
-  const p = projectGround(t, view);
+  // the 3D sim says exactly where the rock is on screen; the ground maths is only a fallback
+  let p = null;
+  let size = 0;
+  if (t.screen) { p = { x: t.screen.x * w, y: t.screen.y * h }; size = t.screen.size * h; }
+  else {
+    const view = { centerX: w / 2, centerY: h / 2, focalPx: focalForFov(w, FOV_DEG), pitchDeg: s.pitch ?? 0, eyeHeightM: (t.eye ?? 1.6) - 0.4 };
+    p = projectGround(t, view);
+    size = p ? p.scale * 0.9 : 0;
+  }
   if (!p || p.x < clear.minX || p.x > clear.maxX || p.y < h * 0.15 || p.y > h * 0.9) return;
   const pulse = 1 + 0.12 * Math.sin((s.timeMs ?? 0) / 220);
-  const r = Math.max(2.5 * u, Math.min(9 * u, p.scale * 0.9)) * pulse;
+  const r = Math.max(2.5 * u, Math.min(12 * u, size * 1.3)) * pulse;
   ctx.strokeStyle = NAV;
   ctx.lineWidth = Math.max(2, 0.45 * u);
   ctx.setLineDash([1.4 * u, 0.9 * u]);
