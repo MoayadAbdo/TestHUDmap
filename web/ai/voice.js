@@ -21827,8 +21827,9 @@ var Qg = { async startSession(e) {
 bg(), xh(() => new Dg()), kg(Ng);
 // src/adapters/elevenLabsVoiceSession.ts
 var $g = async ({ agentId: e, clientTools: t, callbacks: n }) => {
-	let r = await Qg.startSession({
+	let r = (typeof location < "u" ? new URLSearchParams(location.search).get("voicelink") : null) === "webrtc" ? "webrtc" : "websocket", i = await Qg.startSession({
 		agentId: e,
+		connectionType: r,
 		textOnly: !1,
 		clientTools: t,
 		onMessage: ({ role: e, message: t }) => n.onMessage({
@@ -21846,9 +21847,9 @@ var $g = async ({ agentId: e, clientTools: t, callbacks: n }) => {
 		}
 	});
 	return {
-		id: r.getId(),
-		sendContextualUpdate: (e) => r.sendContextualUpdate(e),
-		endSession: () => r.endSession()
+		id: i.getId(),
+		sendContextualUpdate: (e) => i.sendContextualUpdate(e),
+		endSession: () => i.endSession()
 	};
 };
 // src/adapters/browserMicrophone.ts
