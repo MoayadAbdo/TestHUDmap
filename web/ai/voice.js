@@ -21828,8 +21828,9 @@ var Qg = { async startSession(e) {
 bg(), xh(() => new Dg()), kg(Ng);
 // src/adapters/elevenLabsVoiceSession.ts
 var $g = async ({ agentId: e, clientTools: t, callbacks: n }) => {
-	let r = await Qg.startSession({
+	let r = (typeof location < "u" ? new URLSearchParams(location.search).get("voicelink") : null) === "webrtc" ? "webrtc" : "websocket", i = await Qg.startSession({
 		agentId: e,
+		connectionType: r,
 		textOnly: !1,
 		clientTools: t,
 		onMessage: ({ role: e, message: t }) => n.onMessage({
@@ -21847,9 +21848,9 @@ var $g = async ({ agentId: e, clientTools: t, callbacks: n }) => {
 		}
 	});
 	return {
-		id: r.getId(),
-		sendContextualUpdate: (e) => r.sendContextualUpdate(e),
-		endSession: () => r.endSession()
+		id: i.getId(),
+		sendContextualUpdate: (e) => i.sendContextualUpdate(e),
+		endSession: () => i.endSession()
 	};
 };
 // src/adapters/browserMicrophone.ts
@@ -21893,12 +21894,19 @@ var a_ = {
 	connection: "AI offline: no connection",
 	agent: null,
 	tool: null
-};
-function o_(e) {
+}, o_ = [
+	[/\b404\b|not found/i, "AI offline: agent ID not found (check ?agent=)"],
+	[/\b40[13]\b|unauthori[sz]ed|forbidden|not allowed|allowlist|origin/i, "AI offline: agent is private or this site isn't allowed"],
+	[/quota|credit|limit|\b429\b|\b402\b/i, "AI offline: ElevenLabs credits or limit reached"]
+];
+function s_(e, t = "") {
+	if (e === "connection") {
+		for (let [e, n] of o_) if (e.test(t)) return n;
+	}
 	return a_[e];
 }
 // src/hud/HudVoiceBridge.ts
-var s_ = class {
+var c_ = class {
 	constructor(e, t) {
 		f(this, "assistant", void 0), f(this, "log", void 0), this.assistant = e, this.log = t, e.subscribe((e) => {
 			e.type === "error" && t.warn(`[voice] ${e.kind} error: ${e.message}`);
@@ -21913,7 +21921,7 @@ var s_ = class {
 	}
 	onAgentText(e) {
 		return this.assistant.subscribe((t) => {
-			let n = c_(t);
+			let n = l_(t);
 			n && e(n);
 		});
 	}
@@ -21934,22 +21942,22 @@ var s_ = class {
 		}
 	}
 };
-function c_(e) {
-	return e.type === "transcript" && e.role === "agent" ? e.text : e.type === "error" ? o_(e.kind) : null;
+function l_(e) {
+	return e.type === "transcript" && e.role === "agent" ? e.text : e.type === "error" ? s_(e.kind, e.message) : null;
 }
 // src/hudBridge.ts
-function l_() {
+function u_() {
 	try {
 		return window.localStorage;
 	} catch {
 		return;
 	}
 }
-var u_ = window, d_ = new s_(new re({
-	agentId: r_(location.search, l_()),
-	statusProvider: new ie({ getStatus: t_(() => u_.hud) }),
+var d_ = window, f_ = new c_(new re({
+	agentId: r_(location.search, u_()),
+	statusProvider: new ie({ getStatus: t_(() => d_.hud) }),
 	startSession: $g,
 	requestMicrophoneAccess: () => e_(),
 	clock: Date.now
-}), console), f_ = () => d_.toggleVoice(), p_ = () => d_.getConversation(), m_ = (e) => d_.onAgentText(e), h_ = (e) => d_.onUserText(e), g_ = () => d_.isListening(), __ = () => d_.getVoiceState();
-export { p_ as getConversation, __ as getVoiceState, g_ as isListening, m_ as onAgentText, h_ as onUserText, f_ as toggleVoice };
+}), console), p_ = () => f_.toggleVoice(), m_ = () => f_.getConversation(), h_ = (e) => f_.onAgentText(e), g_ = (e) => f_.onUserText(e), __ = () => f_.isListening(), v_ = () => f_.getVoiceState();
+export { m_ as getConversation, v_ as getVoiceState, __ as isListening, h_ as onAgentText, g_ as onUserText, p_ as toggleVoice };

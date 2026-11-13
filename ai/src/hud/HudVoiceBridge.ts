@@ -68,6 +68,6 @@ export class HudVoiceBridge {
 
 function agentText(event: VoiceAssistantEvent): string | null {
   if (event.type === "transcript" && event.role === "agent") return event.text;
-  if (event.type === "error") return visorErrorText(event.kind);
+  if (event.type === "error") return visorErrorText(event.kind, event.message);
   return null;
 }

@@ -19,8 +19,13 @@ export const startElevenLabsVoiceSession: StartVoiceSession = async ({
   clientTools,
   callbacks,
 }) => {
+  // WebSocket by default: it works on phone networks and hotspots where WebRTC often fails.
+  // Open the HUD with ?voicelink=webrtc to try WebRTC instead.
+  const linkParam = typeof location !== "undefined" ? new URLSearchParams(location.search).get("voicelink") : null;
+  const connectionType = linkParam === "webrtc" ? "webrtc" : "websocket";
   const conversation = await Conversation.startSession({
     agentId,
+    connectionType,
     textOnly: false,
     clientTools,
     onMessage: ({ role, message }) => callbacks.onMessage({ role, text: message }),
