@@ -1,7 +1,7 @@
 import { relativeTo } from './ar.js';
 
 /** The route, stops and base around the walker, in metres forward/right, for the ground arrows, pins and mini-map. */
-export function buildScene({ world, position, heading, isVisited = () => false, target, path = [], eyeAt = () => null }) {
+export function buildScene({ world, position, heading, isVisited = () => false, target, path = [], plan = [], eyeAt = () => null }) {
   const rel = (at) => relativeTo(position.at, heading, at, world.r);
   return {
     route: world.route.map((p) => rel(p.at)),
@@ -16,5 +16,6 @@ export function buildScene({ world, position, heading, isVisited = () => false, 
     base: { ...rel(world.base.at), isTarget: Boolean(target.isBase), eye: target.isBase ? eyeAt(world.base.at) : null },
     marsPerMetre: world.marsPerFrameMetre,
     path: path.map((p) => ({ ...rel(p.at), d: p.d, steep: p.steep, eye: p.eye })),   // the walking path, every 0.5 m
+    plan: plan.map(rel),                                                                 // the whole planned path
   };
 }

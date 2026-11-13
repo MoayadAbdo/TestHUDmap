@@ -35,6 +35,9 @@ Use Android Chrome.
   - Gamepad on the phone: left stick walks, right stick turns, shoulder buttons run, **A** talks, **B** auto-walk, **Y** stop card.
   - From the laptop: Ground Control → **Drive (WASD)** switch, same keys, with its own speed (3× by default). The phone stops if the link drops.
   - Too slow? Hold **Shift** to run (2.5×), or add `&speed=3` to the HUD link (3× for all walking).
+- **Safest path**: the ground arrows, the direction arrow and the mini-map's solid line follow a path planned on the
+  real 1 m height map (A*: steep ground costs more, over 25° is never used). On the real route it cuts the walking
+  over 15° from up to 28 m per leg to 0–6 m. Without the map (`?safe=0`) the arrows follow Curiosity's route.
 - **Map layers on the 3D ground** (sim / Mars walk): **L** key, gamepad **X**, or the demo panel cycles
   Photo → Slope (HiRISE 1 m DEM) → Minerals (CRISM) → Heat (THEMIS). Ground Control's map has all layers
   (plus two more CRISM scenes and CTX) and a **Show on visor** button. The 3D ground uses the real 1 m heights.

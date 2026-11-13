@@ -7,6 +7,7 @@ import { baseMessage, createBaseFix } from './core/base-fix.js';
 import { gpsWarning } from './core/gps-health.js';
 import { sideReadouts } from './core/readouts.js';
 import { createRoutePlanner, pathGuide } from './core/path.js';
+import { createSafePlanner } from './core/safe-path.js';
 import { buildScene } from './core/scene.js';
 import { createStopCard, nearbyReachedStop } from './core/stop-card.js';
 import { buildStatus } from './core/status.js';
@@ -24,7 +25,7 @@ const STEEP_DEG = 12;
  * Everything it talks to is passed in, so stand-ins and the real parts are interchangeable.
  */
 export function createHudApp({
-  mission: rawMission, source, live, voice, link = { label: 'Habitat link', bars: 4 },
+  mission: rawMission, source, live, voice, link = { label: 'Habitat link', bars: 4 }, terrain = null,
   clock = () => performance.now(), now = () => Date.now(), timers = window,
 }) {
   // The official mission.json lists the base as a stop with "is_base": true; the HUD uses anchor.mars as base.
@@ -63,7 +64,9 @@ export function createHudApp({
     const route = (mission.route ?? []).map((p) => (Array.isArray(p) ? { at: toFrame(p), slope_deg: 0 } : { ...p, at: toFrame(p.mars) }));
     world = { stops, route, base: { at: toFrame(mission.anchor.mars) }, r, marsPerFrameMetre, toMars };
     nav = createNavigator({ stops, base: world.base, r });
-    planner = createRoutePlanner({ route, r });   // swap for a slope-map planner when one exists
+    // safest path on the real height map (avoids steep ground); along the rover's route when there's no map
+    const alongRoute = createRoutePlanner({ route, r });
+    planner = terrain ? createSafePlanner({ terrain, toMars, toFrame, r, fallback: alongRoute, clock }) : alongRoute;
     if (mustReturn) nav.goHome();                  // a new base doesn't cancel return-to-base
   }
 
@@ -160,7 +163,8 @@ export function createHudApp({
 
   /** The walking path from here to the target (not the straight line), and what the visor needs from it. */
   function guideFrom(position) {
-    return pathGuide(planner.plan(position.at, step.target.at), world.r);
+    const path = planner.plan(position.at, step.target.at);
+    return { ...pathGuide(path, world.r), path };
   }
 
   function status() {
@@ -290,7 +294,7 @@ export function createHudApp({
         hud.targetName = step.target.isBase ? 'Base' : step.target.name;
         hud.targetLabel = `${hud.targetName}, about ${hud.etaMin} min`;
         const path = guide.samples.map((p) => ({ ...p, steep: planner.slopeAt(p.at) > STEEP_DEG, eye: eyeAt(p.at) }));
-        hud.scene = buildScene({ world, position, heading, isVisited: nav.isVisited, target: step.target, path, eyeAt });
+        hud.scene = buildScene({ world, position, heading, isVisited: nav.isVisited, target: step.target, path, plan: guide.path, eyeAt });
       }
       return { background: source.getBackground(), hud };
     },

@@ -667,6 +667,8 @@ export const sim = {
     S.layerId = layer.id;
     return layer;
   },
+  /** The height grid the 3D ground is built from ({ ...terrain.json, heights }), so the HUD needn't download it again. */
+  terrain() { return S.T ? { ...S.T.meta, heights: S.T.heights } : null; },
   /** How far below the eye the ground is at this Mars point (metres), so HUD arrows sit on the real ground. */
   eyeDrop(lat, lon) {
     if (!S.toLocal || !S.T) return null;

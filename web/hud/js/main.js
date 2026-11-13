@@ -40,6 +40,25 @@ async function loadMission() {
   throw new Error('No mission.json found.');
 }
 
+/** The real height map (terrain.json + heights.bin next to mission.json) for the safest-path planner; null if missing. */
+async function loadTerrain(assetsBase, world3d, tries = 3) {
+  if (params.get('safe') === '0') return null;
+  const shared = world3d?.terrain?.();           // the 3D sim already has it: no second download
+  if (shared) return shared;
+  for (let i = 1; i <= tries; i++) {
+    try {
+      const meta = await (await fetch(new URL('terrain/terrain.json', assetsBase))).json();
+      const heights = new Float32Array(await (await fetch(new URL('terrain/heights.bin', assetsBase))).arrayBuffer());
+      if (heights.length !== meta.grid[0] * meta.grid[1]) throw new Error(`heights: ${heights.length} values for grid ${meta.grid}`);
+      return { ...meta, heights };
+    } catch (error) {
+      if (i === tries) console.warn('[hud] no height map, arrows follow the rover route:', error?.message ?? error);
+      else await new Promise((resolve) => setTimeout(resolve, 1000 * i));
+    }
+  }
+  return null;
+}
+
 /** Loads a teammate's module if it is there and fits; otherwise uses the stand-in. */
 async function loadPart(name, fit, standIn) {
   if (params.get(name) !== 'fake') {
@@ -104,7 +123,8 @@ async function start(mode, view, motionAsked) {
   const link = live.real
     ? { get label() { return live.part.linkLabel?.() ?? 'Habitat link'; }, bars: 4 }
     : { label: 'Local only (stand-in)', bars: 1 };
-  app = createHudApp({ mission, source, live: live.part, voice: voice.part, link });
+  const terrain = await loadTerrain(assetsBase, source.world3d ?? source.sim);
+  app = createHudApp({ mission, source, live: live.part, voice: voice.part, link, terrain });
   const canvas = document.getElementById('hud');
   const layerSwitch = createLayerSwitch({ sim: source.world3d ?? source.sim, notify: (t) => app.notify(t) });
   const getFrame = () => { const f = app.frame(); f.hud.layer = layerSwitch.current; return f; };

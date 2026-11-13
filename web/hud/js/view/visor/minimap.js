@@ -2,7 +2,7 @@ import { AMBER, AMBER_FAINT, AMBER_SOFT, PANEL, RED, say } from './style.js';
 
 const RANGE_M = 80;
 
-/** Heading-up mini-map: Curiosity's route, the stops as pins, base, and the walker in the middle. */
+/** Heading-up mini-map: Curiosity's route (faint dashes), the planned safe path (solid), stops, base, and the walker. */
 export function drawMiniMap(ctx, cx, cy, radius, u, s) {
   const scene = s.scene;
   const k = radius / RANGE_M;
@@ -35,6 +35,14 @@ export function drawMiniMap(ctx, cx, cy, radius, u, s) {
     });
     ctx.stroke();
     ctx.setLineDash([]);
+
+    if (scene.plan?.length > 1) {                 // the way the arrows lead: around steep ground
+      ctx.strokeStyle = s.mustReturn ? RED : AMBER;
+      ctx.lineWidth = Math.max(2, 0.6 * u);
+      ctx.beginPath();
+      scene.plan.forEach((p, i) => { const [x, y] = xy(p); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
+      ctx.stroke();
+    }
 
     const [bx, by] = xy(scene.base);
     ctx.strokeStyle = scene.base.isTarget ? RED : AMBER_SOFT;
