@@ -22,13 +22,12 @@ export function doseText(usv) {
  */
 export function drawVitals(ctx, x, y, u, s) {
   const w = 25 * u;
-  plate(ctx, x - 1.6 * u, y - 2.6 * u, w + 3.2 * u, 25.2 * u, { radius: 1 * u, edge: s.level === 'danger' ? RED : null });
-  const o2Bad = s.o2Pct < 30 || s.mustReturn;
-  const o2Color = o2Bad ? RED : INK;
+  // the same panel in the hand-held view and the VR box; oxygen is Rama's battery (fill, notch = needed to get home)
+  const dy = 3 * u;
+  plate(ctx, x - 1.6 * u, y - 2.6 * u, w + 3.2 * u, 25.2 * u + dy, { radius: 1 * u, edge: s.level === 'danger' ? RED : null });
   header(ctx, 'OXYGEN', x, y, u);
-  say(ctx, `${Math.round(s.o2Pct)}%`, x + w, y, 2.1 * u, { align: 'right', color: AMBER_SOFT, weight: 700 });
-  say(ctx, `${hm(s.o2MinutesLeft)} left`, x, y + 3.9 * u, 3.6 * u, { color: o2Color, weight: 700 });
-  bar(ctx, x, y + 6.6 * u, w, 1 * u, s.o2Pct / 100, { color: o2Bad ? RED : AMBER });
+  drawOxygenChip(ctx, x, y + 4.4 * u, u, s);
+  y += dy;
 
   const radColor = s.radHigh ? RED : INK;
   header(ctx, 'RADIATION', x, y + 10.4 * u, u);

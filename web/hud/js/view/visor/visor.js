@@ -8,7 +8,7 @@ import { drawGroundGuide } from './ground.js';
 import { drawMiniMap } from './minimap.js';
 import { drawAlerts, drawDirectionArrow, drawFooter, drawMessage, drawNextStop, drawVoice, drawWaiting } from './overlay.js';
 import {
-  PANEL_W_U, drawBiosigns, drawComms, drawDelayTag, drawIntegrity, drawLayer, drawLinkChip, drawLocation, drawOxygenChip,
+  PANEL_W_U, drawBiosigns, drawComms, drawDelayTag, drawIntegrity, drawLayer, drawLocation,
   drawRadiation, drawSuit, drawVitals,
 } from './panels.js';
 import { AMBER, NAV, PANEL, RED, plate } from './style.js';
@@ -29,10 +29,8 @@ export function drawVisorHud(ctx, w, h, s, images) {
   const right = w - left;
   const cx = w / 2;
   // level 0..1: how much of the full suit display shows (standing still or pinned on; see core/detail-auto.js)
-  // walking in the VR box: clean, just oxygen and the link (the eye is narrow); hand-held: the focus panels
   const level = s.detailLevel ?? (s.detail === 'full' ? 1 : 0);
   const full = level > 0.5;
-  const clean = s.view === 'vr';
   const navColor = s.mustReturn ? RED : NAV;
 
   // the guide stays clear of the side panels (full view) or only of the screen edge (focus view, panels are up top)
@@ -62,16 +60,12 @@ export function drawVisorHud(ctx, w, h, s, images) {
   }
   if (level < 1) {                         // while walking: the light view
     ctx.globalAlpha = 1 - level;
-    if (clean) {
-      drawOxygenChip(ctx, left, 9 * row, u, s);
-      drawLinkChip(ctx, right, 9 * row, u, s);
-    } else {
-      drawVitals(ctx, left, 16 * row, u, s);
-      const mapR = 11 * u;
-      drawMiniMap(ctx, right - mapR - 1 * u, 16 * row + mapR, mapR, u, s);
-      drawDelayTag(ctx, right - mapR - 1 * u, 16 * row + 2 * mapR + 5 * u, u, s);
-      if (s.layer) drawLayer(ctx, right, 16 * row + 2 * mapR + 11 * u, u, s.layer);
-    }
+    // one walking view for both the hand-held screen and the VR box (identical, just scaled to the eye)
+    drawVitals(ctx, left, 16 * row, u, s);
+    const mapR = 11 * u;
+    drawMiniMap(ctx, right - mapR - 1 * u, 16 * row + mapR, mapR, u, s);
+    drawDelayTag(ctx, right - mapR - 1 * u, 16 * row + 2 * mapR + 5 * u, u, s);
+    if (s.layer) drawLayer(ctx, right, 16 * row + 2 * mapR + 11 * u, u, s.layer);
   }
   ctx.globalAlpha = 1;
 
