@@ -80,8 +80,9 @@ export function drawVisorHud(ctx, w, h, s, images) {
   drawMessage(ctx, cx, 21 * row + (alertH ? alertH + 2.4 : 1.5) * u, u, w, s.message);
   // always visible: which way to go along the path (under the card when one is open)
   const arrowRow = s.card ? (s.alerts.length ? 82 : 78) : 64;   // below the card, which sits lower under an alert
-  if (!s.waiting) drawDirectionArrow(ctx, cx, arrowRow * row, u, s.arrowDeg, navColor);
-  drawVoice(ctx, cx, 86 * row, u, w, s);
+  // under an open card there's no room for the TURN word as well as the AI's text: the arrow alone says it
+  if (!s.waiting) drawDirectionArrow(ctx, cx, arrowRow * row, u, s.arrowDeg, navColor, { label: !s.card });
+  drawVoice(ctx, cx, (s.card ? 89 : 86) * row, u, w, s);
   if (s.view !== 'vr' && !s.waiting) drawFooter(ctx, left, 88 * row, u, s);
   if (clean && !s.card) say(ctx, 'LOOK DOWN FOR SUIT', cx, 93 * row, 1.7 * u, { align: 'center', color: AMBER_SOFT, weight: 600 });
 }

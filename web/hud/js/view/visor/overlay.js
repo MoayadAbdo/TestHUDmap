@@ -81,7 +81,7 @@ export function drawWaiting(ctx, cx, cy, u, text) {
 }
 
 /** Always-on arrow under the view centre: the way to go along the path (0 = straight ahead, + = right). */
-export function drawDirectionArrow(ctx, cx, cy, u, deg, color = NAV) {
+export function drawDirectionArrow(ctx, cx, cy, u, deg, color = NAV, { label = true } = {}) {
   if (deg == null) return;
   const r = 3.4 * u;
   ctx.save();
@@ -102,7 +102,7 @@ export function drawDirectionArrow(ctx, cx, cy, u, deg, color = NAV) {
   ctx.fill();
   ctx.restore();
   ctx.shadowBlur = 0;
-  const turn = turnWord(deg);
+  const turn = label ? turnWord(deg) : '';
   if (turn) say(ctx, turn, cx, cy + r + 2.2 * u, 2.4 * u, { align: 'center', color, weight: 700 });
 }
 
