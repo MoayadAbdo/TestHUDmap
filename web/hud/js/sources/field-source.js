@@ -1,4 +1,5 @@
-import { cameraHeading, cameraPitch, smoothHeading } from '../core/compass.js';
+import { smoothHeading } from '../core/compass.js';
+import { createHeadPose } from '../core/head-pose.js';
 import { wrap360 } from '../core/geo.js';
 
 const MIN_SPEED_FOR_GPS_COURSE = 0.7;
@@ -27,17 +28,22 @@ export function createFieldSource({ doc = document, nav = navigator, win = windo
 
   const screenAngle = () => win.screen?.orientation?.angle ?? win.orientation ?? 0;
 
-  /** Android: absolute angles. iPhone: webkitCompassHeading, shifted by the screen turn (best effort, check on the phone). */
+  // Head pose from the full 3D rotation (no flip when you look up and down). Android: absolute angles are
+  // north-referenced. iPhone: north is learned slowly from webkitCompassHeading (it jumps 180° near level).
+  const head = createHeadPose();
   let pitch = null;
   function onOrientation(event) {
-    let h = null;
-    if (event.webkitCompassHeading != null) h = wrap360(event.webkitCompassHeading + screenAngle());
-    else if (event.absolute || event.type === 'deviceorientationabsolute') h = cameraHeading(event.alpha, event.beta, event.gamma);
-    const p = cameraPitch(event.beta, event.gamma);
-    if (p != null) pitch = pitch == null ? p : pitch + 0.25 * (p - pitch);
-    if (h == null) return;
+    const absolute = event.absolute || event.type === 'deviceorientationabsolute';
+    const iphone = event.webkitCompassHeading != null;
+    if (!absolute && !iphone) return;           // Android's relative events: the absolute ones come too
+    head.update({
+      alpha: event.alpha, beta: event.beta, gamma: event.gamma, absolute,
+      compass: iphone ? wrap360(event.webkitCompassHeading + screenAngle()) : null,
+    });
+    pitch = pitch == null ? head.pitch : pitch + 0.25 * (head.pitch - pitch);
+    if (head.heading == null) return;
     compassSeen = true;
-    heading = smoothHeading(heading, h);
+    heading = smoothHeading(heading, head.heading);
   }
 
   let fixAt = 0;

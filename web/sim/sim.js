@@ -21,6 +21,7 @@
 // Laptop: hold Space to walk; drag the mouse (or A / D) to look around.
 
 import * as THREE from "three";
+import { createHeadPose } from "../hud/js/core/head-pose.js";
 
 const DEG = Math.PI / 180;
 const EYE_H = 1.7;                 // astronaut eye height (m)
@@ -349,17 +350,14 @@ function addDust() {
 }
 
 // ---------- sensors & input ----------
+// Head tracking from the phone's full 3D rotation: smooth when you look up and down (the iPhone compass value
+// flips by 180° there, so it isn't used). The first reading faces where the view already looks.
 function onOrientation(ev) {
   if (ev.alpha == null) return;
-  const a = ev.alpha * DEG, b = ev.beta * DEG, g = ev.gamma * DEG;
-  // direction the back of the phone points (phone upright in the VR box)
-  const vx = -(Math.cos(a) * Math.sin(g) + Math.sin(a) * Math.sin(b) * Math.cos(g));
-  const vy = Math.cos(a) * Math.sin(b) * Math.cos(g) - Math.sin(a) * Math.sin(g);
-  const vz = -Math.cos(b) * Math.cos(g);
-  let h = Math.atan2(vx, vy) / DEG;
-  if (typeof ev.webkitCompassHeading === "number") h += ev.webkitCompassHeading - wrap360(360 - ev.alpha); // iOS
-  S.sensorHeading = wrap360(h);
-  S.sensorPitch = Math.asin(Math.max(-1, Math.min(1, vz))) / DEG;
+  S.head ??= createHeadPose({ startHeading: S.heading });
+  S.head.update({ alpha: ev.alpha, beta: ev.beta, gamma: ev.gamma });
+  if (S.head.heading != null) S.sensorHeading = S.head.heading;
+  S.sensorPitch = S.head.pitch;
 }
 function addInput() {
   listen(window, "keydown", (e) => {
@@ -536,6 +534,7 @@ export const sim = {
   async start(mission, opts = {}) {
     this.stop();
     S.mission = mission;
+    S.head = null; S.sensorHeading = null; S.yaw = 0;   // head tracking starts fresh
     S.opts = { assetsBase: "../mission/", speed: 1, stereo: true, ...opts };
     S.stereo = S.opts.stereo;
     S.container = S.opts.container || document.body;
