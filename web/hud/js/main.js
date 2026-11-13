@@ -7,6 +7,7 @@ import { createMarsWalkSource } from './sources/marswalk-source.js';
 import { SIM_CLICKER_KEYS, bindInput } from './input.js';
 import { createMoveInput } from './move-input.js';
 import { createLayerSwitch } from './layer-switch.js';
+import { createStepDetector } from './core/steps.js';
 import { startWakeWord } from './wake-word.js';
 import { createDemoPanel } from './view/demo-panel.js';
 import { createRenderer } from './view/renderer.js';
@@ -145,7 +146,17 @@ async function start(mode, view, motionAsked) {
   bindInput({ canvas, onTap: tap, onLongPress: demo.toggle, onClicker: app.onTap, onCard: app.toggleCard, onLayer: layerSwitch.next,
     clickerKeys: sim3d ? SIM_CLICKER_KEYS : undefined });
   // Sim mode: move without walking for real (WASD, gamepad, or Ground Control driving)
-  const moveInput = sim3d?.setMoveInput ? createMoveInput({ sim: sim3d, onVoice: app.onTap, onToggleWalk: toggleWalk, onCard: app.toggleCard, onLayer: layerSwitch.next }) : null;
+  // ...and with only the phone: each step you take (in place or around the room) walks you forward where you look
+  let stepCount = 0;
+  const steps = sim3d && params.get('steps') !== '0' ? createStepDetector({ onStep: () => {
+    if (!stepCount++) app.notify('Walking with your steps');
+    if (sim3d.isAutopilot?.()) sim3d.setAutopilot(false);
+  } }) : null;
+  if (steps) window.addEventListener('devicemotion', (e) => {
+    const a = e.accelerationIncludingGravity;
+    if (a) steps.update(a.x, a.y, a.z, performance.now());
+  });
+  const moveInput = sim3d?.setMoveInput ? createMoveInput({ sim: sim3d, steps, onVoice: app.onTap, onToggleWalk: toggleWalk, onCard: app.toggleCard, onLayer: layerSwitch.next }) : null;
   // Mars walk: every frame, put the 3D Mars view where the real GPS puts you
   if (source.world3d) {
     const follow = () => {
@@ -160,11 +171,12 @@ async function start(mode, view, motionAsked) {
     getStatus: app.getStatus, demo: app.demo, standInLive: live.real ? null : live.part, sim: source.world3d ?? source.sim ?? null,
     move: (v) => moveInput?.remote(v),
     layer: (id) => (id ? layerSwitch.set(id) : layerSwitch.next()),   // Ground Control picks the visor's layer
+    stepCount: () => stepCount,
   };
   console.info('[hud] mission', url, 'live', live.real ? 'real' : 'stand-in', 'voice', voice.real ? 'real' : 'stand-in');
   await Promise.race([document.fonts?.load?.('600 20px Rajdhani'), new Promise((resolve) => setTimeout(resolve, 1500))]);
   app.start();
-  if (sim3d) app.notify(moveInput ? 'Move: WASD / gamepad, or tap to auto-walk' : 'Tap the screen to start walking');
+  if (sim3d) app.notify(moveInput ? 'Walk in place to move · tap to auto-walk' : 'Tap the screen to start walking');
   if (source.world3d) app.notify('Walk for real: GPS moves you on Mars');
   // hands-free voice: "Hey suit" (only with the real voice agent, and unless ?wake=0)
   if (voice.real && params.get('wake') !== '0') setTimeout(() => startWakeWord({ voice: voice.part, notify: app.notify }), 4000);

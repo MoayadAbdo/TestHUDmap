@@ -29,6 +29,10 @@ Use Android Chrome.
 - **Bluetooth clicker**: talk to the voice agent. It must send keys (Enter, arrows, Page Down, Play/Pause).
   Cheap selfie remotes send volume keys, which phone browsers usually keep: test yours first.
 - **"Hey suit"** (real voice agent only): hands-free talk. Plain "suit" does not wake it.
+- **Walk in place (sim mode, phone only)**: each step you take, in place or around the room, walks you forward on
+  the 3D Mars where you look (the phone's motion sensor counts steps; you stop ~0.7 s after the last step).
+  iPhone: allow "Motion & Orientation" when Start asks. One step ≈ 0.6 m (× `&speed=`). Off with `&steps=0`.
+  (GPS can't see steps inside a room; **Mars walk** mode uses GPS and works outdoors.)
 - **Move without walking (sim mode)**, for testing in the VR box while sitting:
   - Bluetooth keyboard on the phone: **W/S** (or **↑/↓**) walk forward/back, **A/D** sideways, **Q/E** turn, **Shift** runs, **T** auto-walk on/off, **C** close / reopen the stop card.
     (In sim mode Space, Enter, Page Down, **←/→** and V talk to the AI, so page-turner clickers still work.)

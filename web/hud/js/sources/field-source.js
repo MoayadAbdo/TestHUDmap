@@ -9,7 +9,9 @@ export async function requestMotionPermission(win = window) {
   const Orientation = win.DeviceOrientationEvent;
   if (!Orientation || typeof Orientation.requestPermission !== 'function') return true;
   try {
-    return (await Orientation.requestPermission()) === 'granted';
+    // iPhone: ask for both inside the same tap (steps need motion, head turning needs orientation)
+    const asks = [Orientation.requestPermission(), win.DeviceMotionEvent?.requestPermission?.()].filter(Boolean);
+    return (await Promise.all(asks)).every((answer) => answer === 'granted');
   } catch {
     return false;
   }

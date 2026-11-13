@@ -53,7 +53,7 @@ const same = (a, b) => a.forward === b.forward && a.right === b.right && a.turn 
 export const isMove = (code) => code in KEY_MOVES || RUN_CODES.has(code);
 
 /** Wires keys, the gamepad and Ground Control to sim.setMoveInput(). T or pad B: auto-walk; pad A: talk. */
-export function createMoveInput({ win = window, sim, clock = () => performance.now(), getPads = () => navigator.getGamepads?.() ?? [], onVoice, onToggleWalk, onCard, onLayer }) {
+export function createMoveInput({ win = window, sim, clock = () => performance.now(), getPads = () => navigator.getGamepads?.() ?? [], steps = null, onVoice, onToggleWalk, onCard, onLayer }) {
   const pressed = new Set();
   let remote = { v: STILL, at: -Infinity };
   let sent = STILL;
@@ -78,7 +78,8 @@ export function createMoveInput({ win = window, sim, clock = () => performance.n
     if (buttons[PAD.layer] && !lastButtons[PAD.layer]) onLayer?.();
     lastButtons = buttons;
     const fresh = clock() - remote.at < REMOTE_FRESH_MS;
-    const v = combine(keyVector(pressed), padVector(pad), fresh ? remote.v : STILL);
+    const stepping = steps?.walking(clock()) ? { ...STILL, forward: 1 } : STILL;   // walking in place on the phone
+    const v = combine(keyVector(pressed), padVector(pad), fresh ? remote.v : STILL, stepping);
     if (!same(v, sent)) { sim.setMoveInput(v); sent = v; }
   }
 
