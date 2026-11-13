@@ -1,0 +1,58 @@
+{
+  "about": "Hand-written science facts for the location knowledge. Every fact has a source. 'scope' says how local it is: 'area' = true for the boxwork area (not tied to this exact spot), 'ground' = true for this kind of ground (ridge, hollow, layer).",
+  "sources": {
+    "jpl2026": "NASA/JPL, 'NASA's Curiosity Rover Sees Martian Spiderwebs Up Close', 23 Feb 2026",
+    "waypoints": "Curiosity rover waypoints (JPL MMGIS), sol and position of each stop",
+    "rems": "Curiosity REMS weather, per sol"
+  },
+  "area": [
+    { "text": "Boxwork ridges are 1 to 2 m tall with sandy hollows between them, a web that stretches for kilometres.", "source": "jpl2026" },
+    { "text": "Groundwater flowed through fractures and left minerals that hardened the ridges; wind later wore away the softer rock in between.", "source": "jpl2026" },
+    { "text": "Finding boxwork this high on Mount Sharp suggests groundwater lasted longer than expected, giving life more time.", "source": "jpl2026" },
+    { "text": "The boxwork sits in a layer rich in salty sulfate minerals.", "source": "jpl2026" }
+  ],
+  "stops": [
+    {
+      "id": 0, "ground": "edge of the boxwork field",
+      "why_it_matters": "Starting point: the boxwork ridges begin just south of here.",
+      "look_for": "Look south: the ridges form a web of low walls.",
+      "curiosity": "Curiosity entered the boxwork area here in July 2025 (sol 4596).",
+      "scope": "ground", "source": "waypoints"
+    },
+    {
+      "id": 1, "ground": "first boxwork ridges",
+      "why_it_matters": "Each ridge marks a crack where groundwater once flowed.",
+      "look_for": "A dark line running along the top of a ridge.",
+      "curiosity": "Curiosity confirmed that these dark lines are fractures, supporting the idea that groundwater moved through them.",
+      "scope": "area", "source": "jpl2026"
+    },
+    {
+      "id": 2, "ground": "ridge top",
+      "why_it_matters": "The ridge rock was hardened by minerals from groundwater.",
+      "look_for": "The dark central fracture along the ridge top. Photograph it from both sides.",
+      "curiosity": "Curiosity drilled a ridgetop in this area; X-ray analysis found clay minerals in the ridge.",
+      "scope": "ground", "source": "jpl2026"
+    },
+    {
+      "id": 3, "ground": "hollow between ridges",
+      "why_it_matters": "Hollows are where wind removed the softer rock, and where Curiosity's wheels slipped in sand.",
+      "look_for": "Small round nodules on the ridge walls and the hollow floor.",
+      "curiosity": "Curiosity found nodules along ridge walls and in hollows but not near the central fractures; why is still unexplained.",
+      "scope": "ground", "source": "jpl2026"
+    },
+    {
+      "id": 4, "ground": "ridge and hollow side by side",
+      "why_it_matters": "Comparing ridge and hollow rock shows what the water changed.",
+      "look_for": "Pale ridge rock next to the darker hollow floor. Take one sample from each.",
+      "curiosity": "In this area Curiosity drilled a ridgetop, a hollow and the transition between them: clay minerals in the ridge, carbonate minerals in the hollow.",
+      "scope": "ground", "source": "jpl2026"
+    },
+    {
+      "id": 5, "ground": "edge of the sulfate layer",
+      "why_it_matters": "The sulfate layer records Mars drying out over time.",
+      "look_for": "Layered, light-toned rock beyond the last ridges.",
+      "curiosity": "After the boxwork, Curiosity continued into the sulfate-rich layer (from sol 4820, February 2026).",
+      "scope": "area", "source": "waypoints"
+    }
+  ]
+}

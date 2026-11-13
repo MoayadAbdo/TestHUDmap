@@ -43,7 +43,7 @@ function groundLine(ti) {
  * Facts for one spot. Returns null outside the mapped area.
  * { here: {...numbers}, stop: {id, name, distance_m} | null, lines: [{ kind, icon, text }], sources: [...] }
  */
-export function placeInfo({ grid, mission, lat, lon }) {
+export function placeInfo({ grid, mission, facts = null, lat, lon }) {
   const i = cellIndex(grid, lat, lon);
   if (i < 0) return null;
   const here = {
@@ -56,13 +56,27 @@ export function placeInfo({ grid, mission, lat, lon }) {
   const stop = near && near.d <= NEAR_STOP_M ? { id: near.s.id, name: near.s.name, distance_m: Math.round(near.d) } : null;
 
   const lines = [];
+  const factSources = new Set();
   if (stop) lines.push({ kind: 'stop', icon: '📍', text: `Near stop ${stop.id}: ${stop.name} (${stop.distance_m} m)` });
+  // hand-written science (web/mission/knowledge/facts.json): the stop's facts, or one area fact between stops
+  const f = stop && facts?.stops?.find((x) => x.id === stop.id);
+  if (f) {
+    const where = f.scope === 'area' ? 'In this boxwork area: ' : '';
+    lines.push({ kind: 'curiosity', icon: '🔬', text: where + f.curiosity });
+    lines.push({ kind: 'look_for', icon: '👀', text: `Look for: ${f.look_for}` });
+    lines.push({ kind: 'why', icon: '💡', text: f.why_it_matters });
+    factSources.add(facts.sources?.[f.source] ?? f.source);
+  } else if (facts?.area?.length) {
+    const a = facts.area[Math.abs(Math.round(lat * 1e5 + lon * 1e5)) % facts.area.length];   // same spot, same fact
+    lines.push({ kind: 'area', icon: '💡', text: a.text });
+    factSources.add(facts.sources?.[a.source] ?? a.source);
+  }
   lines.push({ kind: 'slope', icon: '⛰', text: slopeLine(here.steep_pct) });
   lines.push({ kind: 'mineral', icon: '💧', text: mineralLine(grid.mineral[i], here.mineral_pct, grid.mineral_names) });
   lines.push({ kind: 'ground', icon: '🪨', text: groundLine(here.ti) });
   lines.push({ kind: 'height', icon: '↕', text: `${here.height_m >= 0 ? '+' : ''}${Math.round(here.height_m)} m compared with the base` });
 
   const scene = grid.mineral_scenes?.[grid.mineral_scene[i]]?.scene;
-  const sources = ['MRO HiRISE 1 m heights and slope', `MRO CRISM${scene ? ` ${scene}` : ''}`, 'Mars Odyssey THEMIS'];
+  const sources = ['MRO HiRISE 1 m heights and slope', `MRO CRISM${scene ? ` ${scene}` : ''}`, 'Mars Odyssey THEMIS', ...factSources];
   return { here, stop, lines, sources };
 }
