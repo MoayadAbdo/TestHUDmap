@@ -1,14 +1,14 @@
 import { relativeTo } from './ar.js';
 
 /** The route, stops and base around the walker, in metres forward/right, for the ground arrows, pins and mini-map. */
-export function buildScene({ world, position, heading, nextIndex, target }) {
+export function buildScene({ world, position, heading, isVisited = () => false, target }) {
   const rel = (at) => relativeTo(position.at, heading, at, world.r);
   return {
     route: world.route.map((p) => rel(p.at)),
     stops: world.stops.map((s, i) => ({
       id: s.id,
       name: s.name,
-      visited: i < nextIndex,
+      visited: isVisited(i),
       isTarget: !target.isBase && s.id === target.id,
       ...rel(s.at),
     })),

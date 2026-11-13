@@ -12,7 +12,7 @@ const RUN_CODES = new Set(['ShiftLeft', 'ShiftRight']);
 export const STILL = Object.freeze({ forward: 0, right: 0, turn: 0, run: false, boost: 0 });
 const DEAD_ZONE = 0.18;
 const REMOTE_FRESH_MS = 1000;    // Ground Control keeps sending; if the link drops you stop, never keep walking
-const PAD = { voice: 0, autoWalk: 1, runButtons: [4, 5, 6, 7] };   // A talks, B auto-walks, shoulders run
+const PAD = { voice: 0, autoWalk: 1, card: 3, runButtons: [4, 5, 6, 7] };   // A talks, B auto-walks, Y stop card, shoulders run
 
 const clamp = (v) => Math.max(-1, Math.min(1, Number(v) || 0));
 const dead = (v) => (Math.abs(v) < DEAD_ZONE ? 0 : v);
@@ -53,7 +53,7 @@ const same = (a, b) => a.forward === b.forward && a.right === b.right && a.turn 
 export const isMove = (code) => code in KEY_MOVES || RUN_CODES.has(code);
 
 /** Wires keys, the gamepad and Ground Control to sim.setMoveInput(). T or pad B: auto-walk; pad A: talk. */
-export function createMoveInput({ win = window, sim, clock = () => performance.now(), getPads = () => navigator.getGamepads?.() ?? [], onVoice, onToggleWalk }) {
+export function createMoveInput({ win = window, sim, clock = () => performance.now(), getPads = () => navigator.getGamepads?.() ?? [], onVoice, onToggleWalk, onCard }) {
   const pressed = new Set();
   let remote = { v: STILL, at: -Infinity };
   let sent = STILL;
@@ -74,6 +74,7 @@ export function createMoveInput({ win = window, sim, clock = () => performance.n
     const buttons = pad?.buttons?.map((b) => b.pressed) ?? [];
     if (buttons[PAD.voice] && !lastButtons[PAD.voice]) onVoice?.();
     if (buttons[PAD.autoWalk] && !lastButtons[PAD.autoWalk]) onToggleWalk?.();
+    if (buttons[PAD.card] && !lastButtons[PAD.card]) onCard?.();
     lastButtons = buttons;
     const fresh = clock() - remote.at < REMOTE_FRESH_MS;
     const v = combine(keyVector(pressed), padVector(pad), fresh ? remote.v : STILL);

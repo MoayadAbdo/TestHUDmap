@@ -118,10 +118,10 @@ async function start(mode, view, motionAsked) {
     sim3d.setAutopilot(walking);
     app.notify(walking ? 'Walking: tap to stop' : 'Stopped: tap to walk');
   };
-  bindInput({ canvas, onTap: sim3d ? toggleWalk : app.onTap, onLongPress: demo.toggle, onClicker: app.onTap,
+  bindInput({ canvas, onTap: sim3d ? toggleWalk : app.onTap, onLongPress: demo.toggle, onClicker: app.onTap, onCard: app.toggleCard,
     clickerKeys: sim3d ? SIM_CLICKER_KEYS : undefined });
   // Sim mode: move without walking for real (WASD, gamepad, or Ground Control driving)
-  const moveInput = sim3d?.setMoveInput ? createMoveInput({ sim: sim3d, onVoice: app.onTap, onToggleWalk: toggleWalk }) : null;
+  const moveInput = sim3d?.setMoveInput ? createMoveInput({ sim: sim3d, onVoice: app.onTap, onToggleWalk: toggleWalk, onCard: app.toggleCard }) : null;
   // Mars walk: every frame, put the 3D Mars view where the real GPS puts you
   if (source.world3d) {
     const follow = () => {

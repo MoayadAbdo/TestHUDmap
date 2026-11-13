@@ -15,12 +15,19 @@ export function createRenderer({ canvas, getFrame, view = 'vr', maxPixelRatio = 
   let running = false;
   let currentView = view;
 
+  // stop photos: load once, and try again every few seconds if a load failed (weak connection in the field)
+  const RETRY_MS = 4000;
+  const tried = new Map();
   function photo(url) {
-    if (url && !images.has(url)) {
-      const img = new Image();
-      img.src = url;
-      images.set(url, img);
-    }
+    if (!url) return;
+    const img = images.get(url);
+    const failed = img?.complete && !img.naturalWidth;
+    if (img && !(failed && performance.now() - tried.get(url) > RETRY_MS)) return;
+    const next = new Image();
+    next.decoding = 'async';
+    next.src = url;
+    images.set(url, next);
+    tried.set(url, performance.now());
   }
 
   function resize() {

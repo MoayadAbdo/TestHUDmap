@@ -7,6 +7,7 @@ import { baseMessage, createBaseFix } from './core/base-fix.js';
 import { gpsWarning } from './core/gps-health.js';
 import { sideReadouts } from './core/readouts.js';
 import { buildScene } from './core/scene.js';
+import { createStopCard, nearbyReachedStop } from './core/stop-card.js';
 import { buildStatus } from './core/status.js';
 import { createSuit } from './core/suit.js';
 import { createTwin } from './core/twin.js';
@@ -14,7 +15,6 @@ import { createTwin } from './core/twin.js';
 const TICK_MS = 250;
 const TELEMETRY_MS = 1000;
 const PHOTO_MS = 2000;
-const CARD_MS = 15000;
 const MESSAGE_MS = 12000;
 
 /**
@@ -43,7 +43,7 @@ export function createHudApp({
   let step = null;
   let mustReturn = false;
   let alerts = [];
-  let card = null;
+  const card = createStopCard();
   let message = null;
   let aiText = '';
   let forcedSlopeUntil = 0;
@@ -87,12 +87,13 @@ export function createHudApp({
   function conditionStop() {
     if (!step) return mission.stops[0] ?? null;
     if (!step.target.isBase) return step.target;
-    return mission.stops[Math.max(0, nav.nextIndex - 1)] ?? null;
+    return mission.stops[Math.max(0, nav.lastReachedIndex)] ?? null;
   }
   const conditions = () => conditionStop()?.conditions ?? null;
 
-  function arrive(stop, t) {
-    card = { stop, until: t + CARD_MS };
+  function arrive(stop, t, allDone) {
+    card.show(stop, t);
+    if (allDone) message = { text: 'All stops done: walk back to base', fromGround: false, until: t + MESSAGE_MS };
     const sentence = (label, value) => (value ? ` ${label}: ${String(value).replace(/[.\s]+$/, '')}.` : '');
     voice.sendContext(`The astronaut reached stop ${stop.id} of ${stopCount}: ${stop.name}.`
       + sentence('Task', stop.task) + sentence('Hazard', stop.hazard) + sentence('Science', stop.science));
@@ -122,7 +123,8 @@ export function createHudApp({
     lastSpot = { at: position.at, t };
 
     step = nav.update(position.at, t);
-    if (step.arrived) arrive(step.arrived, t);
+    if (step.arrived) arrive(step.arrived, t, step.done);
+    card.update(position.at, t, world.r);
 
     const slope = t < forcedSlopeUntil ? 90 : slopeAhead(world.route, position.at, world.r);
     slopeNow = slope;
@@ -136,6 +138,7 @@ export function createHudApp({
     });
     if (result.mustReturn && !mustReturn) {
       mustReturn = true;
+      card.close();                                  // the way home matters more than the card
       nav.goHome();
       step = nav.update(position.at, t);
       voice.sendContext('The oxygen reserve is reached. The astronaut must return to base now.');
@@ -213,6 +216,14 @@ export function createHudApp({
     onTap() {
       voice.toggle();
     },
+    /** Close the stop card, or show it again while standing at a reached stop (C key, gamepad Y). */
+    toggleCard() {
+      if (card.stop) { card.close(); return; }
+      const position = source.getPosition();
+      if (!world || !position) return;
+      const stop = nearbyReachedStop(world.stops, nav.isVisited, position.at, world.r);
+      if (stop) card.show(stop, clock());
+    },
     /** Where the astronaut is on Mars and which way they look on Mars (null until the base is set). */
     marsPosition() {
       const position = source.getPosition();
@@ -228,7 +239,6 @@ export function createHudApp({
     /** What the renderer draws this frame. Heading is read fresh so the arrow turns smoothly. */
     frame() {
       const t = clock();
-      if (card && t > card.until) card = null;
       if (message && t > message.until) message = null;
       const position = source.getPosition();
       const c = conditions();
@@ -242,7 +252,7 @@ export function createHudApp({
         aiText,
         listening: voice.listening,
         mustReturn,
-        card: card?.stop ?? null,
+        card: card.stop,
         waiting: step ? null : waitingText(position),
       };
       Object.assign(hud, { timeMs: t }, sideReadouts({
@@ -258,7 +268,7 @@ export function createHudApp({
         hud.etaMin = Math.max(1, Math.round(etaMinutes(step.distanceM, walkSpeed)));
         hud.targetName = step.target.isBase ? 'Base' : step.target.name;
         hud.targetLabel = `${hud.targetName}, about ${hud.etaMin} min`;
-        if (position) hud.scene = buildScene({ world, position, heading, nextIndex: nav.nextIndex, target: step.target });
+        if (position) hud.scene = buildScene({ world, position, heading, isVisited: nav.isVisited, target: step.target });
       }
       return { background: source.getBackground(), hud };
     },
@@ -269,7 +279,12 @@ export function createHudApp({
       steepGround: () => {
         forcedSlopeUntil = clock() + 10000;
       },
-      nextStop: () => source.sim?.jumpToStop?.(nav ? nav.nextIndex : 0),
+      // the sims count stops as in mission.json (base included), so find the target there by id
+      nextStop: () => {
+        const id = step?.target && !step.target.isBase ? step.target.id : mission.stops[0]?.id;
+        const i = rawMission.stops.findIndex((s) => s.id === id);
+        if (i >= 0) source.sim?.jumpToStop?.(i);
+      },
       /** Field mode: make the current spot the base (e.g. after a weak first fix). The walk starts again. */
       setBaseHere: () => {
         const position = source.getPosition();
@@ -279,7 +294,7 @@ export function createHudApp({
         world = null;
         nav = null;
         step = null;
-        card = null;
+        card.close();
         return true;
       },
       message: (text) => {

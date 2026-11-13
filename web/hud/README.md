@@ -30,9 +30,9 @@ Use Android Chrome.
   Cheap selfie remotes send volume keys, which phone browsers usually keep: test yours first.
 - **"Hey suit"** (real voice agent only): hands-free talk. Plain "suit" does not wake it.
 - **Move without walking (sim mode)**, for testing in the VR box while sitting:
-  - Bluetooth keyboard on the phone: **W/S** walk forward/back, **A/D** sideways, **Q/E** or **←/→** turn, **Shift** runs, **T** auto-walk on/off.
+  - Bluetooth keyboard on the phone: **W/S** walk forward/back, **A/D** sideways, **Q/E** or **←/→** turn, **Shift** runs, **T** auto-walk on/off, **C** close / reopen the stop card.
     (In sim mode Space, Enter, Page Down and V talk to the AI; the arrows move you.)
-  - Gamepad on the phone: left stick walks, right stick turns, shoulder buttons run, **A** talks, **B** auto-walk.
+  - Gamepad on the phone: left stick walks, right stick turns, shoulder buttons run, **A** talks, **B** auto-walk, **Y** stop card.
   - From the laptop: Ground Control → **Drive (WASD)** switch, same keys, with its own speed (3× by default). The phone stops if the link drops.
   - Too slow? Hold **Shift** to run (2.5×), or add `&speed=3` to the HUD link (3× for all walking).
 - **Long-press** (about 1 second): show or hide the demo panel. It can speed up oxygen, set it to 25%,
