@@ -35,7 +35,7 @@ export function drawGroundGuide(ctx, w, h, u, s, clear = { minX: 0, maxX: w }, p
   const target = scene.stops.find((p) => p.isTarget) ?? (scene.base.isTarget ? scene.base : null);
   if (!target) return;
   const color = s.mustReturn ? RED : NAV;
-  const view = { centerX: w / 2, centerY: h / 2, focalPx: focalForFov(w, FOV_DEG), pitchDeg: s.pitch ?? 0 };
+  const view = { centerX: w / 2, centerY: h / 2, focalPx: focalForFov(w, FOV_DEG), pitchDeg: s.pitch ?? 0, minTopY: h * 0.3 };
   const inside = (c, zone) => c && c.x >= zone.minX && c.x <= zone.maxX;
   const path = scene.path ?? [];
   const lengthM = path.length ? path[path.length - 1].d : 0;
@@ -72,7 +72,7 @@ export function drawGroundGuide(ctx, w, h, u, s, clear = { minX: 0, maxX: w }, p
 
 function drawPin(ctx, ground, u, view, forward, color, s) {
   const height = Math.max(9 * u, Math.min(30 * u, (view.focalPx * 3) / forward));
-  const topY = ground.y - height;
+  const topY = Math.max(ground.y - height, view.minTopY ?? -Infinity);   // never up into the compass
   const beam = ctx.createLinearGradient(0, topY, 0, ground.y);
   beam.addColorStop(0, color);
   beam.addColorStop(1, 'rgba(0, 0, 0, 0)');

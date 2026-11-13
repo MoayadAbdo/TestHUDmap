@@ -1,4 +1,7 @@
 import { distanceM } from './geo.js';
+import { createTerrainGrid, slopeGrid } from './terrain-grid.js';
+
+export { slopeGrid };
 
 /**
  * Safest walking path on the real height map (HiRISE 1 m DEM, resampled to the terrain grid):
@@ -10,19 +13,6 @@ const EASY_DEG = 6;                  // gentle slopes cost (almost) nothing extr
 const REPLAN_MS = 4000;
 const OFF_PATH_M = 6;                // walked this far off the planned path: plan again
 
-/** Slope in degrees for every cell of a height grid (row 0 = north). */
-export function slopeGrid({ heights, gw, gh, cellX, cellY }) {
-  const slope = new Float32Array(gw * gh);
-  const h = (i, j) => heights[Math.max(0, Math.min(gh - 1, j)) * gw + Math.max(0, Math.min(gw - 1, i))];
-  for (let j = 0; j < gh; j++) {
-    for (let i = 0; i < gw; i++) {
-      const dx = (h(i + 1, j) - h(i - 1, j)) / (2 * cellX);
-      const dy = (h(i, j + 1) - h(i, j - 1)) / (2 * cellY);
-      slope[j * gw + i] = (Math.atan(Math.hypot(dx, dy)) * 180) / Math.PI;
-    }
-  }
-  return slope;
-}
 
 /** How much harder a cell is to cross than flat ground (Infinity = blocked). */
 export const slopeCost = (deg) => (deg > BLOCKED_DEG ? Infinity : 1 + Math.max(0, deg - EASY_DEG) ** 2 / 20);
@@ -106,19 +96,9 @@ export function findCells({ slope, gw, gh, cellX, cellY }, a, b) {
  * (mission/terrain). toMars / toFrame convert between the walk's frame (desert or Mars) and Mars lat/lon.
  * fallback (the route planner) is used outside the map or when every way is blocked.
  */
-export function createSafePlanner({ terrain, toMars, toFrame, r, fallback, clock = () => performance.now() }) {
-  const [gw, gh] = terrain.grid;
-  const { north, south, west, east } = terrain.bounds;
-  const cellX = terrain.width_m / (gw - 1);
-  const cellY = terrain.height_m / (gh - 1);
-  const grid = { slope: slopeGrid({ heights: terrain.heights, gw, gh, cellX, cellY }), gw, gh, cellX, cellY };
-
-  const cellOf = ([lat, lon]) => {
-    const i = Math.round(((lon - west) / (east - west)) * (gw - 1));
-    const j = Math.round(((north - lat) / (north - south)) * (gh - 1));
-    return i < 0 || j < 0 || i >= gw || j >= gh ? null : j * gw + i;
-  };
-  const latLonOf = (k) => [north - (Math.floor(k / gw) / (gh - 1)) * (north - south), west + ((k % gw) / (gw - 1)) * (east - west)];
+export function createSafePlanner({ terrain, grid: given = null, toMars, toFrame, r, fallback, clock = () => performance.now() }) {
+  const grid = given ?? createTerrainGrid(terrain);
+  const { cellOf, latLonOf } = grid;
 
   let cached = null;      // { key, path, at }
 

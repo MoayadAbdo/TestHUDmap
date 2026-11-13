@@ -1,5 +1,6 @@
 import { drawStopCard } from './card.js';
 import { drawCompass } from './compass.js';
+import { drawDangerSigns, drawEdgeGlow, drawPathProfile } from './dangers.js';
 import { drawVisorFrame } from './frame.js';
 import { drawGroundGuide } from './ground.js';
 import { drawMiniMap } from './minimap.js';
@@ -37,7 +38,9 @@ export function drawVisorHud(ctx, w, h, s, images) {
   const edge = full ? (PANEL_W_U + 1) * u : 2 * u;
   const pinEdge = (PANEL_W_U + 1) * u;
   if (!s.waiting) drawGroundGuide(ctx, w, h, u, s, { minX: left + edge, maxX: right - edge }, { minX: left + pinEdge + 8 * u, maxX: right - pinEdge - 8 * u });
+  if (s.dangers?.show?.signs) drawDangerSigns(ctx, w, h, u, s, { minX: left + edge, maxX: right - edge });
   drawVisorFrame(ctx, w, h, { vr: s.view === 'vr' });
+  if (s.dangers?.show?.glow) drawEdgeGlow(ctx, w, h, u, s);
 
   drawCompass(ctx, cx, 15 * row, Math.min(w * 0.46, 64 * u), u, s.heading ?? 0, s.targetBearing, navColor);
 
@@ -72,6 +75,8 @@ export function drawVisorHud(ctx, w, h, s, images) {
   if (s.card) drawStopCard(ctx, w, h, u, s.card, images.get(s.card.photo), { underAlert: s.alerts.length > 0 });
   else if (s.waiting) drawWaiting(ctx, cx, h / 2, u, s.waiting);
   else drawNextStop(ctx, cx, 74 * row, u, s);
+  const profile = Boolean(s.dangers?.show?.profile && !s.card && !s.waiting);
+  if (profile) drawPathProfile(ctx, cx, 81.5 * row, u, s);
   // alerts and messages go on top of everything, including an open stop card
   const alertH = drawAlerts(ctx, cx, 21 * row, u, s);
   drawMessage(ctx, cx, 21 * row + (alertH ? alertH + 2.4 : 1.5) * u, u, w, s.message);
@@ -79,7 +84,7 @@ export function drawVisorHud(ctx, w, h, s, images) {
   const arrowRow = s.card ? (s.alerts.length ? 82 : 78) : 64;   // below the card, which sits lower under an alert
   // under an open card there's no room for the TURN word as well as the AI's text: the arrow alone says it
   if (!s.waiting) drawDirectionArrow(ctx, cx, arrowRow * row, u, s.arrowDeg, navColor, { label: !s.card });
-  drawVoice(ctx, cx, (s.card ? 89 : 86) * row, u, w, s);
+  drawVoice(ctx, cx, (s.card || profile ? 89.5 : 86) * row, u, w, s);
   if (s.view !== 'vr' && !s.waiting) drawFooter(ctx, left, 88 * row, u, s);
 }
 

@@ -8,6 +8,10 @@ import { SIM_CLICKER_KEYS, bindInput } from './input.js';
 import { createMoveInput } from './move-input.js';
 import { createLayerSwitch } from './layer-switch.js';
 import { createStepDetector } from './core/steps.js';
+import { createTerrainGrid } from './core/terrain-grid.js';
+import { dangerOptions } from './core/danger-watch.js';
+import { zonePixels } from './core/hazards.js';
+import { createDangerSound, unlockSpeech } from './danger-sound.js';
 import { startWakeWord } from './wake-word.js';
 import { createDemoPanel } from './view/demo-panel.js';
 import { createRenderer } from './view/renderer.js';
@@ -125,10 +129,20 @@ async function start(mode, view, motionAsked) {
     ? { get label() { return live.part.linkLabel?.() ?? 'Habitat link'; }, bars: 4 }
     : { label: 'Local only (stand-in)', bars: 1 };
   const terrain = await loadTerrain(assetsBase, source.world3d ?? source.sim);
-  app = createHudApp({ mission, source, live: live.part, voice: voice.part, link, terrain });
+  const grid = terrain ? createTerrainGrid(terrain) : null;
+  const dangers = dangerOptions(params.get('dangers'));       // ?dangers=zones,signs,profile,glow (or all)
+  app = createHudApp({ mission, source, live: live.part, voice: voice.part, link, terrain, grid, dangers });
+  const world3d = source.world3d ?? source.sim;
+  if (dangers.zones && grid && world3d?.setGroundOverlay) {        // danger zones painted on the 3D ground
+    const c = document.createElement('canvas');
+    c.width = grid.gw; c.height = grid.gh;
+    c.getContext('2d').putImageData(new ImageData(zonePixels(grid), grid.gw, grid.gh), 0, 0);
+    world3d.setGroundOverlay(c);
+  }
+  const sound = dangers.glow ? createDangerSound() : null;
   const canvas = document.getElementById('hud');
   const layerSwitch = createLayerSwitch({ sim: source.world3d ?? source.sim, notify: (t) => app.notify(t) });
-  const getFrame = () => { const f = app.frame(); f.hud.layer = layerSwitch.current; return f; };
+  const getFrame = () => { const f = app.frame(); f.hud.layer = layerSwitch.current; sound?.update(f.hud.dangers); return f; };
   const renderer = createRenderer({ canvas, getFrame, view });
   const demo = createDemoPanel({ element: document.getElementById('demo'), app, renderer, live: live.part, layers: layerSwitch });
   if (params.get('demo') === '1') demo.show();
@@ -202,6 +216,7 @@ document.getElementById('go').addEventListener('click', () => {
   startError.textContent = '';
   const mode = chosen('mode');
   const motionAsked = requestMotionPermission();
+  unlockSpeech();                       // iPhone only speaks after a tap
   // ask for the microphone inside the tap, so "Hey suit" works later without touching the phone
   navigator.mediaDevices?.getUserMedia?.({ audio: true }).then((s) => s.getTracks().forEach((t) => t.stop())).catch(() => {});
   start(mode, chosen('view'), motionAsked).catch((error) => {

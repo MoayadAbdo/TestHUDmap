@@ -116,6 +116,23 @@ async function loadTerrain(base) {
 }
 
 // ---------- map layers on the ground (photo, slope, minerals, heat), from mission/layers/layers.json ----------
+/** The ground texture with the danger zones painted on top (cached per base texture). */
+function withOverlay(base) {
+  if (!S.overlay || !base) return base;
+  S.overlayTex ??= {};
+  if (S.overlayTex[base.uuid]) return S.overlayTex[base.uuid];
+  const img = base.image;
+  const c = document.createElement("canvas");
+  c.width = img.width; c.height = img.height;
+  const g = c.getContext("2d");
+  g.drawImage(img, 0, 0);
+  g.imageSmoothingEnabled = true;
+  g.drawImage(S.overlay, 0, 0, c.width, c.height);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  return (S.overlayTex[base.uuid] = tex);
+}
 const LAYER_CYCLE = ["photo", "slope", "minerals_frt0000b6f1", "thermal"];
 const PHOTO_TINT = "#f6bf92";
 function layerList() {
@@ -663,11 +680,18 @@ export const sim = {
   async setLayer(id) {
     const layer = layerList().find((l) => l.id === id);
     if (!layer || !S.groundMat) return null;
-    S.groundMat.map = layer.id === "photo" ? S.photoTex : await layerTexture(layer);
+    S.baseMap = layer.id === "photo" ? S.photoTex : await layerTexture(layer);
+    S.groundMat.map = withOverlay(S.baseMap);
     S.groundMat.color.set(layer.id === "photo" ? PHOTO_TINT : "#ffffff");
     S.groundMat.needsUpdate = true;
     S.layerId = layer.id;
     return layer;
+  },
+  /** Danger zones (a canvas over the same box as the ground, clear where safe) drawn on top of any layer; null = off. */
+  setGroundOverlay(canvas) {
+    S.overlay = canvas ?? null;
+    S.overlayTex = {};
+    if (S.groundMat) { S.groundMat.map = withOverlay(S.baseMap ?? S.photoTex); S.groundMat.needsUpdate = true; }
   },
   /** The height grid the 3D ground is built from ({ ...terrain.json, heights }), so the HUD needn't download it again. */
   terrain() { return S.T ? { ...S.T.meta, heights: S.T.heights } : null; },

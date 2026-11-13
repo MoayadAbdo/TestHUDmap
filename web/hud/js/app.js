@@ -9,6 +9,7 @@ import { createRoutePlanner, pathGuide, pathLength } from './core/path.js';
 import { evaClock } from './core/eva-clock.js';
 import { createDetailAuto } from './core/detail-auto.js';
 import { createSafePlanner } from './core/safe-path.js';
+import { createDangerWatch } from './core/danger-watch.js';
 import { buildScene } from './core/scene.js';
 import { createStopCard, nearbyReachedStop } from './core/stop-card.js';
 import { buildStatus } from './core/status.js';
@@ -30,7 +31,8 @@ const SOLAR_FACTOR = 40;           // dose rate during the event (RAD saw large 
  * Everything it talks to is passed in, so stand-ins and the real parts are interchangeable.
  */
 export function createHudApp({
-  mission: rawMission, source, live, voice, link = { label: 'Habitat link', bars: 4 }, terrain = null,
+  mission: rawMission, source, live, voice, link = { label: 'Habitat link', bars: 4 }, terrain = null, grid = null,
+  dangers = { zones: false, signs: false, profile: false, glow: false },
   clock = () => performance.now(), now = () => Date.now(), timers = window,
 }) {
   // The official mission.json lists the base as a stop with "is_base": true; the HUD uses anchor.mars as base.
@@ -49,6 +51,7 @@ export function createHudApp({
   let world = null;
   let nav = null;
   let planner = null;
+  let watch = null;                 // dangers around the walker (signs, profile, edge glow), when they're on
   let step = null;
   let mustReturn = false;
   let alerts = [];
@@ -77,7 +80,8 @@ export function createHudApp({
     nav = createNavigator({ stops, base: world.base, r });
     // safest path on the real height map (avoids steep ground); along the rover's route when there's no map
     const alongRoute = createRoutePlanner({ route, r });
-    planner = terrain ? createSafePlanner({ terrain, toMars, toFrame, r, fallback: alongRoute, clock }) : alongRoute;
+    planner = terrain ? createSafePlanner({ terrain, grid, toMars, toFrame, r, fallback: alongRoute, clock }) : alongRoute;
+    watch = grid && (dangers.signs || dangers.profile || dangers.glow) ? createDangerWatch({ grid, toMars, toFrame, r, show: dangers }) : null;
     world.home = alongRoute;                     // the way home: back along the checked route, never cross-country
     homeAt = -Infinity;
     if (mustReturn) nav.goHome();                  // a new base doesn't cancel return-to-base
@@ -375,6 +379,10 @@ export function createHudApp({
         hud.targetLabel = `${hud.targetName}, about ${hud.etaMin} min`;
         const path = guide.samples.map((p) => ({ ...p, steep: planner.slopeAt(p.at) > STEEP_DEG, eye: eyeAt(p.at) }));
         hud.scene = buildScene({ world, position, heading, isVisited: nav.isVisited, target: step.target, path, plan: guide.path, eyeAt });
+        if (watch) {
+          watch.update({ position, heading, path: guide.path, t, slopeAt: (at) => planner.slopeAt(at) });
+          hud.dangers = { ...watch.view(position, heading, eyeAt), show: dangers };
+        }
       }
       return { background: source.getBackground(), hud };
     },
