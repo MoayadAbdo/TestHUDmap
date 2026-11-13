@@ -96,3 +96,13 @@ details.tools .row + .row { margin-top: 8px; }
 /* science */
 #scienceLast { display: inline-block; max-width: 11em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
 #log li.science { color: #86d9a8; }
+
+/* 3D map */
+.map-box { position: relative; flex: 1; display: flex; min-height: 0; }
+.map-box #map { flex: 1; }
+#map3d { position: absolute; inset: 0; border-radius: 12px; border: 1px solid var(--line); overflow: hidden; z-index: 500; }
+.view-toggle { position: absolute; left: 50px; top: 10px; z-index: 900; padding: 5px 12px; font-weight: 700; background: rgba(20, 14, 9, 0.9); }
+.view-toggle.on { background: var(--amber); color: #1a1205; }
+/* in 3D the 2D map is hidden, but its layer buttons and key stay on top (zoom buttons are 2D only) */
+.map-box #map .leaflet-control-container { visibility: visible; }
+.map-box.is3d #map .leaflet-control-zoom, .map-box.is3d #map .leaflet-control-scale { visibility: hidden; }

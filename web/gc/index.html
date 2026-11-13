@@ -47,7 +47,11 @@
 
   <section class="map">
     <div class="label">MARS MAP <span>HiRISE (MRO) · Curiosity route</span></div>
-    <div id="map"></div>
+    <div class="map-box">
+      <div id="map"></div>
+      <div id="map3d" style="display:none"></div>
+      <button type="button" id="view3d" class="view-toggle" title="Show the map in 3D (real 1 m HiRISE heights)">3D</button>
+    </div>
   </section>
 
   <section class="panel readouts">
@@ -102,6 +106,7 @@
 <script src="vendor/leaflet.js"></script>
 <script src="vendor/qrcode.js"></script>
 <script src="../live/vendor/peerjs.min.js"></script>
+<script type="importmap">{ "imports": { "three": "../sim/vendor/three.module.min.js" } }</script>
 <script type="module" src="gc.js"></script>
 </body>
 </html>

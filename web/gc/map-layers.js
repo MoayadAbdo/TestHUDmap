@@ -17,7 +17,7 @@ const GROUPS = [
   { name: "Context", ids: ["ctx"] },
 ];
 
-export async function addMapLayers({ map, L, base = "../mission/layers/", onShowOnVisor }) {
+export async function addMapLayers({ map, L, base = "../mission/layers/", onShowOnVisor, onLayer }) {
   const data = await fetch(base + "layers.json").then((r) => (r.ok ? r.json() : null)).catch(() => null);
   if (!data) return null;
   const byId = new Map(data.layers.map((l) => [l.id, l]));
@@ -62,6 +62,7 @@ export async function addMapLayers({ map, L, base = "../mission/layers/", onShow
     if (l) overlayOf(l).addTo(map);
     buttons.forEach(({ b, g }) => b.classList.toggle("on", id ? g.ids.includes(id) : g.name === "Photo"));
     drawKey(l ?? byId.get("photo"));
+    onLayer?.(l ? l.url ?? base + l.file : null, l);       // the 3D map drapes the same layer
   }
 
   function drawKey(l) {

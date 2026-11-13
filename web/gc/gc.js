@@ -5,6 +5,7 @@ import { createDelayedView } from "./delayed-view.js";
 import { createDrive } from "./drive.js";
 import { createLinkChoice } from "./link-choice.js";
 import { addMapLayers, stopLabel } from "./map-layers.js";
+import { createMap3d } from "./map3d.js";
 import { startLocalLink } from "./local-link.js";
 import { createPairPanel } from "./pair-panel.js";
 import { createPeerLink } from "./peer-link.js";
@@ -66,7 +67,22 @@ function markTarget(id) {
   mission.stops.forEach((s, i) => stopMarkers[i].setIcon(pinIcon(s, !s.is_base && s.id === id)));
 }
 // layers: slope, minerals, heat, CTX; "Show on visor" paints the same layer on the astronaut's 3D ground
-addMapLayers({ map, L, onShowOnVisor: (l) => sendToAstronaut({ type: "layer", id: l.id }, `LAYER ${l.name} on the visor`) })
+// 3D map: the same route, stops, astronaut and layer, on the real height map (built the first time it's opened)
+let map3d = null, layerUrl = null, lastMars = null;
+$("view3d").addEventListener("click", async () => {
+  const on = $("view3d").classList.toggle("on");
+  $("view3d").textContent = on ? "2D" : "3D";
+  $("map").style.visibility = on ? "hidden" : "";
+  $("map").parentElement.classList.toggle("is3d", on);
+  if (on && !map3d) {
+    map3d = await createMap3d({ container: $("map3d"), mission });
+    if (layerUrl) map3d.setLayer(layerUrl);
+    if (lastMars) map3d.setAstronaut(lastMars);
+  }
+  map3d?.show(on);
+  if (!on) map.invalidateSize();
+});
+addMapLayers({ map, L, onLayer: (url) => { layerUrl = url; map3d?.setLayer(url); }, onShowOnVisor: (l) => sendToAstronaut({ type: "layer", id: l.id }, `LAYER ${l.name} on the visor`) })
   .then((added) => {
     mapLayers = added;
     if (added) mission.stops.forEach((s, i) => stopMarkers[i].setTooltipContent(stopLabel(s, added.layers)));
@@ -109,6 +125,8 @@ function onTelemetry(t) {
   else { state.textContent = `EVA NOMINAL · walking to ${stop ? stop.name : "base"}`; state.className = "eva-state ok"; }
   if (t.mars) {
     astro.setLatLng(t.mars);
+    lastMars = t.mars;
+    map3d?.setAstronaut(t.mars);
     trail.addLatLng(t.mars);
     if (!followed) { map.panTo(t.mars); followed = true; }
   }
