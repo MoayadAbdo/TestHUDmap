@@ -12,7 +12,7 @@ export const UNKNOWN = "unknown";
 
 /** What the agent receives: the HUD fields, with missing readings as "unknown". */
 export type AgentStatus = {
-  [K in keyof MissionStatus]: Exclude<MissionStatus[K], null> | typeof UNKNOWN;
+  [K in keyof MissionStatus]: Exclude<MissionStatus[K], null | undefined> | typeof UNKNOWN;
 };
 
 export class StatusUnavailableError extends Error {
@@ -71,7 +71,7 @@ export function toAgentStatus(value: unknown): AgentStatus {
   if (bad.length > 0) {
     throw new StatusUnavailableError(`invalid or missing fields: ${bad.join(", ")}`);
   }
-  return {
+  const status: AgentStatus = {
     stop: numberOrUnknown(r.stop),
     stop_name: typeof r.stop_name === "string" && r.stop_name.trim() !== "" ? r.stop_name : UNKNOWN,
     dist_next_m: numberOrUnknown(r.dist_next_m),
@@ -82,6 +82,11 @@ export function toAgentStatus(value: unknown): AgentStatus {
     rad_uSv_h: numberOrUnknown(r.rad_uSv_h),
     temp_c: numberOrUnknown(r.temp_c),
   };
+  // newer HUD fields: passed on only when the HUD sends them (older HUDs and mocks stay unchanged)
+  if (typeof r.return_reason === "string" && r.return_reason.trim() !== "") status.return_reason = r.return_reason;
+  if (isFiniteNumber(r.walk_home_min)) status.walk_home_min = r.walk_home_min;
+  if (isFiniteNumber(r.rad_dose_uSv)) status.rad_dose_uSv = r.rad_dose_uSv;
+  return status;
 }
 
 function isFiniteNumber(value: unknown): value is number {

@@ -32,7 +32,21 @@ const hirise = mission.layers.find((l) => l.id === "hirise")?.tiles;
 const map = L.map("map", { crs: L.CRS.EPSG4326, zoomControl: true, attributionControl: true })
   .setView(mission.anchor.mars, 16);
 L.tileLayer(hirise, { maxNativeZoom: 16, maxZoom: 18, attribution: "NASA/JPL/UArizona HiRISE · Mars Trek" }).addTo(map);
-L.polyline(mission.route.map((p) => p.mars ?? [p.lat, p.lon]), { color: "#ffb54a", weight: 3, opacity: 0.9 }).addTo(map);
+// the route coloured by slope: green easy, amber careful (> 12°), red no-go (> 20°, NASA's EVA limit)
+const slopeColor = (deg) => (deg > 20 ? "#ef4444" : deg > 12 ? "#f59e0b" : "#4ade80");
+const pts = mission.route.map((p) => ({ at: p.mars ?? [p.lat, p.lon], slope: p.slope_deg ?? 0 }));
+for (let i = 1; i < pts.length; i++) {
+  L.polyline([pts[i - 1].at, pts[i].at], { color: slopeColor(pts[i - 1].slope), weight: 4, opacity: 0.95 })
+    .bindTooltip(`Route slope ${Math.round(pts[i - 1].slope)}°`, { sticky: true }).addTo(map);
+}
+L.control.scale({ metric: true, imperial: false, maxWidth: 140, position: "bottomleft" }).addTo(map);
+const routeKey = L.control({ position: "bottomleft" });
+routeKey.onAdd = () => {
+  const el = L.DomUtil.create("div", "route-key");
+  el.innerHTML = '<b>Route slope</b><br><i style="background:#4ade80"></i>&lt; 12° easy<br><i style="background:#f59e0b"></i>12–20° careful<br><i style="background:#ef4444"></i>&gt; 20° no-go (NASA EVA limit)';
+  return el;
+};
+routeKey.addTo(map);
 const stopMarkers = mission.stops.map((s) => L.circleMarker(s.mars, { radius: 7, color: s.is_base ? "#4ade80" : "#22d3ee", fillOpacity: 0.85 })
   .bindTooltip(`${s.id} · ${s.name}`, { permanent: true, direction: "right", className: "" }).addTo(map));
 // layers: slope, minerals, heat, CTX; "Show on visor" paints the same layer on the astronaut's 3D ground
@@ -44,14 +58,26 @@ let followed = false;
 
 // ---------- incoming data ----------
 function onTelemetry(t) {
-  $("o2").textContent = t.o2_pct != null ? `${t.o2_pct}%` : "—";
-  $("rad").textContent = t.rad_dose_uSv ?? "—";
+  const set = (id, text, cls = "") => { const el = $(id); el.textContent = text; el.className = cls; };
+  const hm = (min) => (min == null ? "" : `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, "0")}m left`);
+  set("o2", t.o2_pct != null ? `${t.o2_pct}%` : "—", t.o2_pct < 30 ? "bad" : "");
+  $("o2left").textContent = hm(t.o2_minutes_left);
+  set("radRate", t.rad_uSv_h != null ? `${t.rad_uSv_h} µSv/h` : "—", t.rad_uSv_h > 100 ? "bad" : "");
+  $("radDose").textContent = t.rad_dose_uSv != null ? `· dose ${t.rad_dose_uSv} µSv` : "";
+  set("temp", t.temp_c != null ? `${t.temp_c} °C` : "—");
   const stop = mission.stops.find((s) => s.id === t.stop && !s.is_base);
-  $("stop").textContent = stop ? stop.name : t.stop == null ? "Base" : `#${t.stop}`;
-  $("dnext").textContent = t.dist_next_m != null ? `${t.dist_next_m} m` : "—";
-  $("dbase").textContent = t.dist_base_m != null ? `${t.dist_base_m} m` : "—";
-  $("heading").textContent = t.heading != null ? `${t.heading}°` : "—";
+  set("stop", stop ? stop.name : t.stop == null ? "Base" : `#${t.stop}`);
+  set("dnext", t.dist_next_m != null ? `${t.dist_next_m} m` : "—");
+  set("home", t.walk_home_min != null ? `${t.walk_home_min} min` : "—");
+  $("dbase").textContent = t.dist_base_m != null ? `· ${t.dist_base_m} m straight` : "";
+  set("eva", t.eva_min != null ? `${t.eva_min} min` : "—");
+  set("heading", t.heading != null ? `${t.heading}°` : "—");
   $("viewMode").textContent = { field: "· camera", sim: "· 3D simulation" }[t.mode] ?? "";
+  const alerts = t.alerts ?? [];
+  const state = $("evaState");
+  if (t.must_return) { state.textContent = `RETURNING TO BASE · ${t.return_reason ?? "safety limit"}`; state.className = "eva-state danger"; }
+  else if (alerts.length) { state.textContent = `CAUTION · ${alerts.map((a) => a.replaceAll("_", " ").toLowerCase()).join(" · ")}`; state.className = "eva-state caution"; }
+  else { state.textContent = `EVA NOMINAL · walking to ${stop ? stop.name : "base"}`; state.className = "eva-state ok"; }
   if (t.mars) {
     astro.setLatLng(t.mars);
     trail.addLatLng(t.mars);
@@ -130,8 +156,24 @@ $("msgForm").addEventListener("submit", (e) => {
   sendToAstronaut({ type: "message", text }, `GC: ${text}`);
   $("msg").value = "";
 });
+// An event happens ON MARS: the suit feels it at once (no delay). What Ground Control says about it
+// travels at light speed, so with "Mars delay" on it arrives minutes later — that gap is the point of the demo.
+const GC_WORDS = { dust: "Dust storm on the way, stay on the route", solar: "Solar storm warning: head back to base now", o2leak: "We see an O2 leak, return to base now" };
+function eventNow(msg, label) {
+  const via = route();
+  if (!via) { log("Not connected", "alert"); return; }
+  log(label, "alert");
+  if (via === "local") local.send(msg).catch(() => log("Send failed", "alert"));
+  else peerLink.send(msg);
+}
 document.querySelectorAll("[data-event]").forEach((b) =>
-  b.addEventListener("click", () => sendToAstronaut({ type: "event", name: b.dataset.event }, `EVENT ${b.textContent}`)));
+  b.addEventListener("click", () => {
+    eventNow({ type: "event", name: b.dataset.event }, `ON MARS: ${b.textContent} hits the astronaut`);
+    const words = GC_WORDS[b.dataset.event];
+    if (words) sendToAstronaut({ type: "message", text: words }, `GC: ${words}`);
+  }));
+document.querySelector("[data-recall]")?.addEventListener("click", () =>
+  sendToAstronaut({ type: "event", name: "recall" }, "GC: RECALL to base"));
 document.querySelectorAll("[data-demo]").forEach((b) =>
   b.addEventListener("click", () => sendToAstronaut({ type: "demo", name: b.dataset.demo }, `TEST ${b.textContent}`)));
 const applyDelay = () => delayedView.setDelay(delayMs() / 1000);

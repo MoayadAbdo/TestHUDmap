@@ -1,5 +1,5 @@
 import { focalForFov, projectGround } from '../../core/ar.js';
-import { AMBER, RED, say } from './style.js';
+import { INK, NAV, RED, say } from './style.js';
 
 const FOV_DEG = 62;
 const SPACING_M = 2.5;
@@ -18,7 +18,7 @@ export function guideSide(target, view, clear, coneDeg = GUIDE_CONE_DEG) {
   return at && at.x >= clear.minX && at.x <= clear.maxX ? 'guide' : turn;
 }
 
-const STEEP = '#ff7a4d';
+const STEEP = '#ffb02e';        // steep part of the path (caution), set apart from the cyan path
 
 /** Path point d metres ahead (scene.path has a point every 0.5 m). */
 const along = (path, d) => path[Math.min(path.length - 1, Math.max(0, Math.round(d / 0.5)))];
@@ -34,14 +34,14 @@ export function drawGroundGuide(ctx, w, h, u, s, clear = { minX: 0, maxX: w }, p
   if (!scene) return;
   const target = scene.stops.find((p) => p.isTarget) ?? (scene.base.isTarget ? scene.base : null);
   if (!target) return;
-  const color = s.mustReturn ? RED : AMBER;
+  const color = s.mustReturn ? RED : NAV;
   const view = { centerX: w / 2, centerY: h / 2, focalPx: focalForFov(w, FOV_DEG), pitchDeg: s.pitch ?? 0 };
   const inside = (c, zone) => c && c.x >= zone.minX && c.x <= zone.maxX;
   const path = scene.path ?? [];
   const lengthM = path.length ? path[path.length - 1].d : 0;
 
   const flow = ((s.timeMs / 1000) * 1.2) % SPACING_M;
-  ctx.shadowColor = color;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
   for (let d = 2.5 + flow; d < Math.min(lengthM - 1, FARTHEST_M); d += SPACING_M) {   // from 2.5 m: not under your feet
     const here = along(path, d);
     const next = along(path, d + 0.5);
@@ -75,7 +75,7 @@ function drawPin(ctx, ground, u, view, forward, color, s) {
   const topY = ground.y - height;
   const beam = ctx.createLinearGradient(0, topY, 0, ground.y);
   beam.addColorStop(0, color);
-  beam.addColorStop(1, 'rgba(255, 181, 71, 0)');
+  beam.addColorStop(1, 'rgba(0, 0, 0, 0)');
   ctx.strokeStyle = beam;
   ctx.lineWidth = Math.max(2, 0.5 * u);
   ctx.beginPath();
@@ -106,5 +106,5 @@ function drawPin(ctx, ground, u, view, forward, color, s) {
   ctx.fill();
   ctx.shadowBlur = 0;
   say(ctx, (s.targetName ?? '').toUpperCase(), ground.x, topY - 5 * u, 2.8 * u, { align: 'center', color, weight: 700 });
-  say(ctx, `${s.distanceLabel}   ${s.etaMin} MIN`, ground.x, topY - 2.2 * u - 0.6 * u, 2.2 * u, { align: 'center', color });
+  say(ctx, `${s.distanceLabel} · ${s.etaMin} MIN`, ground.x, topY - 2.2 * u - 0.6 * u, 2.2 * u, { align: 'center', color: INK });
 }

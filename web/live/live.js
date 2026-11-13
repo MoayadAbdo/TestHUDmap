@@ -50,6 +50,8 @@ function hudStream() {
   return state.stream;
 }
 
+const DEMO_NAMES = new Set(["oxygenFast", "oxygenLow", "steepGround", "nextStop", "solarStorm", "o2Leak", "recall", "toggleDetail"]);
+
 function send(msg) {
   for (const c of state.conns) if (c.open) { try { c.send(msg); } catch (_) { /* closed */ } }
 }
@@ -58,14 +60,18 @@ function onData(msg) {
   if (!msg || typeof msg !== "object") return;
   if (msg.type === "message") state.onMessage.forEach((cb) => cb({ text: msg.text }));
   if (msg.type === "want-video") callViewer(this);
-  if (msg.type === "demo") window.hud?.demo?.[msg.name]?.();
+  // Ground Control may only press the demo buttons it has, not call any function by name
+  if (msg.type === "demo" && DEMO_NAMES.has(msg.name)) window.hud?.demo?.[msg.name]?.();
   if (msg.type === "move") window.hud?.move?.(msg);                 // Ground Control drives the sim (WASD)
   if (msg.type === "layer") window.hud?.layer?.(msg.id);            // Ground Control picks the visor's map layer
   if (msg.type === "event") {
     if (msg.name === "dust") window.hud?.sim?.event?.("dust");
-    const text = { dust: "DUST STORM: visibility dropping", solar: "SOLAR STORM: return to base", o2leak: "O2 LEAK: return to base now" }[msg.name];
-    if (msg.name === "o2leak") window.hud?.demo?.oxygenLow?.();
-    if (text) state.onMessage.forEach((cb) => cb({ text }));
+    // the suit's own sensors react at once (return home, radiation up); Ground Control's words come as a
+    // separate, delayed message, so these are suit notices, not "Ground Control:" messages
+    if (msg.name === "solar") window.hud?.demo?.solarStorm?.();
+    if (msg.name === "o2leak") window.hud?.demo?.o2Leak?.();
+    if (msg.name === "recall") window.hud?.demo?.recall?.();
+    if (msg.name === "dust") window.hud?.notify?.("Dust storm: visibility dropping, stay on the route");
   }
 }
 

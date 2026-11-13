@@ -38,11 +38,14 @@
   </section>
 
   <section class="panel readouts">
-    <div class="tile"><b id="o2">—</b><span>Oxygen</span></div>
-    <div class="tile"><b id="rad">—</b><span>Radiation µSv</span></div>
-    <div class="tile"><b id="stop">—</b><span>Next stop</span></div>
-    <div class="tile"><b id="dnext">—</b><span>To next stop</span></div>
-    <div class="tile"><b id="dbase">—</b><span>To base</span></div>
+    <div id="evaState" class="eva-state">Waiting for telemetry</div>
+    <div class="tile"><b id="o2">—</b><span>Oxygen <em id="o2left"></em></span></div>
+    <div class="tile"><b id="radRate">—</b><span>Radiation now <em id="radDose"></em></span></div>
+    <div class="tile"><b id="temp">—</b><span>Temperature</span></div>
+    <div class="tile"><b id="stop">—</b><span>Heading to</span></div>
+    <div class="tile"><b id="dnext">—</b><span>Distance there</span></div>
+    <div class="tile"><b id="home">—</b><span>Walk home <em id="dbase"></em></span></div>
+    <div class="tile"><b id="eva">—</b><span>EVA time</span></div>
     <div class="tile"><b id="heading">—</b><span>Heading</span></div>
   </section>
 
@@ -55,11 +58,17 @@
       <select id="driveSpeed" title="Walking speed while driving"><option value="1">1× walk</option><option value="3" selected>3× walk</option><option value="5">5× walk</option><option value="8">8× walk</option></select>
       <select id="delaySec"><option value="20">20 s (demo)</option><option value="60">1 min</option><option value="186">3.1 min (closest)</option><option value="1335">22 min (farthest)</option></select>
     </div>
+    <div class="label sub">SIMULATE ON MARS <span>happens to the suit at once · Earth's words follow with the delay</span></div>
     <div class="row events">
       <button data-event="dust">Dust storm</button>
       <button data-event="solar">Solar storm</button>
       <button data-event="o2leak">O₂ leak</button>
       <button data-demo="steepGround">Steep ground</button>
+    </div>
+    <div class="row events">
+      <button data-recall class="danger">Recall to base</button>
+      <button data-demo="toggleDetail" title="Astronaut visor: only what matters now ↔ every panel">Visor: focus / full</button>
+      <button data-demo="nextStop">Jump to next stop</button>
     </div>
   </section>
 

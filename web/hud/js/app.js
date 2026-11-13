@@ -1,12 +1,12 @@
-import { evaluateAlerts } from './core/alerts.js';
+import { RETURN_REASONS, alertLevel, evaluateAlerts } from './core/alerts.js';
 import { createBiosigns } from './core/biosigns.js';
 import { EARTH_RADIUS_M, MARS_RADIUS_M, bearingDeg, distanceM } from './core/geo.js';
 import { arrowAngle, createNavigator, etaMinutes } from './core/nav.js';
-import { slopeAhead } from './core/route.js';
 import { baseMessage, createBaseFix } from './core/base-fix.js';
 import { gpsWarning } from './core/gps-health.js';
 import { sideReadouts } from './core/readouts.js';
-import { createRoutePlanner, pathGuide } from './core/path.js';
+import { createRoutePlanner, pathGuide, pathLength } from './core/path.js';
+import { evaClock } from './core/eva-clock.js';
 import { createSafePlanner } from './core/safe-path.js';
 import { buildScene } from './core/scene.js';
 import { createStopCard, nearbyReachedStop } from './core/stop-card.js';
@@ -19,6 +19,10 @@ const TELEMETRY_MS = 1000;
 const PHOTO_MS = 2000;
 const MESSAGE_MS = 12000;
 const STEEP_DEG = 12;
+const SLOPE_LOOK_M = 15;           // the steep-ground alert looks this far along the planned path
+const HOME_PLAN_MS = 3000;         // re-measure the walk home this often
+const SOLAR_MS = 5 * 60000;        // a solar particle event in the demo lasts 5 minutes
+const SOLAR_FACTOR = 40;           // dose rate during the event (RAD saw large jumps in strong events)
 
 /**
  * The HUD's brain: position in, navigation, oxygen, alerts, cards and messages out.
@@ -52,6 +56,12 @@ export function createHudApp({
   let aiText = '';
   let forcedSlopeUntil = 0;
   let radDoseUsv = 0;
+  let hazard = null;               // { name, until } — solar storm, O2 leak or a recall from Ground Control
+  let returnReason = null;
+  let homeM = null;                 // walk home along the route (Mars metres of the frame)
+  let homeAt = -Infinity;
+  let detail = 'focus';             // focus: only what matters now · full: every panel
+  const startedAt = clock();
   let lastTickMs = clock();
   let lastSpot = null;
   let speedMps = 0;
@@ -67,6 +77,8 @@ export function createHudApp({
     // safest path on the real height map (avoids steep ground); along the rover's route when there's no map
     const alongRoute = createRoutePlanner({ route, r });
     planner = terrain ? createSafePlanner({ terrain, toMars, toFrame, r, fallback: alongRoute, clock }) : alongRoute;
+    world.home = alongRoute;                     // the way home: back along the checked route, never cross-country
+    homeAt = -Infinity;
     if (mustReturn) nav.goHome();                  // a new base doesn't cancel return-to-base
   }
 
@@ -115,11 +127,41 @@ export function createHudApp({
     if (text) { gpsWarnAt = t; message = { text, fromGround: false, until: t + MESSAGE_MS }; }
   }
 
+  /** Radiation now (µSv/h): the stop's RAD value, many times higher during a solar storm. */
+  function radRate(t) {
+    const base = conditions()?.rad_uSv_h ?? 0;
+    return hazard?.name === 'solar' && t <= hazard.until ? base * SOLAR_FACTOR : base;
+  }
+
+  /** Walking slows on slopes (suit + 0.38 g): about half speed at 20°. */
+  const slowdown = (deg) => 1 / (1 + Math.max(0, deg) / 20);
+
+  /** Steepest ground in the next few metres of the path the arrows show (not the rover's line). */
+  function slopeAlongPath(position) {
+    const guide = guideFrom(position);
+    let steepest = 0;
+    let steepRun = 0;                               // need a metre of steep ground, not one noisy cell
+    for (const p of guide.samples) {
+      if (p.d > SLOPE_LOOK_M) break;
+      const deg = planner.slopeAt(p.at) ?? 0;
+      steepRun = deg > STEEP_DEG ? steepRun + 1 : 0;
+      if (steepRun >= 2) steepest = Math.max(steepest, deg);
+    }
+    return steepest;
+  }
+
+  /** Start an emergency: the walk ends and the astronaut heads home. */
+  function startHazard(name, ms = SOLAR_MS) {
+    hazard = { name, until: clock() + ms };
+    tick();
+  }
+
   function tick() {
     const t = clock();
     suit.update(t);
     const position = source.getPosition();
-    radDoseUsv += ((conditions()?.rad_uSv_h ?? 0) * (t - lastTickMs)) / 3600000;
+    if (hazard && t > hazard.until) hazard = null;
+    radDoseUsv += (radRate(t) * (t - lastTickMs)) / 3600000;
     lastTickMs = t;
     if (!position || !ensureWorld(position)) return;
     gpsHealth(position, t);
@@ -134,22 +176,29 @@ export function createHudApp({
     if (step.arrived) arrive(step.arrived, t, step.done);
     card.update(position.at, t, world.r);
 
-    const slope = t < forcedSlopeUntil ? 90 : slopeAhead(world.route, position.at, world.r);
+    const slope = t < forcedSlopeUntil ? 30 : slopeAlongPath(position);
+    if (t - homeAt > HOME_PLAN_MS) {
+      homeAt = t;
+      homeM = pathLength(world.home.plan(position.at, world.base.at), world.r);
+    }
     slopeNow = slope;
     bio = body.update({ speedMps, slopeDeg: Math.min(slope, 30), lowOxygen: suit.o2Pct < 30 });
     const result = evaluateAlerts({
       slopeAheadDeg: slope,
       o2Pct: suit.o2Pct,
       o2MinutesLeft: suit.minutesLeft,
-      walkBackMinutes: etaMinutes(step.baseDistanceM, walkSpeed),
+      walkBackMinutes: etaMinutes(homeM ?? step.baseDistanceM, walkSpeed * slowdown(slope)),
       alreadyReturning: mustReturn,
+      hazard: hazard?.name ?? null,
     });
     if (result.mustReturn && !mustReturn) {
       mustReturn = true;
+      returnReason = result.reason;
       card.close();                                  // the way home matters more than the card
       nav.goHome();
       step = nav.update(position.at, t);
-      voice.sendContext('The oxygen reserve is reached. The astronaut must return to base now.');
+      const why = RETURN_REASONS[returnReason] ?? 'Safety limit reached';
+      voice.sendContext(`${why}. The astronaut must return to base now, along the route.`);
     }
     alerts = result.alerts;
   }
@@ -179,6 +228,15 @@ export function createHudApp({
       o2MinutesLeft: suit.minutesLeft,
       mustReturn,
       conditions: conditions(),
+      extra: {
+        return_reason: mustReturn ? RETURN_REASONS[returnReason] ?? null : null,
+        rad_uSv_h: Math.round(radRate(clock()) * 10) / 10,   // radiation NOW (a solar storm raises it), not the stop's normal value
+        rad_now_uSv_h: Math.round(radRate(clock()) * 10) / 10,
+        rad_dose_uSv: Math.round(radDoseUsv * 10) / 10,
+        walk_home_min: homeM == null ? null : Math.round(etaMinutes(homeM, walkSpeed)),
+        hazard: hazard?.name ?? null,
+        eva_min: Math.round((clock() - startedAt) / 60000),
+      },
     });
   }
 
@@ -196,7 +254,15 @@ export function createHudApp({
       dist_next_m: s.dist_next_m,
       dist_base_m: s.dist_base_m,
       o2_pct: s.o2_pct,
-      rad_dose_uSv: Math.round(radDoseUsv * 10) / 10,
+      o2_minutes_left: s.o2_minutes_left,
+      rad_dose_uSv: s.rad_dose_uSv,
+      rad_uSv_h: s.rad_now_uSv_h,
+      temp_c: s.temp_c,
+      must_return: s.must_return,
+      return_reason: s.return_reason,
+      walk_home_min: s.walk_home_min,
+      eva_min: s.eva_min,
+      stop_name: s.stop_name,
       alerts,
     });
   }
@@ -273,7 +339,12 @@ export function createHudApp({
       const c = conditions();
       const hud = {
         o2Pct: suit.o2Pct,
-        radUsvH: c?.rad_uSv_h ?? null,
+        radUsvH: Math.round(radRate(t) * 10) / 10,
+        radHigh: hazard?.name === 'solar',
+        level: alertLevel(alerts),
+        returnReason: mustReturn ? RETURN_REASONS[returnReason] ?? null : null,
+        walkHomeMin: homeM == null ? null : Math.max(1, Math.round(etaMinutes(homeM, walkSpeed))),
+        detail,
         tempC: c?.temp_c ?? null,
         stopLabel: stopLabel(),
         alerts,
@@ -286,6 +357,7 @@ export function createHudApp({
       };
       Object.assign(hud, { timeMs: t }, sideReadouts({
         wallMs: now(), mission, conditionStop: conditionStop(), suit, bio, link, radDoseUsv, mustReturn, slopeDeg: slopeNow,
+        eva: source.frame === 'mars' ? evaClock(t - startedAt) : null,
       }));
       if (step && position) {
         const heading = position.heading ?? 0;
@@ -308,6 +380,11 @@ export function createHudApp({
     demo: {
       oxygenFast: () => suit.setSpeed(20),
       oxygenLow: () => suit.setO2(25),
+      solarStorm: () => startHazard('solar'),
+      o2Leak: () => { suit.setO2(Math.min(suit.o2Pct, 25)); startHazard('o2leak', 60 * 60000); },
+      recall: () => startHazard('ground', 60 * 60000),
+      /** focus ↔ full panels (I key, gamepad X, long tap on the side) */
+      toggleDetail: () => { detail = detail === 'focus' ? 'full' : 'focus'; return detail; },
       steepGround: () => {
         forcedSlopeUntil = clock() + 10000;
       },

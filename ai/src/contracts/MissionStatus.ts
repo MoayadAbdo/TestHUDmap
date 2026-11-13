@@ -22,6 +22,12 @@ export interface MissionStatus {
   rad_uSv_h: number | null;
   /** Outside temperature, °C. */
   temp_c: number | null;
+  /** Why the suit ordered the return (e.g. "Solar storm: radiation rising"); null while walking. Optional. */
+  return_reason?: string | null;
+  /** Minutes to walk home along the route. Optional. */
+  walk_home_min?: number | null;
+  /** Radiation dose so far on this walk, microsieverts. Optional. */
+  rad_dose_uSv?: number | null;
 }
 
 export interface StatusProvider {

@@ -3,7 +3,7 @@
  * stop / stop_name / dist_next_m: the stop the astronaut is walking TO (null / 'Base' when heading home).
  * Numbers that are unknown are null, never Infinity or NaN.
  */
-export function buildStatus({ nav, stopCount, marsPerFrameMetre, o2Pct, o2MinutesLeft, mustReturn, conditions }) {
+export function buildStatus({ nav, stopCount, marsPerFrameMetre, o2Pct, o2MinutesLeft, mustReturn, conditions, extra = {} }) {
   const round = (n) => (Number.isFinite(n) ? Math.round(n) : null);
   const finite = (n) => (Number.isFinite(n) ? n : null);
   return {
@@ -16,5 +16,6 @@ export function buildStatus({ nav, stopCount, marsPerFrameMetre, o2Pct, o2Minute
     must_return: mustReturn,
     rad_uSv_h: finite(conditions?.rad_uSv_h),
     temp_c: finite(conditions?.temp_c),
+    ...extra,
   };
 }
