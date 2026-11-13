@@ -1,6 +1,7 @@
 
 import type { StatusProvider } from "../contracts/MissionStatus";
 import type {
+  ClientToolHandler,
   StartVoiceSession,
   VoiceDisconnect,
   VoiceMode,
@@ -44,6 +45,8 @@ export interface VoiceAssistantDependencies {
   clock?: () => number;
   /** Re-sent mission context older than this is dropped. */
   contextMaxAgeMs?: number;
+  /** More client tools for the agent, e.g. `get_location_info`. `get_status` can't be replaced. */
+  extraTools?: Record<string, ClientToolHandler>;
 }
 
 /**
@@ -154,7 +157,7 @@ export class VoiceAssistantService {
     try {
       session = await this.deps.startSession({
         agentId,
-        clientTools: { [GET_STATUS_TOOL_NAME]: this.createStatusTool() },
+        clientTools: { ...this.deps.extraTools, [GET_STATUS_TOOL_NAME]: this.createStatusTool() },
         callbacks: this.callbacksFor(generation),
       });
     } catch (error) {

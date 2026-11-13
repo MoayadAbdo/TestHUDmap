@@ -8,7 +8,8 @@
  *   isListening()            true while connected
  *   getVoiceState()          'disconnected' | 'connecting' | 'connected'
  *
- * Live status comes from `window.hud.getStatus()`. The agent id is read at
+ * Live status comes from `window.hud.getStatus()`; location facts (`get_location_info`, which also
+ * opens the info card on the visor) from `window.hud.placeInfo()`. The agent id is read at
  * runtime only (`?agent=<id>`, remembered on the phone); never at build time.
  */
 import { VoiceAssistantService } from "./services/VoiceAssistantService";
@@ -18,6 +19,7 @@ import { requestBrowserMicrophone } from "./adapters/browserMicrophone";
 import { createHudStatusReader, type HudWindowApi } from "./hud/hudStatusReader";
 import { resolveRuntimeAgentId } from "./hud/runtimeAgentId";
 import { HudVoiceBridge } from "./hud/HudVoiceBridge";
+import { createGetLocationInfoTool, GET_LOCATION_INFO_TOOL_NAME } from "./voice/getLocationInfoTool";
 
 function localStorageOrUndefined(): Storage | undefined {
   try {
@@ -36,6 +38,9 @@ const bridge = new HudVoiceBridge(
     startSession: startElevenLabsVoiceSession,
     requestMicrophoneAccess: () => requestBrowserMicrophone(),
     clock: Date.now,
+    extraTools: {
+      [GET_LOCATION_INFO_TOOL_NAME]: createGetLocationInfoTool(() => hudWindow.hud?.placeInfo?.() ?? null),
+    },
   }),
   console,
 );
