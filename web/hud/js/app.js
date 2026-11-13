@@ -14,6 +14,7 @@ import { createScience } from './core/science.js';
 import { relativeTo } from './core/ar.js';
 import { buildScene } from './core/scene.js';
 import { createStopCard, nearbyReachedStop } from './core/stop-card.js';
+import { placeInfo, importantLines, infoTitle } from './core/place-info.js';
 import { buildStatus } from './core/status.js';
 import { createSuit } from './core/suit.js';
 import { createTwin } from './core/twin.js';
@@ -33,7 +34,7 @@ const SOLAR_FACTOR = 40;           // dose rate during the event (RAD saw large 
  * Everything it talks to is passed in, so stand-ins and the real parts are interchangeable.
  */
 export function createHudApp({
-  mission: rawMission, source, live, voice, link = { label: 'Habitat link', bars: 4 }, terrain = null, grid = null,
+  mission: rawMission, source, live, voice, link = { label: 'Habitat link', bars: 4 }, terrain = null, grid = null, knowledge = null,
   dangers = { zones: false, signs: false, profile: false, glow: false },
   clock = () => performance.now(), now = () => Date.now(), timers = window,
 }) {
@@ -59,6 +60,8 @@ export function createHudApp({
   let alerts = [];
   const science = createScience({ stops: mission.stops });
   const card = createStopCard({ awayMs: source.frame === 'mars' ? 0 : undefined });
+  const INFO_MS = 15000;                              // the "What's here?" card stays this long
+  let info = null, infoSeq = 0;
   let message = null;
   let aiText = '';
   let forcedSlopeUntil = 0;
@@ -298,6 +301,7 @@ export function createHudApp({
       stop_name: s.stop_name,
       science: { done: science.done, total: science.total, last: science.last?.name ?? null },
       samples: science.list(),
+      place_info: info ? { id: info.id, title: info.title, lines: info.lines.map((l) => `${l.icon} ${l.text}`) } : null,
       alerts,
     });
   }
@@ -348,8 +352,22 @@ export function createHudApp({
       sampleLogged(sample);
       return sample;
     },
+    /**
+     * "What's here?": facts about the astronaut's spot from the real layers + Curiosity's findings.
+     * Shows the info card on the visor (and in Ground Control's log) and returns the facts (for the voice agent).
+     */
+    showPlaceInfo() {
+      const position = source.getPosition();
+      if (!knowledge?.grid || !world || !position) return null;
+      const [lat, lon] = world.toMars(position.at);
+      const p = placeInfo({ grid: knowledge.grid, mission: rawMission, facts: knowledge.facts, lat, lon });
+      if (!p) return null;
+      info = { id: ++infoSeq, title: infoTitle(p), lines: importantLines(p), sources: p.sources, until: clock() + INFO_MS };
+      return p;
+    },
     /** Tap while a stop card is open: close it. Returns true if it closed one. */
     dismissCard() {
+      if (!card.stop && info) { info = null; return true; }     // a tap also closes the info card
       if (!card.stop) return false;
       card.close();
       return true;
@@ -357,6 +375,7 @@ export function createHudApp({
     /** Close the stop card, or show it again while standing at a reached stop (C key, gamepad Y). */
     toggleCard() {
       if (card.stop) { card.close(); return; }
+      if (info) { info = null; return; }                         // C also closes the info card
       const position = source.getPosition();
       if (!world || !position) return;
       const stop = nearbyReachedStop(world.stops, nav.isVisited, position.at, world.r);
@@ -378,6 +397,7 @@ export function createHudApp({
     frame() {
       const t = clock();
       if (message && t > message.until) message = null;
+      if (info && t > info.until) info = null;
       const position = source.getPosition();
       const c = conditions();
       const hud = {
@@ -399,6 +419,7 @@ export function createHudApp({
         listening: voice.listening,
         mustReturn,
         card: card.stop,
+        info: card.stop ? null : info,                   // a stop card wins; the info card comes back after it
         waiting: step ? null : waitingText(position),
       };
       Object.assign(hud, { timeMs: t }, sideReadouts({

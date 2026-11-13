@@ -80,3 +80,21 @@ export function placeInfo({ grid, mission, facts = null, lat, lon }) {
   const sources = ['MRO HiRISE 1 m heights and slope', `MRO CRISM${scene ? ` ${scene}` : ''}`, 'Mars Odyssey THEMIS', ...factSources];
   return { here, stop, lines, sources };
 }
+
+const PRIORITY = ['stop', 'curiosity', 'look_for', 'slope', 'mineral', 'why', 'area', 'ground', 'height'];
+
+/** The most important lines first: what's here and what to do, then dangers, then the rest. Calm ground and no-signal lines go last. */
+export function importantLines(info, max = 5) {
+  const rank = (l) => {
+    let r = PRIORITY.indexOf(l.kind);
+    if (l.kind === 'slope' && info.here.steep_pct < 15) r += 10;          // gentle ground: not important
+    if (l.kind === 'mineral' && /No clear/.test(l.text)) r += 10;       // no signal: not important
+    return r;
+  };
+  return [...info.lines].sort((a, b) => rank(a) - rank(b)).slice(0, max);
+}
+
+/** Card title: the stop's name, or "between stops". */
+export function infoTitle(info) {
+  return info.stop ? info.stop.name : 'Between stops';
+}
