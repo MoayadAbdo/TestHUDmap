@@ -11,11 +11,9 @@
 <header>
   <div class="brand">GROUND CONTROL <span>Mount Sharp boxwork · Gale Crater</span></div>
   <form id="join">
-    <span id="local" class="pill off" hidden>local link</span>
     <label>Room code <input id="room" placeholder="e.g. K7Q2XM" autocomplete="off" maxlength="10"></label>
     <button>Connect</button>
-    <span id="link" class="pill off">not connected</span>
-    <span id="source" class="pill off">no phone data</span>
+    <span id="status" class="pill off">not connected</span>
   </form>
 </header>
 
@@ -51,20 +49,25 @@
     <form id="msgForm"><input id="msg" placeholder="Type a message…" autocomplete="off"><button>Send</button></form>
     <div class="row">
       <label class="switch"><input type="checkbox" id="delayOn"> Mars delay</label>
-      <label class="switch" title="Sim mode: W/S walk, A/D sideways, Q/E or arrows turn, Shift runs. Ignores the Mars delay."><input type="checkbox" id="driveOn"> Drive (WASD)</label>
-      <select id="driveSpeed" title="Walking speed while driving"><option value="1">1× walk</option><option value="3" selected>3× walk</option><option value="5">5× walk</option><option value="8">8× walk</option></select>
       <select id="delaySec"><option value="20">20 s (demo)</option><option value="60">1 min</option><option value="186">3.1 min (closest)</option><option value="1335">22 min (farthest)</option></select>
     </div>
-    <div class="row events">
-      <button data-event="dust">Dust storm</button>
-      <button data-event="solar">Solar storm</button>
-      <button data-event="o2leak">O₂ leak</button>
-      <button data-demo="steepGround">Steep ground</button>
-    </div>
+    <details class="tools">
+      <summary>Demo tools</summary>
+      <div class="row events">
+        <button data-event="dust">Dust storm</button>
+        <button data-event="solar">Solar storm</button>
+        <button data-event="o2leak">O₂ leak</button>
+        <button data-demo="steepGround">Steep ground</button>
+      </div>
+      <div class="row">
+        <label class="switch" title="Sim mode: W/S walk, A/D sideways, Q/E turn, Shift runs. Ignores the Mars delay."><input type="checkbox" id="driveOn"> Drive the astronaut (WASD)</label>
+        <select id="driveSpeed" title="Walking speed while driving"><option value="1">1× walk</option><option value="3" selected>3× walk</option><option value="5">5× walk</option><option value="8">8× walk</option></select>
+      </div>
+    </details>
   </section>
 
   <section class="panel log">
-    <div class="label">ALERT LOG</div>
+    <div class="label">ALERT LOG <label class="quiet"><input type="checkbox" id="showLink"> link events</label></div>
     <ol id="log"></ol>
   </section>
 </main>

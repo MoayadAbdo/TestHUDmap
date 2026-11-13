@@ -41,8 +41,27 @@ main { display: grid; grid-template-columns: 1.5fr 1fr; grid-template-rows: 1fr 
 
 /* map layers */
 .leaflet-image-layer.pixelated { image-rendering: pixelated; }
-.layer-key { background: rgba(20, 14, 9, 0.88); color: #f3dcc0; padding: 8px 10px; border-radius: 8px; font: 12px/1.45 system-ui, sans-serif; max-width: 280px; }
+.layer-key { background: rgba(20, 14, 9, 0.88); color: #f3dcc0; padding: 6px 9px; border-radius: 8px; font: 11px/1.4 system-ui, sans-serif; max-width: 210px; }
 .layer-key i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -2px; border: 1px solid #0006; }
 .layer-key small { display: block; margin-top: 4px; opacity: 0.7; }
-.layer-key button { margin-top: 6px; }
+.layer-key button { margin: 4px 0; padding: 3px 8px; font-size: 11px; display: block; }
 .leaflet-control-layers { background: rgba(20, 14, 9, 0.88); color: #f3dcc0; font-size: 12px; }
+
+/* calmer layout */
+#log li.link { display: none; color: #5d6577; }
+#log.show-link li.link { display: list-item; }
+.label .quiet { float: right; letter-spacing: 0; font-size: 11px; color: #5d6577; cursor: pointer; }
+.label .quiet input { vertical-align: -2px; }
+details.tools { border-top: 1px solid var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 8px; }
+details.tools summary { cursor: pointer; color: var(--mute); font-size: 13px; }
+details.tools[open] summary { margin-bottom: 8px; }
+details.tools .row + .row { margin-top: 8px; }
+.stop-pin { width: 22px; height: 22px; border-radius: 50%; background: #0e7490; color: #fff; font: 700 12px/22px system-ui, sans-serif; text-align: center; border: 2px solid #fff; box-shadow: 0 0 6px #000a; }
+.stop-pin.base { background: #15803d; }
+.stop-pin.target { background: var(--amber); color: #1a1205; box-shadow: 0 0 12px var(--amber); }
+.layer-bar { display: flex; gap: 0; background: rgba(20, 14, 9, 0.9); border-radius: 8px; overflow: hidden; border: 1px solid #0008; }
+.layer-bar button { border: 0; border-radius: 0; background: transparent; color: #f3dcc0; padding: 6px 10px; font-size: 13px; }
+.layer-bar button + button { border-left: 1px solid #ffffff1a; }
+.layer-bar button.on { background: var(--amber); color: #1a1205; font-weight: 700; }
+.layer-key select { margin-top: 6px; width: 100%; font-size: 12px; padding: 3px 6px; }
+.leaflet-control-attribution { font-size: 9px; max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

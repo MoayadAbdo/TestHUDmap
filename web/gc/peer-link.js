@@ -26,7 +26,7 @@ export function createPeerLink({ onData, onStream, onStatus, hasVideo, log }) {
       const c = (conn = p.connect(PEER_PREFIX + room, { reliable: true }));
       c.on("open", () => {
         lastData = Date.now();
-        onStatus(`connected · ${room}`, "on"); log(`Connected with room code ${room}`, "info");
+        onStatus(`connected · ${room}`, "on"); log(`Connected with room code ${room}`, "link");
         // no video after 4 s? ask the phone to send it again
         setTimeout(() => { if (!hasVideo() && conn === c && c.open) c.send({ type: "want-video" }); }, VIDEO_CHECK_MS);
       });
@@ -46,7 +46,7 @@ export function createPeerLink({ onData, onStream, onStatus, hasVideo, log }) {
   setInterval(() => {
     if (!conn?.open) return;
     const quiet = Date.now() - lastData;
-    if (quiet > DEAD_MS) { log("Room-code link silent: reconnecting", "alert"); connect(room); }
+    if (quiet > DEAD_MS) { log("Room-code link silent: reconnecting", "link"); connect(room); }
     else if (quiet > WEAK_MS) onStatus(`weak link · ${Math.round(quiet / 1000)} s`, "warn");
     else onStatus(`connected · ${room}`, "on");
   }, 1000);

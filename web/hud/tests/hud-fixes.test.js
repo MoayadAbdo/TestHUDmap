@@ -100,3 +100,12 @@ test('one word for the way to go', async () => {
   assert.equal(turnWord(90), 'TURN RIGHT');
   assert.equal(turnWord(-170), 'TURN AROUND');
 });
+
+test('VR: clean view looking ahead, suit panels fade in looking down; hand-held always full', async () => {
+  const { suitDetail } = await import('../js/view/visor/visor.js');
+  assert.equal(suitDetail('vr', 0), 0);
+  assert.equal(suitDetail('vr', 10), 0, 'looking up: clean');
+  assert.ok(suitDetail('vr', -17) > 0 && suitDetail('vr', -17) < 1);
+  assert.equal(suitDetail('vr', -30), 1);
+  assert.equal(suitDetail('single', 0), 1);
+});

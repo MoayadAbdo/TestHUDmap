@@ -7,6 +7,7 @@ import { createLinkChoice } from "./link-choice.js";
 import { addMapLayers, stopLabel } from "./map-layers.js";
 import { startLocalLink } from "./local-link.js";
 import { createPeerLink } from "./peer-link.js";
+import { createStatusPill } from "./status-pill.js";
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -20,7 +21,8 @@ function log(text, kind = "info") {
   li.textContent = `${new Date().toLocaleTimeString()}  ${text}`;
   $("log").prepend(li);
 }
-function setPill(id, text, kind) { const el = $(id); el.textContent = text; el.className = `pill ${kind}`; }
+let status = null;   // one pill for the link (made once the link choice exists)
+function setPill(id, text, kind) { status?.set(id, text, kind); }
 
 // ---------- Mars delay ----------
 const delayMs = () => ($("delayOn").checked ? Number($("delaySec").value) * 1000 : 0);
@@ -33,8 +35,17 @@ const map = L.map("map", { crs: L.CRS.EPSG4326, zoomControl: true, attributionCo
   .setView(mission.anchor.mars, 16);
 L.tileLayer(hirise, { maxNativeZoom: 16, maxZoom: 18, attribution: "NASA/JPL/UArizona HiRISE · Mars Trek" }).addTo(map);
 L.polyline(mission.route.map((p) => p.mars ?? [p.lat, p.lon]), { color: "#ffb54a", weight: 3, opacity: 0.9 }).addTo(map);
-const stopMarkers = mission.stops.map((s) => L.circleMarker(s.mars, { radius: 7, color: s.is_base ? "#4ade80" : "#22d3ee", fillOpacity: 0.85 })
-  .bindTooltip(`${s.id} · ${s.name}`, { permanent: true, direction: "right", className: "" }).addTo(map));
+// stops: small numbered pins (B = base); the name and what the layers say there on hover; the next stop glows
+const pinIcon = (s, target) => L.divIcon({ className: "", iconSize: [22, 22],
+  html: `<div class="stop-pin${s.is_base ? " base" : ""}${target ? " target" : ""}">${s.is_base ? "B" : s.id}</div>` });
+const stopMarkers = mission.stops.map((s) => L.marker(s.mars, { icon: pinIcon(s, false) })
+  .bindTooltip(`${s.id} · ${s.name}`, { direction: "top", offset: [0, -10] }).addTo(map));
+let targetStop = null;
+function markTarget(id) {
+  if (id === targetStop) return;
+  targetStop = id;
+  mission.stops.forEach((s, i) => stopMarkers[i].setIcon(pinIcon(s, !s.is_base && s.id === id)));
+}
 // layers: slope, minerals, heat, CTX; "Show on visor" paints the same layer on the astronaut's 3D ground
 addMapLayers({ map, L, onShowOnVisor: (l) => sendToAstronaut({ type: "layer", id: l.id }, `LAYER ${l.name} on the visor`) })
   .then((layers) => { if (layers) mission.stops.forEach((s, i) => stopMarkers[i].setTooltipContent(stopLabel(s, layers))); });
@@ -47,6 +58,7 @@ function onTelemetry(t) {
   $("o2").textContent = t.o2_pct != null ? `${t.o2_pct}%` : "—";
   $("rad").textContent = t.rad_dose_uSv ?? "—";
   const stop = mission.stops.find((s) => s.id === t.stop && !s.is_base);
+  markTarget(stop?.id ?? null);
   $("stop").textContent = stop ? stop.name : t.stop == null ? "Base" : `#${t.stop}`;
   $("dnext").textContent = t.dist_next_m != null ? `${t.dist_next_m} m` : "—";
   $("dbase").textContent = t.dist_base_m != null ? `${t.dist_base_m} m` : "—";
@@ -67,7 +79,7 @@ function onPhoneData(source, msg) {
   if (msg.type === "snap" && !(video.videoWidth > 0)) snap.src = msg.data;   // live; the delayed view delays it
   later(() => {
     if (msg.type === "telemetry") onTelemetry(msg);
-    if (msg.type === "hello") log(`Linked to astronaut (room ${msg.room})`, "info");
+    if (msg.type === "hello") log(`Linked to astronaut (room ${msg.room})`, "link");
   });
 }
 
@@ -83,11 +95,8 @@ function showView() {
   for (const e of [mjpeg, video, snap]) e.style.display = e === el ? "block" : "none";
   noVideo.style.display = el ? "none" : "flex";
 }
-const SOURCE = { local: ["data: local link", "on"], peer: ["data: room code (PeerJS)", "on"] };
-setInterval(() => {
-  showView();
-  setPill("source", ...(SOURCE[choice.current()] ?? ["no phone data", "off"]));
-}, 1000);
+status = createStatusPill($("status"), { current: () => choice.current() });
+setInterval(() => { showView(); status.render(); }, 1000);
 showView();
 // with Mars delay on, the picture is delayed too
 const delayedView = createDelayedView({ screen: document.querySelector(".screen"), output: $("delayed"), label: $("delayLabel"), live: liveElement });
@@ -102,6 +111,7 @@ const peerLink = createPeerLink({
 });
 function join(code) {
   const room = peerLink.connect(code);   // one rule for cleaning the code, in peer-link.js
+  status.setRoom(room);
   if (room) { params.set("room", room); history.replaceState(null, "", `?${params}`); }
 }
 async function allowLocalNetwork() {
@@ -161,4 +171,6 @@ startLocalLink({
   onData: (msg) => onPhoneData("local", msg),
   onStatus: (text, kind) => setPill("local", text, kind),
   log,
-}).then((link) => { local = link; $("local").hidden = !link; });
+}).then((link) => { local = link; });
+// the alert log shows alerts, messages and events; link chatter only when asked
+$("showLink").addEventListener("change", (e) => $("log").classList.toggle("show-link", e.target.checked));

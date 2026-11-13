@@ -14,7 +14,7 @@ export async function startLocalLink({ picture, onData, onStatus, log }) {
   const setOnline = (online) => {
     if (online === link.phoneOnline) return;
     link.phoneOnline = online;
-    log(online ? "Phone connected (local link)" : "Phone not sending (local link)", online ? "info" : "alert");
+    log(online ? "Phone connected (local link)" : "Phone not sending (local link)", "link");
   };
   picture.src = "/api/video.mjpg";
   picture.onerror = () => setTimeout(() => { picture.src = `/api/video.mjpg?${Date.now()}`; }, 1000);

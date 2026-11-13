@@ -10,3 +10,9 @@ test("stop label shows what the layers say at the stop", () => {
   assert.equal(stopLabel({ id: 2, name: "Steep ridge" }, layers), "2 · Steep ridge · slope 22° · TI 396");
   assert.equal(stopLabel({ id: 9, name: "X" }, layers), "9 · X");
 });
+
+test("short legend text for the key", async () => {
+  const { shortLabel } = await import("../map-layers.js");
+  assert.equal(shortLabel("magenta: polyhydrated sulfates (1.9 and 2.4 µm bands)"), "polyhydrated sulfates");
+  assert.equal(shortLabel("under 8° (easy)"), "under 8°");
+});

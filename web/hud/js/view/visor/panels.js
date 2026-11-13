@@ -139,3 +139,21 @@ export function drawLayer(ctx, right, y, u, layer) {
     say(ctx, legendText(item.label), right - 2.8 * u, ry, 1.9 * u, { align: 'right', color: AMBER_SOFT, weight: 500 });
   });
 }
+
+/** Clean VR view: oxygen time left in one line (red when low). */
+export function drawOxygenChip(ctx, x, y, u, s) {
+  const minutes = Math.max(0, Math.round(s.o2MinutesLeft ?? 0));
+  const color = s.o2Pct < 30 || s.mustReturn ? RED : AMBER;
+  say(ctx, `O2 ${Math.round(s.o2Pct)}%  ${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`, x, y, 2.3 * u, { color, weight: 700 });
+}
+
+/** Clean VR view: link bars and the Earth delay in one line. */
+export function drawLinkChip(ctx, right, y, u, s) {
+  const bars = s.link?.bars ?? 0;
+  for (let i = 0; i < 4; i++) {
+    const bh = (0.8 + i * 0.6) * u;
+    ctx.fillStyle = i < bars ? AMBER : AMBER_FAINT;
+    ctx.fillRect(right - (4 - i) * 1.2 * u, y + 1 * u - bh, 0.8 * u, bh);
+  }
+  say(ctx, `${s.lightMin?.toFixed(0) ?? '--'} min`, right - 5.6 * u, y, 2.1 * u, { align: 'right', color: AMBER_SOFT });
+}
