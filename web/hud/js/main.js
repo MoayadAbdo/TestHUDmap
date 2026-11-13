@@ -87,7 +87,7 @@ async function start(mode, view, motionAsked) {
   let source;
   if (mode === 'sim') {
     const sim = await loadPart('sim', asSim, () => createFakeSim({ mission, speedFactor: Number(params.get('speed') ?? 1) }));
-    source = createSimSource(sim.part, mission, view, assetsBase);
+    source = createSimSource(sim.part, mission, view, assetsBase, Number(params.get('speed') ?? 1));   // ?speed=3: walk faster for testing
   } else if (mode === 'marswalk') {
     const sim = await loadPart('sim', asSim, () => null);
     source = sim.real ? createMarsWalkSource(createFieldSource(), sim.part, mission, view, assetsBase) : createFieldSource();

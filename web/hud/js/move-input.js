@@ -10,7 +10,7 @@ const KEY_MOVES = {
 const RUN_CODES = new Set(['ShiftLeft', 'ShiftRight']);
 export const STILL = Object.freeze({ forward: 0, right: 0, turn: 0, run: false });
 const DEAD_ZONE = 0.18;
-const REMOTE_FRESH_MS = 600;     // Ground Control keeps sending; if the link drops you stop, never keep walking
+const REMOTE_FRESH_MS = 1000;    // Ground Control keeps sending; if the link drops you stop, never keep walking
 const PAD = { voice: 0, autoWalk: 1, runButtons: [4, 5, 6, 7] };   // A talks, B auto-walks, shoulders run
 
 const clamp = (v) => Math.max(-1, Math.min(1, Number(v) || 0));

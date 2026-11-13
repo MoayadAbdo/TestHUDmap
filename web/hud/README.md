@@ -34,6 +34,7 @@ Use Android Chrome.
     (In sim mode Space, Enter, Page Down and V talk to the AI; the arrows move you.)
   - Gamepad on the phone: left stick walks, right stick turns, shoulder buttons run, **A** talks, **B** auto-walk.
   - From the laptop: Ground Control → **Drive (WASD)** switch, same keys. The phone stops if the link drops.
+  - Too slow? Hold **Shift** to run (2.5×), or add `&speed=3` to the HUD link (3× for all walking).
 - **Long-press** (about 1 second): show or hide the demo panel. It can speed up oxygen, set it to 25%,
   fake steep ground, jump to the next stop (sim), set the base here (field), send a Ground Control message,
   and switch VR/hand-held.

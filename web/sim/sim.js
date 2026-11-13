@@ -408,7 +408,7 @@ function autopilotDirection(now) {
 }
 
 function tick(now) {
-  const dt = Math.min(0.1, (now - (S.last || now)) / 1000); S.last = now;
+  const dt = Math.min(0.25, (now - (S.last || now)) / 1000); S.last = now;   // slow phones still walk at real speed
   update(dt, now);
   render();
   S.raf = requestAnimationFrame(tick);

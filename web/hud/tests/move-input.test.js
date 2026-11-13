@@ -36,7 +36,7 @@ test('steering reaches the sim; Ground Control must keep sending', () => {
   input.remote({ forward: 0, right: 1, turn: 0, run: false });
   input.poll();
   assert.equal(got.at(-1).right, 1);
-  t = 700;                       // link went quiet: stop
+  t = 1100;                      // link went quiet: stop
   input.poll();
   assert.deepEqual(got.at(-1), STILL);
 });
