@@ -38,7 +38,7 @@ const S = {
   walking: false, keyWalking: false, pos: new THREE.Vector3(), bob: 0,
   visited: [], scanned: [], scanT: 0, dustUntil: 0, stereo: true,
   autopilot: false, rIdx: 1, pauseUntil: 0, lastManualLook: -1e9,
-  move: { forward: 0, right: 0, turn: 0, run: false }, yaw: 0,   // keyboard / gamepad / Ground Control steering
+  move: { forward: 0, right: 0, turn: 0, run: false, boost: 0 }, yaw: 0,   // keyboard / gamepad / Ground Control steering
 };
 const TURN_DEG_PER_S = 90;
 const RUN_FACTOR = 2.5;
@@ -453,7 +453,8 @@ function update(dt, now) {
   S.moveHeading = steering ? wrap360(S.heading + Math.atan2(m.right, m.forward) / DEG) : autoDir ?? S.heading;
   if (walking) {
     const pace = steering ? stick * (m.run ? RUN_FACTOR : 1) : 1;
-    const sp = (S.mission.suit?.walk_speed_mps || 0.8) * S.opts.speed * pace;
+    const times = steering && m.boost ? m.boost : S.opts.speed;      // Ground Control's Drive speed wins while it steers
+    const sp = (S.mission.suit?.walk_speed_mps || 0.8) * times * pace;
     const h = S.moveHeading * DEG;
     const nx = S.pos.x + Math.sin(h) * sp * dt, nz = S.pos.z - Math.cos(h) * sp * dt;
     const T = S.T, lim = (v, half, off) => Math.max(-half - off + 5, Math.min(half - off - 5, v));
@@ -623,10 +624,12 @@ export const sim = {
   /** Walk by yourself along the route, pausing at each beacon. You only look around. */
   setAutopilot(on) { S.autopilot = !!on; S.pauseUntil = 0; if (on) S.rIdx = nearestRouteIndex(); },
   isAutopilot() { return S.autopilot; },
-  /** Steer without walking for real: forward / right in -1..1 (back / left when negative), turn in -1..1, run. */
-  setMoveInput({ forward = 0, right = 0, turn = 0, run = false } = {}) {
+  /** Steer without walking for real: forward / right in -1..1 (back / left when negative), turn in -1..1, run,
+   *  boost = speed × while steering (0 = the sim's own speed). */
+  setMoveInput({ forward = 0, right = 0, turn = 0, run = false, boost = 0 } = {}) {
     const clamp = (v) => Math.max(-1, Math.min(1, Number(v) || 0));
-    S.move = { forward: clamp(forward), right: clamp(right), turn: clamp(turn), run: !!run };
+    const times = Number(boost) > 0 ? Math.min(10, Number(boost)) : 0;
+    S.move = { forward: clamp(forward), right: clamp(right), turn: clamp(turn), run: !!run, boost: times };
   },
   setStereo(on) { S.stereo = !!on; if (S.renderer) resize(); },
   /** Jump next to a stop (testing). */

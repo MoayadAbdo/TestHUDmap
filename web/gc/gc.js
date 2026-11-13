@@ -146,7 +146,7 @@ function sendNow(msg) {
   if (via === "local") local.send(msg).catch(() => {});
   else if (via === "peer") peerLink.send(msg);
 }
-const drive = createDrive({ send: sendNow });
+const drive = createDrive({ send: sendNow, getSpeed: () => Number($("driveSpeed").value) || 1 });
 $("driveOn").addEventListener("change", (e) => {
   drive.setOn(e.target.checked);
   if (e.target.checked) e.target.blur();          // keys go to the page, not the switch

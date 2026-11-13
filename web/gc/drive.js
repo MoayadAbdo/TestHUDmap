@@ -6,13 +6,13 @@ export const SEND_MS = 125;
 const isTyping = (el) => el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
 const moving = (v) => v.forward || v.right || v.turn;
 
-export function createDrive({ win = window, send, timers = globalThis }) {
+export function createDrive({ win = window, send, timers = globalThis, getSpeed = () => 3 }) {
   const pressed = new Set();
   let on = false, timer = null, wasMoving = false;
 
   function tick() {
     const v = keyVector(pressed);
-    if (moving(v) || wasMoving) send({ type: "move", ...v });   // one last "still" when you let go
+    if (moving(v) || wasMoving) send({ type: "move", ...v, boost: getSpeed() });   // one last "still" when you let go
     wasMoving = !!moving(v);
   }
   win.addEventListener("keydown", (e) => {

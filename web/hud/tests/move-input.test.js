@@ -3,15 +3,15 @@ import { test } from 'node:test';
 import { STILL, combine, createMoveInput, keyVector, padVector } from '../js/move-input.js';
 
 test('keys: W walks, S backs, A/D sideways, Q/E and arrows turn, Shift runs', () => {
-  assert.deepEqual(keyVector(new Set(['KeyW', 'ShiftLeft'])), { forward: 1, right: 0, turn: 0, run: true });
-  assert.deepEqual(keyVector(new Set(['KeyS', 'KeyD'])), { forward: -1, right: 1, turn: 0, run: false });
-  assert.deepEqual(keyVector(new Set(['ArrowLeft'])), { forward: 0, right: 0, turn: -1, run: false });
+  assert.deepEqual(keyVector(new Set(['KeyW', 'ShiftLeft'])), { forward: 1, right: 0, turn: 0, run: true, boost: 0 });
+  assert.deepEqual(keyVector(new Set(['KeyS', 'KeyD'])), { forward: -1, right: 1, turn: 0, run: false, boost: 0 });
+  assert.deepEqual(keyVector(new Set(['ArrowLeft'])), { forward: 0, right: 0, turn: -1, run: false, boost: 0 });
   assert.deepEqual(keyVector(new Set(['KeyW', 'KeyS'])), STILL);
 });
 
 test('gamepad: left stick walks, right stick turns, small wobble ignored', () => {
   const pad = { axes: [0.1, -0.9, 0.5, 0], buttons: [{}, {}, {}, {}, { pressed: true }] };
-  assert.deepEqual(padVector(pad), { forward: 0.9, right: 0, turn: 0.5, run: true });
+  assert.deepEqual(padVector(pad), { forward: 0.9, right: 0, turn: 0.5, run: true, boost: 0 });
   assert.deepEqual(padVector(null), STILL);
 });
 
@@ -33,9 +33,10 @@ test('steering reaches the sim; Ground Control must keep sending', () => {
   input.poll();
   assert.equal(got.at(-1).forward, 1);
   win.handlers.keyup({ code: 'KeyW' });
-  input.remote({ forward: 0, right: 1, turn: 0, run: false });
+  input.remote({ forward: 0, right: 1, turn: 0, run: false, boost: 3 });
   input.poll();
   assert.equal(got.at(-1).right, 1);
+  assert.equal(got.at(-1).boost, 3, 'Ground Control speed reaches the sim');
   t = 1100;                      // link went quiet: stop
   input.poll();
   assert.deepEqual(got.at(-1), STILL);

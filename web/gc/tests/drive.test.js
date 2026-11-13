@@ -8,7 +8,7 @@ function setup() {
   let tick = null;
   const timers = { setInterval: (fn) => { tick = fn; return 1; }, clearInterval: () => { tick = null; } };
   const sent = [];
-  const drive = createDrive({ win, send: (m) => sent.push(m), timers });
+  const drive = createDrive({ win, send: (m) => sent.push(m), timers, getSpeed: () => 3 });
   const key = (type, code, target = { tagName: "BODY" }) => handlers[type]({ code, target, preventDefault() {} });
   return { drive, sent, key, tick: () => tick?.() };
 }
@@ -21,7 +21,7 @@ test("sends moves while a key is held, then one stop", () => {
   key("keyup", "KeyW");
   tick(); tick();
   assert.deepEqual(sent.map((m) => m.forward), [1, 1, 0]);
-  assert.ok(sent.every((m) => m.type === "move"));
+  assert.ok(sent.every((m) => m.type === "move" && m.boost === 3));
 });
 
 test("ignores keys while off or while typing a message", () => {
