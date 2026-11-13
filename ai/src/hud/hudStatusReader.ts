@@ -6,6 +6,8 @@ type RawHudStatus = Partial<Record<keyof MissionStatus, unknown>> | null | undef
 /** The part of `window.hud` the voice assistant reads. */
 export interface HudWindowApi {
   getStatus?: () => RawHudStatus;
+  /** Opens the "What's here?" card and returns the facts for the astronaut's spot (or null). */
+  placeInfo?: () => unknown;
 }
 
 /**

@@ -49,6 +49,18 @@ async function loadMission() {
 }
 
 /** The real height map (terrain.json + heights.bin next to mission.json) for the safest-path planner; null if missing. */
+/** Location knowledge for "What's here?" (builder/knowledge.py + facts.json). Missing files: the feature is just off. */
+async function loadKnowledge(assetsBase) {
+  try {
+    const [grid, facts] = await Promise.all(['knowledge/grid.json', 'knowledge/facts.json']
+      .map(async (f) => { const r = await fetch(new URL(f, assetsBase)); if (!r.ok) throw new Error(f); return r.json(); }));
+    return { grid, facts };
+  } catch (e) {
+    console.warn('[hud] no location knowledge:', e.message);
+    return null;
+  }
+}
+
 async function loadTerrain(assetsBase, world3d, tries = 3) {
   if (params.get('safe') === '0') return null;
   const shared = world3d?.terrain?.();           // the 3D sim already has it: no second download
@@ -134,7 +146,8 @@ async function start(mode, view, motionAsked) {
   const terrain = await loadTerrain(assetsBase, source.world3d ?? source.sim);
   const grid = terrain ? createTerrainGrid(terrain) : null;
   const dangers = dangerOptions(params.get('dangers'));       // ?dangers=zones,signs,profile,glow (or all)
-  app = createHudApp({ mission, source, live: live.part, voice: voice.part, link, terrain, grid, dangers });
+  const knowledge = await loadKnowledge(assetsBase);
+  app = createHudApp({ mission, source, live: live.part, voice: voice.part, link, terrain, grid, dangers, knowledge });
   const world3d = source.world3d ?? source.sim;
   world3d?.on?.('scan', ({ stop }) => app.logScan(stop));      // looked at a stop's rock for 2 s: sample logged
   if (dangers.zones && grid && world3d?.setGroundOverlay) {        // zones from several layers on the 3D ground
@@ -209,10 +222,12 @@ async function start(mode, view, motionAsked) {
     getStatus: app.getStatus, demo: { ...app.demo, reset: resetAll }, standInLive: live.real ? null : live.part, sim: source.world3d ?? source.sim ?? null,
     move: (v) => moveInput?.remote(v),
     layer: (id) => (id ? layerSwitch.set(id) : layerSwitch.next()),   // Ground Control picks the visor's layer
+    placeInfo: () => app.showPlaceInfo(),             // "What's here?" (voice tool, H key)
     stepCount: () => stepCount,
     sound: () => alertSounds?.toggle(),
     notify: app.notify,
   };
+  addEventListener('keydown', (e) => { if ((e.key === 'h' || e.key === 'H') && !e.repeat) app.showPlaceInfo(); });   // H = "What's here?"
   console.info('[hud] mission', url, 'live', live.real ? 'real' : 'stand-in', 'voice', voice.real ? 'real' : 'stand-in');
   await Promise.race([document.fonts?.load?.('600 20px Rajdhani'), new Promise((resolve) => setTimeout(resolve, 1500))]);
   app.start();

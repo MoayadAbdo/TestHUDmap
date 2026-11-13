@@ -1,4 +1,5 @@
 import { drawStopCard } from './card.js';
+import { drawInfoCard } from './info-card.js';
 import { drawCompass } from './compass.js';
 import { drawDangerSigns, drawEdgeGlow, drawPathProfile } from './dangers.js';
 import { drawScanProgress, drawScanTarget } from './science.js';
@@ -75,19 +76,21 @@ export function drawVisorHud(ctx, w, h, s, images) {
   ctx.globalAlpha = 1;
 
   if (s.card) drawStopCard(ctx, w, h, u, s.card, images.get(s.card.photo), { sample: s.cardSample });
+  else if (s.info) drawInfoCard(ctx, w, h, u, s.info);
   else if (s.waiting) drawWaiting(ctx, cx, h / 2, u, s.waiting);
   else drawNextStop(ctx, cx, 74 * row, u, s);
-  const profile = Boolean(s.dangers?.show?.profile && !s.card && !s.waiting);
+  const profile = Boolean(s.dangers?.show?.profile && !s.card && !s.info && !s.waiting);
   if (profile) drawPathProfile(ctx, cx, 81.5 * row, u, s);
   drawScanProgress(ctx, cx, h / 2, u, s);
   // alerts and messages go on top of everything, including an open stop card
   const alertH = drawAlerts(ctx, cx, 21 * row, u, s);
   drawMessage(ctx, cx, 21 * row + (alertH ? alertH + 2.4 : 1.5) * u, u, w, s.message);
   // always visible: which way to go along the path (under the card when one is open)
-  // the stop card sits bottom-left: the arrow and the AI's words move right while it's open
-  if (!s.waiting) drawDirectionArrow(ctx, s.card ? w * 0.66 : cx, 64 * row, u, s.arrowDeg, navColor);
-  drawVoice(ctx, s.card ? w * 0.73 : cx, (profile ? 89.5 : 86) * row, u, s.card ? w * 0.8 : w, s);
-  if (s.view !== 'vr' && !s.waiting && !s.card) drawFooter(ctx, left, 88 * row, u, s);
+  // the stop card and the info card sit bottom-left: the arrow and the AI's words move right while one is open
+  const side = Boolean(s.card || s.info);
+  if (!s.waiting) drawDirectionArrow(ctx, side ? w * 0.66 : cx, 64 * row, u, s.arrowDeg, navColor);
+  drawVoice(ctx, side ? w * 0.73 : cx, (profile ? 89.5 : 86) * row, u, side ? w * 0.8 : w, s);
+  if (s.view !== 'vr' && !s.waiting && !side) drawFooter(ctx, left, 88 * row, u, s);
 }
 
 export { AMBER };

@@ -78,7 +78,13 @@ let followed = false;
 
 // ---------- incoming data ----------
 const science = createScienceReadout({ value: $("science"), last: $("scienceLast"), log });
+let lastPlaceInfo = 0;
 function onTelemetry(t) {
+  // the astronaut asked "What's here?": put the same facts in the log
+  if (t.place_info && t.place_info.id !== lastPlaceInfo) {
+    lastPlaceInfo = t.place_info.id;
+    log(`HERE · ${t.place_info.title}: ${t.place_info.lines.join("  ")}`, "info");
+  }
   const set = (id, text, cls = "") => { const el = $(id); el.textContent = text; el.className = cls; };
   const hm = (min) => (min == null ? "" : `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, "0")}m left`);
   set("o2", t.o2_pct != null ? `${t.o2_pct}%` : "—", t.o2_pct < 30 ? "bad" : "");
