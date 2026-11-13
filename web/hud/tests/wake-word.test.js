@@ -60,6 +60,8 @@ test('waits while the agent is connecting instead of giving up after 4 s', async
   const w = createWakeWord({ voice, SR, timers: time.timers, clock: time.clock });
   w.start();
   made[0].say('hey suit');
+  assert.equal(voice.toggles, 0, 'waits for the microphone to be released first');
+  time.advance(600);
   assert.equal(voice.toggles, 1);
   voice.state = 'connecting';
   time.advance(10_000);

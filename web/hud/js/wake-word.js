@@ -5,6 +5,7 @@
  * The Bluetooth clicker still works at any time.
  */
 // "hey" is required: on stage we say "suit" all the time
+const MIC_HANDOFF_MS = 600;   // wait after stopping the wake-word listener before the AI takes the mic
 const WAKE = /\b(hey|hi|ok|okay)[\s,]+(suit|suits|soot|sweet|suite)\b/i;
 export const isWakePhrase = (text) => WAKE.test(text);
 
@@ -74,7 +75,8 @@ export function createWakeWord({ voice, notify = () => {}, SR, timers = globalTh
     quiet();
     chime(880);
     notify('Listening… ask your question');
-    voice.toggle();
+    // Android needs a moment to release the microphone from the wake-word listener before the AI opens it
+    timers.setTimeout(() => { if (mode === 'waking') voice.toggle(); }, MIC_HANDOFF_MS);
   }
 
   function backToIdle(delayMs) {
