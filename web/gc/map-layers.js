@@ -1,12 +1,16 @@
 // Map layers from mission/layers/layers.json on the Ground Control map: slope, minerals (3 CRISM scenes), heat,
 // wider CTX context; a colour key with the credit, and "Show on visor" to paint the same layer on the
 // astronaut's 3D ground. Stops get their slope and thermal inertia in the hover label.
+import { createTerrainGrid } from "../hud/js/core/terrain-grid.js";
+import { ZONES_KEY, zonesCanvas } from "../hud/js/zone-layers.js";
+
 const VISOR_IDS = new Set(["photo", "slope", "minerals_frt0000b6f1", "thermal"]);   // the layers the 3D sim can paint
 
 // One layer at a time, picked from a short button bar: Photo | Slope | Minerals | Heat | Context.
 // Minerals has three CRISM scenes; the key offers a choice between them.
 const GROUPS = [
   { name: "Photo", ids: [] },
+  { name: "Zones", ids: ["zones"] },
   { name: "Slope", ids: ["slope"] },
   { name: "Minerals", ids: ["minerals_frt0000b6f1", "minerals", "minerals_hrl0000baba"] },
   { name: "Heat", ids: ["thermal"] },
@@ -17,11 +21,13 @@ export async function addMapLayers({ map, L, base = "../mission/layers/", onShow
   const data = await fetch(base + "layers.json").then((r) => (r.ok ? r.json() : null)).catch(() => null);
   if (!data) return null;
   const byId = new Map(data.layers.map((l) => [l.id, l]));
+  const zones = await zonesLayer(base, byId.get("photo")?.bounds);    // slope + rough + THEMIS + CRISM, same as the visor
+  if (zones) byId.set("zones", zones);
   const box = (b) => [[b.south, b.west], [b.north, b.east]];
   const overlays = new Map();
   const overlayOf = (l) => {
     if (!overlays.has(l.id)) {
-      overlays.set(l.id, L.imageOverlay(base + l.file, box(l.bounds), {
+      overlays.set(l.id, L.imageOverlay(l.url ?? base + l.file, box(l.bounds), {
         opacity: l.kind === "optical" ? 1 : 0.65, attribution: l.credit, className: l.resolution_m >= 10 ? "pixelated" : "",
       }));
     }
@@ -106,3 +112,18 @@ export function stopLabel(stop, layers = []) {
 
 /** Legend text without the details: "magenta: polyhydrated sulfates (1.9 µm)" → "polyhydrated sulfates". */
 export const shortLabel = (label) => String(label).split(":").pop().split("(")[0].trim();
+
+/** The zones as a map layer: built from the real height map and the THEMIS / CRISM images (null if missing). */
+async function zonesLayer(base, bounds) {
+  try {
+    const meta = await (await fetch(new URL("../terrain/terrain.json", new URL(base, location.href)))).json();
+    const buf = await (await fetch(new URL("../terrain/heights.bin", new URL(base, location.href)))).arrayBuffer();
+    const grid = createTerrainGrid({ ...meta, heights: new Float32Array(buf) });
+    const canvas = await zonesCanvas(grid, new URL("layers.json", new URL(base, location.href)).href);
+    return { ...ZONES_KEY, kind: "safety", mission: "MRO + Odyssey", bounds: bounds ?? meta.bounds, url: canvas.toDataURL(),
+      credit: "Slope and rough ground: HiRISE 1 m DEM (NASA/JPL/UArizona) · looser ground: THEMIS (NASA/JPL/ASU) · sulfates: CRISM (NASA/JPL/JHUAPL)" };
+  } catch (error) {
+    console.warn("[map] zones not available:", error?.message ?? error);
+    return null;
+  }
+}

@@ -168,7 +168,7 @@ export function drawLayer(ctx, right, y, u, layer) {
   say(ctx, layer.name.split(' (')[0], right, y + 3.4 * u, 2.4 * u, { align: 'right' });
   say(ctx, `${layer.instrument} · ${layer.resolution_m} m`, right, y + 6.2 * u, 1.9 * u, { align: 'right', color: AMBER_SOFT });
   const legend = (layer.legend ?? []).filter((l) => l.color !== '#000000');
-  const items = legend.length > 3 ? [legend[0], legend[legend.length - 1]] : legend;    // long ramps: ends only
+  const items = layer.showAll || legend.length <= 3 ? legend : [legend[0], legend[legend.length - 1]];   // long ramps: ends only
   items.forEach((item, i) => {
     const ry = y + (9 + i * 2.8) * u;
     ctx.fillStyle = item.color;

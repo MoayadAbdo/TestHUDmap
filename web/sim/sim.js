@@ -27,7 +27,7 @@ const DEG = Math.PI / 180;
 const EYE_H = 1.7;                 // astronaut eye height (m)
 const ARRIVE_M = 6;                // reach a beacon within this distance
 const SCAN_SECONDS = 2;            // look at the rock this long to scan it
-const SCAN_RANGE_M = 12;
+const SCAN_RANGE_M = 20;           // the rock may sit a few metres below you on a slope
 const WALK_KEYS = new Set([" ", "Enter", "ArrowUp", "ArrowRight", "PageDown", "w", "W"]);
 const SKY_TOP = new THREE.Color("#b98a66"), SKY_LOW = new THREE.Color("#e9c8a3");
 const FOG = new THREE.Color("#d8b48e"), DUST = new THREE.Color("#b8743f");
@@ -369,9 +369,9 @@ function addStops(mission) {
     // the science rock to scan, a few metres from the beacon
     const ang = i * 1.7 + 0.5, rx = p.x + Math.cos(ang) * 3.2, rz = p.z + Math.sin(ang) * 3.2;
     const rock = new THREE.Mesh(rockGeometry(100 + i), new THREE.MeshLambertMaterial({ color: "#a07a5c", emissive: "#000000" }));
-    rock.scale.setScalar(0.55); rock.position.set(rx, heightAt(rx, rz) + 0.15, rz);
-    const glow = new THREE.Mesh(rockGeometry(100 + i), new THREE.MeshBasicMaterial({ color: "#22d3ee", wireframe: true, transparent: true, opacity: 0.5 }));
-    glow.scale.setScalar(1.12); rock.add(glow);
+    rock.scale.setScalar(0.9); rock.position.set(rx, heightAt(rx, rz) + 0.25, rz);   // big enough to find and look at
+    const glow = new THREE.Mesh(rockGeometry(100 + i), new THREE.MeshBasicMaterial({ color: "#22d3ee", wireframe: true, transparent: true, opacity: 0.7 }));
+    glow.scale.setScalar(1.15); rock.add(glow);
     S.scene.add(rock);
     return { st, pos: p, beamMat, ringMat, ring, rock, glow, label };
   });
@@ -542,9 +542,11 @@ function update(dt, now) {
   S.ray.setFromCamera(new THREE.Vector2(0, 0), S.camera);
   const targets = S.stops.filter((s, i) => !S.scanned[i]).map((s) => s.rock);
   const hit = S.ray.intersectObjects(targets, false)[0];
+  S.scanIndex = -1;
   if (hit && hit.distance < SCAN_RANGE_M) {
     S.scanT += dt;
     const i = S.stops.findIndex((s) => s.rock === hit.object);
+    S.scanIndex = i;
     if (S.scanT >= SCAN_SECONDS) {
       S.scanned[i] = true; S.scanT = 0;
       S.stops[i].rock.material.emissive.set("#1f5f3a");
@@ -692,6 +694,14 @@ export const sim = {
     S.overlay = canvas ?? null;
     S.overlayTex = {};
     if (S.groundMat) { S.groundMat.map = withOverlay(S.baseMap ?? S.photoTex); S.groundMat.needsUpdate = true; }
+  },
+  /** Science rocks to scan (look at one for 2 s): [{ index, mars: [lat, lon], scanned }] — index as in mission.stops. */
+  scanTargets() {
+    return (S.stops ?? []).map((s, index) => ({ index, mars: S.toLatLon(s.rock.position.x, s.rock.position.z), scanned: S.scanned[index] }));
+  },
+  /** Scanning now: { index, progress 0..1 } or null. */
+  scanProgress() {
+    return S.scanIndex >= 0 && S.scanT > 0 ? { index: S.scanIndex, progress: Math.min(1, S.scanT / SCAN_SECONDS) } : null;
   },
   /** The height grid the 3D ground is built from ({ ...terrain.json, heights }), so the HUD needn't download it again. */
   terrain() { return S.T ? { ...S.T.meta, heights: S.T.heights } : null; },

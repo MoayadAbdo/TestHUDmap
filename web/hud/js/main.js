@@ -10,8 +10,9 @@ import { createLayerSwitch } from './layer-switch.js';
 import { createStepDetector } from './core/steps.js';
 import { createTerrainGrid } from './core/terrain-grid.js';
 import { dangerOptions } from './core/danger-watch.js';
-import { zonePixels } from './core/hazards.js';
+import { ZONES_KEY, zonesCanvas } from './zone-layers.js';
 import { createDangerSound, unlockSpeech } from './danger-sound.js';
+import { createAlertSounds, makeSpeaker, makeTones } from './alert-sounds.js';
 import { startWakeWord } from './wake-word.js';
 import { createDemoPanel } from './view/demo-panel.js';
 import { createRenderer } from './view/renderer.js';
@@ -133,16 +134,22 @@ async function start(mode, view, motionAsked) {
   const dangers = dangerOptions(params.get('dangers'));       // ?dangers=zones,signs,profile,glow (or all)
   app = createHudApp({ mission, source, live: live.part, voice: voice.part, link, terrain, grid, dangers });
   const world3d = source.world3d ?? source.sim;
-  if (dangers.zones && grid && world3d?.setGroundOverlay) {        // danger zones painted on the 3D ground
-    const c = document.createElement('canvas');
-    c.width = grid.gw; c.height = grid.gh;
-    c.getContext('2d').putImageData(new ImageData(zonePixels(grid), grid.gw, grid.gh), 0, 0);
-    world3d.setGroundOverlay(c);
+  world3d?.on?.('scan', ({ stop }) => app.logScan(stop));      // looked at a stop's rock for 2 s: sample logged
+  if (dangers.zones && grid && world3d?.setGroundOverlay) {        // zones from several layers on the 3D ground
+    zonesCanvas(grid, new URL('layers/layers.json', assetsBase).href).then((c) => world3d.setGroundOverlay(c));
   }
-  const sound = dangers.glow ? createDangerSound() : null;
+  const sound = dangers.glow ? createDangerSound() : null;                // near no-go ground: beeps
+  const alertSounds = params.get('sound') === '0' ? null
+    : createAlertSounds({ tone: makeTones(), speak: makeSpeaker(), isTalking: () => voice.part.listening });
   const canvas = document.getElementById('hud');
   const layerSwitch = createLayerSwitch({ sim: source.world3d ?? source.sim, notify: (t) => app.notify(t) });
-  const getFrame = () => { const f = app.frame(); f.hud.layer = layerSwitch.current; sound?.update(f.hud.dangers); return f; };
+  const getFrame = () => {
+    const f = app.frame();
+    f.hud.layer = layerSwitch.current ?? (dangers.zones ? ZONES_KEY : null);   // the zones' colour key when no layer is on
+    sound?.update(f.hud.dangers);
+    alertSounds?.update(f.hud);
+    return f;
+  };
   const renderer = createRenderer({ canvas, getFrame, view });
   const demo = createDemoPanel({ element: document.getElementById('demo'), app, renderer, live: live.part, layers: layerSwitch });
   if (params.get('demo') === '1') demo.show();
@@ -194,6 +201,7 @@ async function start(mode, view, motionAsked) {
     move: (v) => moveInput?.remote(v),
     layer: (id) => (id ? layerSwitch.set(id) : layerSwitch.next()),   // Ground Control picks the visor's layer
     stepCount: () => stepCount,
+    sound: () => alertSounds?.toggle(),
     notify: app.notify,
   };
   console.info('[hud] mission', url, 'live', live.real ? 'real' : 'stand-in', 'voice', voice.real ? 'real' : 'stand-in');

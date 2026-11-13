@@ -17,16 +17,25 @@ export function dangerLevel(slopeDeg, roughM) {
   return null;
 }
 
-const ZONE_RGBA = { nogo: [255, 64, 64, 150], careful: [255, 190, 60, 95], rough: [255, 236, 170, 120] };
+const ZONE_RGBA = {
+  nogo: [255, 64, 64, 165], careful: [255, 190, 60, 110], rough: [255, 236, 170, 140],
+  looser: [90, 160, 255, 130], sulfate: [211, 107, 255, 170],
+};
 
-/** RGBA pixels (one per grid cell, row 0 = north) for painting danger zones on the ground; safe cells stay clear. */
-export function zonePixels(grid) {
+/**
+ * RGBA pixels (one per grid cell, row 0 = north) for the zones on the ground; cells with nothing to say stay clear.
+ * Dangers are solid (no-go, careful) or hatched (rough); extras from other layers are dotted so they read
+ * differently: looser ground (THEMIS) and sulfate spots (CRISM), each a 0/1 array on the same grid.
+ */
+export function zonePixels(grid, { looser = null, sulfate = null } = {}) {
   const px = new Uint8ClampedArray(grid.gw * grid.gh * 4);
   for (let k = 0; k < grid.gw * grid.gh; k++) {
-    let level = dangerLevel(grid.slope[k], grid.rough[k]);
     const x = k % grid.gw;
     const y = Math.floor(k / grid.gw);
+    let level = dangerLevel(grid.slope[k], grid.rough[k]);
     if (level === 'rough' && (x + y) % 3) level = null;          // rough ground as hatching, not a solid patch
+    if (!level && sulfate?.[k] && (x % 2 === 0 || y % 2 === 0)) level = 'sulfate';   // science: a dotted grid
+    if (!level && looser?.[k] && (x + 2 * y) % 4 === 0) level = 'looser';
     if (level) px.set(ZONE_RGBA[level], k * 4);
   }
   return px;

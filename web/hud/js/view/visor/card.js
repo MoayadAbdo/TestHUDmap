@@ -5,7 +5,7 @@ import { AMBER, AMBER_SOFT, CAUTION, INK, NAV, brackets, plate, say, wrap } from
  * Stop card, like a wrist tablet: photo on the left, then TASK (what to do), HAZARD, SCIENCE.
  * The text is fitted to the card: lines that don't fit end with "…" instead of running off the edge.
  */
-export function drawStopCard(ctx, w, h, u, card, photo, { underAlert = false } = {}) {
+export function drawStopCard(ctx, w, h, u, card, photo, { underAlert = false, sample = null } = {}) {
   // an alert banner keeps the top of the view: the card moves down and gets a little shorter
   const cw = Math.min(w * 0.58, 80 * u);
   const ch = Math.min(h * (underAlert ? 0.44 : 0.52), 48 * u);
@@ -16,6 +16,12 @@ export function drawStopCard(ctx, w, h, u, card, photo, { underAlert = false } =
 
   const pad = 2.4 * u;
   say(ctx, `STOP ${card.id}`, x + pad, y + pad + 0.4 * u, 1.9 * u, { color: AMBER_SOFT, weight: 700 });
+  // science sample for this stop: done, or how to take it
+  if (sample) {
+    const done = sample.done;
+    say(ctx, done ? '✓ SAMPLE LOGGED' : sample.scan ? '◎ SAMPLE: LOOK AT THE GLOWING ROCK 2 s' : '◎ SAMPLE: PHOTO ON ARRIVAL',
+      x + cw - pad, y + pad + 0.4 * u, 1.9 * u, { align: 'right', color: done ? '#4ade80' : NAV, weight: 800 });
+  }
   say(ctx, card.name.toUpperCase(), x + pad, y + pad + 3.6 * u, 3.8 * u, { color: NAV, weight: 700 });
 
   const top = y + pad + 7.4 * u;

@@ -10,6 +10,8 @@ import { evaClock } from './core/eva-clock.js';
 import { createDetailAuto } from './core/detail-auto.js';
 import { createSafePlanner } from './core/safe-path.js';
 import { createDangerWatch } from './core/danger-watch.js';
+import { createScience } from './core/science.js';
+import { relativeTo } from './core/ar.js';
 import { buildScene } from './core/scene.js';
 import { createStopCard, nearbyReachedStop } from './core/stop-card.js';
 import { buildStatus } from './core/status.js';
@@ -55,6 +57,7 @@ export function createHudApp({
   let step = null;
   let mustReturn = false;
   let alerts = [];
+  const science = createScience({ stops: mission.stops });
   const card = createStopCard({ awayMs: source.frame === 'mars' ? 0 : undefined });
   let message = null;
   let aiText = '';
@@ -76,7 +79,7 @@ export function createHudApp({
   function buildWorld(toFrame, r, marsPerFrameMetre, toMars) {
     const stops = mission.stops.map((s) => ({ ...s, at: toFrame(s.mars) }));
     const route = (mission.route ?? []).map((p) => (Array.isArray(p) ? { at: toFrame(p), slope_deg: 0 } : { ...p, at: toFrame(p.mars) }));
-    world = { stops, route, base: { at: toFrame(mission.anchor.mars) }, r, marsPerFrameMetre, toMars };
+    world = { stops, route, base: { at: toFrame(mission.anchor.mars) }, r, marsPerFrameMetre, toMars, toFrame };
     nav = createNavigator({ stops, base: world.base, r });
     // safest path on the real height map (avoids steep ground); along the rover's route when there's no map
     const alongRoute = createRoutePlanner({ route, r });
@@ -116,8 +119,16 @@ export function createHudApp({
   }
   const conditions = () => conditionStop()?.conditions ?? null;
 
+  /** A new sample: tell the astronaut, the voice agent (and Ground Control through telemetry). */
+  function sampleLogged(sample) {
+    if (!sample) return;
+    message = { text: `SAMPLE LOGGED · ${sample.name} (${science.done}/${science.total})`, fromGround: false, until: clock() + MESSAGE_MS };
+    voice.sendContext(`Sample logged at stop ${sample.id}, ${sample.name}. ${science.done} of ${science.total} samples done.`);
+  }
+
   function arrive(stop, t, allDone) {
     card.show(stop, t);
+    if (source.frame !== 'mars') sampleLogged(science.log(stop.id, 'photo', now()));   // camera mode: the arrival photo
     if (allDone) message = { text: 'All stops done: walk back to base', fromGround: false, until: t + MESSAGE_MS };
     const sentence = (label, value) => (value ? ` ${label}: ${String(value).replace(/[.\s]+$/, '')}.` : '');
     voice.sendContext(`The astronaut reached stop ${stop.id} of ${stopCount}: ${stop.name}.`
@@ -215,6 +226,21 @@ export function createHudApp({
     return Number.isFinite(drop) ? Math.max(0.3, drop) : null;
   }
 
+  /** 3D sim: the nearest unscanned science rock within 25 m (to mark it) and the scan in progress. */
+  function scanView(position, heading) {
+    const targets = world3d?.scanTargets?.() ?? [];
+    let near = null;
+    for (const tg of targets) {
+      const id = rawMission.stops[tg.index]?.id;
+      if (rawMission.stops[tg.index]?.is_base || tg.scanned || science.has(id)) continue;
+      const at = world.toFrame(tg.mars);
+      const distM = distanceM(position.at, at, world.r);
+      if (distM <= 25 && (!near || distM < near.distM)) near = { id, distM, eye: eyeAt(at), ...relativeTo(position.at, heading, at, world.r) };
+    }
+    const p = world3d?.scanProgress?.();
+    return { target: near, progress: p && !rawMission.stops[p.index]?.is_base ? p.progress : 0 };
+  }
+
   /** The walking path from here to the target (not the straight line), and what the visor needs from it. */
   function guideFrom(position) {
     const path = planner.plan(position.at, step.target.at);
@@ -241,6 +267,8 @@ export function createHudApp({
         walk_home_min: homeM == null ? null : Math.round(etaMinutes(homeM, walkSpeed)),
         hazard: hazard?.name ?? null,
         eva_min: Math.round((clock() - startedAt) / 60000),
+        samples_done: science.done,
+        samples_total: science.total,
       },
     });
   }
@@ -268,6 +296,8 @@ export function createHudApp({
       walk_home_min: s.walk_home_min,
       eva_min: s.eva_min,
       stop_name: s.stop_name,
+      science: { done: science.done, total: science.total, last: science.last?.name ?? null },
+      samples: science.list(),
       alerts,
     });
   }
@@ -309,6 +339,14 @@ export function createHudApp({
     getStatus: status,
     onTap() {
       voice.toggle();
+    },
+    /** 3D sim: the rock of mission.stops[index] was scanned. */
+    logScan(index) {
+      const stop = rawMission.stops[index];
+      if (!stop || stop.is_base) return null;
+      const sample = science.log(stop.id, 'scan', now());
+      sampleLogged(sample);
+      return sample;
     },
     /** Tap while a stop card is open: close it. Returns true if it closed one. */
     dismissCard() {
@@ -352,7 +390,9 @@ export function createHudApp({
         detail: detail.mode,
         detailLevel: detail.update(t, { speedMps, busy: Boolean(card.stop || !step) }),
         tempC: c?.temp_c ?? null,
-        stopLabel: stopLabel(),
+        stopLabel: `${stopLabel()} · samples ${science.done}/${science.total}`,
+        science: { done: science.done, total: science.total },
+        cardSample: card.stop ? { done: science.has(card.stop.id), scan: source.frame === 'mars' } : null,
         alerts,
         message: message ? (message.fromGround ? `Ground Control: ${message.text}` : message.text) : null,
         aiText,
@@ -379,6 +419,7 @@ export function createHudApp({
         hud.targetLabel = `${hud.targetName}, about ${hud.etaMin} min`;
         const path = guide.samples.map((p) => ({ ...p, steep: planner.slopeAt(p.at) > STEEP_DEG, eye: eyeAt(p.at) }));
         hud.scene = buildScene({ world, position, heading, isVisited: nav.isVisited, target: step.target, path, plan: guide.path, eyeAt });
+        hud.scan = scanView(position, heading);
         if (watch) {
           watch.update({ position, heading, path: guide.path, t, slopeAt: (at) => planner.slopeAt(at) });
           hud.dangers = { ...watch.view(position, heading, eyeAt), show: dangers };
