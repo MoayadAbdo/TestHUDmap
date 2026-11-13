@@ -63,7 +63,11 @@ function markTarget(id) {
 }
 // layers: slope, minerals, heat, CTX; "Show on visor" paints the same layer on the astronaut's 3D ground
 addMapLayers({ map, L, onShowOnVisor: (l) => sendToAstronaut({ type: "layer", id: l.id }, `LAYER ${l.name} on the visor`) })
-  .then((layers) => { if (layers) mission.stops.forEach((s, i) => stopMarkers[i].setTooltipContent(stopLabel(s, layers))); });
+  .then((added) => {
+    mapLayers = added;
+    if (added) mission.stops.forEach((s, i) => stopMarkers[i].setTooltipContent(stopLabel(s, added.layers)));
+  });
+let mapLayers = null;
 const trail = L.polyline([], { color: "#22d3ee", weight: 2, dashArray: "4 4" }).addTo(map);
 const astro = L.marker(mission.anchor.mars, { icon: L.divIcon({ className: "", html: '<div class="astro"></div>', iconSize: [18, 18] }) }).addTo(map);
 let followed = false;
@@ -206,6 +210,17 @@ $("driveOn").addEventListener("change", (e) => {
   if (e.target.checked) e.target.blur();          // keys go to the page, not the switch
   log(e.target.checked ? "Drive ON: W/S walk, A/D sideways, Q/E or arrows turn, Shift runs (sim mode)" : "Drive OFF", "info");
 });
+// Reset to default: everything back to how it starts (map, the astronaut's visor and suit, delay, drive)
+$("resetAll").addEventListener("click", () => {
+  mapLayers?.showPhoto();
+  $("delayOn").checked = false;
+  applyDelay();
+  $("driveOn").checked = false;
+  drive.setOn(false);
+  sendNow({ type: "demo", name: "reset" });     // straight away, not through the Mars delay: it's a test tool
+  log("RESET to default (map, visor, suit, Mars delay, drive)", "gc");
+});
+
 applyDelay();   // the browser may restore the switch on reload
 
 // local link too, when the laptop server serves this page

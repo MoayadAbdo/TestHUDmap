@@ -4,20 +4,25 @@
  * which phone browsers usually keep for themselves: test yours first.
  */
 export const LONG_PRESS_MS = 800;
+export const DOUBLE_TAP_MS = 350;
 export const CLICKER_KEYS = new Set([' ', 'Enter', 'PageDown', 'PageUp', 'ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown',
   'v', 'V', 'MediaPlayPause', 'AudioVolumeUp', 'AudioVolumeDown']);
 // Sim mode: WASD and ↑/↓ move you; ←/→ stay here because page-turner clickers send them
 export const SIM_CLICKER_KEYS = new Set([' ', 'Enter', 'PageDown', 'PageUp', 'ArrowLeft', 'ArrowRight', 'v', 'V',
   'MediaPlayPause', 'AudioVolumeUp', 'AudioVolumeDown']);
 
-export function bindInput({ canvas, win = window, clock = () => performance.now(), onTap, onLongPress, onClicker, onCard, onLayer, onDetail, clickerKeys = CLICKER_KEYS }) {
+export function bindInput({ canvas, win = window, clock = () => performance.now(), onTap, onDoubleTap, onLongPress, onClicker, onCard, onLayer, onDetail, clickerKeys = CLICKER_KEYS }) {
   let pressStart = 0;
   canvas.addEventListener('pointerdown', () => {
     pressStart = clock();
   });
+  // a double tap (only when there's a double-tap action) waits a moment to tell it from a single tap
+  let tapTimer = null;
   canvas.addEventListener('pointerup', () => {
-    if (clock() - pressStart >= LONG_PRESS_MS) onLongPress();
-    else onTap();
+    if (clock() - pressStart >= LONG_PRESS_MS) { onLongPress(); return; }
+    if (!onDoubleTap) { onTap(); return; }
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; onDoubleTap(); return; }
+    tapTimer = setTimeout(() => { tapTimer = null; onTap(); }, DOUBLE_TAP_MS);
   });
   win.addEventListener('keydown', (e) => {
     if ((e.key === 'c' || e.key === 'C') && !e.repeat) { onCard?.(); return; }   // close / reopen the stop card

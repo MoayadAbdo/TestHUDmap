@@ -7,6 +7,7 @@ import { gpsWarning } from './core/gps-health.js';
 import { sideReadouts } from './core/readouts.js';
 import { createRoutePlanner, pathGuide, pathLength } from './core/path.js';
 import { evaClock } from './core/eva-clock.js';
+import { createDetailAuto } from './core/detail-auto.js';
 import { createSafePlanner } from './core/safe-path.js';
 import { buildScene } from './core/scene.js';
 import { createStopCard, nearbyReachedStop } from './core/stop-card.js';
@@ -60,7 +61,7 @@ export function createHudApp({
   let returnReason = null;
   let homeM = null;                 // walk home along the route (Mars metres of the frame)
   let homeAt = -Infinity;
-  let detail = 'focus';             // focus: only what matters now · full: every panel
+  const detail = createDetailAuto({ moveMps: source.frame === 'mars' ? 0.35 : 0.6 });   // GPS jitters more
   const startedAt = clock();
   let lastTickMs = clock();
   let lastSpot = null;
@@ -344,7 +345,8 @@ export function createHudApp({
         level: alertLevel(alerts),
         returnReason: mustReturn ? RETURN_REASONS[returnReason] ?? null : null,
         walkHomeMin: homeM == null ? null : Math.max(1, Math.round(etaMinutes(homeM, walkSpeed))),
-        detail,
+        detail: detail.mode,
+        detailLevel: detail.update(t, { speedMps, busy: Boolean(card.stop || !step) }),
         tempC: c?.temp_c ?? null,
         stopLabel: stopLabel(),
         alerts,
@@ -384,7 +386,25 @@ export function createHudApp({
       o2Leak: () => { suit.setO2(Math.min(suit.o2Pct, 25)); startHazard('o2leak', 60 * 60000); },
       recall: () => startHazard('ground', 60 * 60000),
       /** focus ↔ full panels (I key, gamepad X, long tap on the side) */
-      toggleDetail: () => { detail = detail === 'focus' ? 'full' : 'focus'; return detail; },
+      /** Reset to default: no emergency, oxygen refilled, normal oxygen use, automatic panels, back to the stops. */
+      reset: () => {
+        mustReturn = false;
+        returnReason = null;
+        hazard = null;
+        forcedSlopeUntil = 0;
+        alerts = [];
+        suit.setSpeed(1);
+        suit.setO2(mission.suit?.o2_start_pct ?? 100);
+        detail.reset();
+        card.close();
+        nav?.resume();
+        message = { text: 'Reset: everything back to normal', fromGround: false, until: clock() + MESSAGE_MS };
+      },
+      toggleDetail: () => {
+        const mode = detail.toggle();
+        message = { text: mode === 'full' ? 'All suit panels on' : 'Suit panels: automatic (stand still to see them)', fromGround: false, until: clock() + MESSAGE_MS };
+        return mode;
+      },
       steepGround: () => {
         forcedSlopeUntil = clock() + 10000;
       },

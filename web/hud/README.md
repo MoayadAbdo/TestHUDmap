@@ -25,7 +25,7 @@ Camera, GPS and compass need HTTPS, so test on the deployed site: `https://<proj
 Use Android Chrome.
 
 ## Screen controls
-- **Tap** (or the Cardboard lever): talk to the voice agent (sim mode: start / stop walking).
+- **Tap** (or the Cardboard lever): talk to the voice agent (closes an open stop card first). **Double tap** (sim): auto-walk on/off.
 - **Bluetooth clicker**: talk to the voice agent. It must send keys (Enter, arrows, Page Down, Play/Pause).
   Cheap selfie remotes send volume keys, which phone browsers usually keep: test yours first.
 - **"Hey suit"** (real voice agent only): hands-free talk. Plain "suit" does not wake it.
@@ -87,3 +87,9 @@ Choose **Mars walk** on the start screen. You walk for real; GPS moves you on th
 - Fit the Mars route to your space: `/hud/?scale=0.3` (desert metres per Mars metre; 0.3 ≈ 230 m of walking for the 750 m route), `&rotation=90` to turn it.
 - Test at a desk: `/hud/?mode=marswalk&fakegps=1` (pretend GPS walking at 1.2 m/s).
 - Safety: inside the VR box you can't see the real ground. Walk slowly on flat open ground, **with a spotter**.
+
+## Suit panels
+While you walk you only see what you need to walk. **Stand still for 3 seconds** and every suit panel fades in;
+start walking and they fade out. **I** key or Ground Control's **Visor: all panels / auto** pins them on.
+Ground Control's **Reset to default** (and the demo panel's) puts everything back: map and visor on Photo,
+automatic panels, no emergency, oxygen refilled, Mars delay and Drive off.

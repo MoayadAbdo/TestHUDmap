@@ -44,6 +44,10 @@ export function createNavigator({ stops, base, r, arrivalM = 20, dwellMs = 3000 
       homeward = true;
       insideSince.clear();
     },
+    /** Reset to default: back to the stops (cancels goHome). */
+    resume() {
+      homeward = false;
+    },
     get nextIndex() {
       return next;
     },

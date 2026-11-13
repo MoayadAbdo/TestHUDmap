@@ -142,28 +142,18 @@ export function drawComms(ctx, right, y, u, s) {
 }
 
 export function drawIntegrity(ctx, right, y, u, s) {
+  // a short list, one line per part: name, a status dot and a word (OK / CHECK / ALERT); the suit is simulated
   header(ctx, 'SUIT INTEGRITY', right, y, u, 'right');
-  const fx = right - 24 * u;
-  const fy = y + 4 * u;
-  ctx.strokeStyle = AMBER_SOFT;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.arc(fx, fy + 1.4 * u, 1.4 * u, 0, Math.PI * 2);
-  ctx.rect(fx - 2 * u, fy + 3.2 * u, 4 * u, 6 * u);
-  ctx.moveTo(fx - 2 * u, fy + 3.6 * u);
-  ctx.lineTo(fx - 3.6 * u, fy + 8.6 * u);
-  ctx.moveTo(fx + 2 * u, fy + 3.6 * u);
-  ctx.lineTo(fx + 3.6 * u, fy + 8.6 * u);
-  ctx.moveTo(fx - 1.2 * u, fy + 9.2 * u);
-  ctx.lineTo(fx - 1.6 * u, fy + 15 * u);
-  ctx.moveTo(fx + 1.2 * u, fy + 9.2 * u);
-  ctx.lineTo(fx + 1.6 * u, fy + 15 * u);
-  ctx.stroke();
-  say(ctx, 'simulated', right - 22 * u, y, 1.6 * u, { align: 'right', color: AMBER_SOFT });
+  say(ctx, 'simulated', right, y + 2.6 * u, 1.6 * u, { align: 'right', color: AMBER_SOFT });
   Object.entries(s.integrity ?? {}).forEach(([part, state], i) => {
-    const ry = fy + (1.4 + i * 3) * u;
-    say(ctx, part, right - 8.5 * u, ry, 2.2 * u, { align: 'right', color: AMBER_SOFT });
-    say(ctx, STATUS_WORD[state] ?? '--', right, ry, 2.2 * u, { align: 'right', color: STATUS_COLOR[state] ?? INK, weight: 700 });
+    const ry = y + (5.8 + i * 2.9) * u;
+    const color = STATUS_COLOR[state] ?? INK;
+    say(ctx, part, right - 9.5 * u, ry, 2.1 * u, { align: 'right', color: AMBER_SOFT });
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(right - 8 * u, ry, 0.65 * u, 0, Math.PI * 2);
+    ctx.fill();
+    say(ctx, STATUS_WORD[state] ?? '--', right, ry, 2.1 * u, { align: 'right', color, weight: 700 });
   });
 }
 

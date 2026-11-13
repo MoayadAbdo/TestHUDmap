@@ -13,6 +13,7 @@ export function createDemoPanel({ element, app, renderer, live, layers }) {
     ['Next stop (sim)', () => app.demo.nextStop()],
     ['Stop card: close / show', () => app.toggleCard?.()],
     ['Next map layer (3D)', () => layers?.next()],
+    ['Reset to default', () => window.hud?.demo?.reset?.()],
     ['Set base here (field)', () => app.notify?.(app.demo.setBaseHere() ? 'Setting base here…' : 'Base: field mode with GPS only')],
     ['Ground Control message', () => (live.pushMessage ? live.pushMessage('Copy, looking good. Keep to the route.') : app.demo.message('Test message'))],
     ['VR / hand-held', () => renderer.setView(renderer.view === 'vr' ? 'single' : 'vr')],

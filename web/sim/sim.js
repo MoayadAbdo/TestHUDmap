@@ -644,7 +644,7 @@ export const sim = {
   getBackground() { return S.renderer?.domElement ?? null; },
   /** Demo panel: jump next to a stop. */
   jumpToStop(i) { this.teleport(Math.max(0, Math.min(S.stops.length - 1, i))); },
-  event(type) { if (type === "dust") S.dustUntil = performance.now() + 20000; },
+  event(type) { if (type === "dust") S.dustUntil = performance.now() + 20000; if (type === "clear") S.dustUntil = 0; },
   setWalking(on) { S.walking = !!on; },
   /** Mars walk mode: put the astronaut at this Mars position (from real GPS), looking at `heading`. */
   setExternalPosition(mars, heading = null, pitch = null) {

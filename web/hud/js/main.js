@@ -142,8 +142,9 @@ async function start(mode, view, motionAsked) {
     sim3d.setAutopilot(walking);
     app.notify(walking ? 'Walking: tap to stop' : 'Stopped: tap to walk');
   };
-  const tap = () => app.dismissCard() || (sim3d ? toggleWalk() : app.onTap());   // a tap closes an open stop card first
-  bindInput({ canvas, onTap: tap, onLongPress: demo.toggle, onClicker: app.onTap, onCard: app.toggleCard, onLayer: layerSwitch.next, onDetail: app.demo.toggleDetail,
+  // tap: close an open stop card, else talk to the AI (the Cardboard button is a tap); double tap: auto-walk (sim)
+  const tap = () => app.dismissCard() || app.onTap();
+  bindInput({ canvas, onTap: tap, onDoubleTap: sim3d ? toggleWalk : undefined, onLongPress: demo.toggle, onClicker: app.onTap, onCard: app.toggleCard, onLayer: layerSwitch.next, onDetail: app.demo.toggleDetail,
     clickerKeys: sim3d ? SIM_CLICKER_KEYS : undefined });
   // Sim mode: move without walking for real (WASD, gamepad, or Ground Control driving)
   // ...and with only the phone: each step you take (in place or around the room) walks you forward where you look
@@ -167,8 +168,15 @@ async function start(mode, view, motionAsked) {
     follow();
   }
 
+  // Reset to default also clears the map layer on the ground, the dust and auto-walk
+  const resetAll = () => {
+    app.demo.reset();
+    layerSwitch.set('photo');
+    (source.world3d ?? source.sim)?.event?.('clear');
+    if (sim3d?.isAutopilot?.()) sim3d.setAutopilot(false);
+  };
   window.hud = {
-    getStatus: app.getStatus, demo: app.demo, standInLive: live.real ? null : live.part, sim: source.world3d ?? source.sim ?? null,
+    getStatus: app.getStatus, demo: { ...app.demo, reset: resetAll }, standInLive: live.real ? null : live.part, sim: source.world3d ?? source.sim ?? null,
     move: (v) => moveInput?.remote(v),
     layer: (id) => (id ? layerSwitch.set(id) : layerSwitch.next()),   // Ground Control picks the visor's layer
     stepCount: () => stepCount,
@@ -178,7 +186,7 @@ async function start(mode, view, motionAsked) {
   await Promise.race([document.fonts?.load?.('600 20px Rajdhani'), new Promise((resolve) => setTimeout(resolve, 1500))]);
   app.start();
   if (params.get('hud') === 'full') app.demo.toggleDetail();   // ?hud=full starts with every panel
-  if (sim3d) app.notify(moveInput ? 'Walk in place to move · tap to auto-walk' : 'Tap the screen to start walking');
+  if (sim3d) app.notify(moveInput ? 'Walk in place to move · tap to talk · double tap to auto-walk' : 'Double tap to start walking');
   if (source.world3d) app.notify('Walk for real: GPS moves you on Mars');
   // hands-free voice: "Hey suit" (only with the real voice agent, and unless ?wake=0)
   if (voice.real && params.get('wake') !== '0') setTimeout(() => startWakeWord({ voice: voice.part, notify: app.notify }), 4000);

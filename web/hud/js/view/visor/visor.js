@@ -8,18 +8,8 @@ import {
   PANEL_W_U, drawBiosigns, drawComms, drawDelayTag, drawIntegrity, drawLayer, drawLinkChip, drawLocation, drawOxygenChip,
   drawRadiation, drawSuit, drawVitals,
 } from './panels.js';
-import { AMBER, AMBER_SOFT, NAV, PANEL, RED, plate, say } from './style.js';
+import { AMBER, NAV, PANEL, RED, plate } from './style.js';
 
-/**
- * VR box only: how far the astronaut looks down (0..1). Looking down shows every panel, like checking a chest display.
- */
-export function suitDetail(view, pitchDeg = 0) {
-  if (view !== 'vr') return 0;
-  const t = Math.max(0, Math.min(1, (-pitchDeg - LOOK_DOWN_START) / (LOOK_DOWN_FULL - LOOK_DOWN_START)));
-  return t * t * (3 - 2 * t);
-}
-const LOOK_DOWN_START = 12;   // degrees below level: panels start to appear
-const LOOK_DOWN_FULL = 22;    // fully shown
 
 /**
  * One eye of the helmet visor. Sizes follow the eye's short side; rows follow its height.
@@ -35,10 +25,11 @@ export function drawVisorHud(ctx, w, h, s, images) {
   const left = Math.max(4 * u, w * 0.05);
   const right = w - left;
   const cx = w / 2;
-  // full: every panel (I key / Ground Control, or looking down in the VR box)
-  // clean: VR box looking ahead, just oxygen and the link (the eye is narrow); focus: hand-held default
-  const full = s.detail === 'full' || suitDetail(s.view, s.pitch) > 0.5;
-  const clean = s.view === 'vr' && !full;
+  // level 0..1: how much of the full suit display shows (standing still or pinned on; see core/detail-auto.js)
+  // walking in the VR box: clean, just oxygen and the link (the eye is narrow); hand-held: the focus panels
+  const level = s.detailLevel ?? (s.detail === 'full' ? 1 : 0);
+  const full = level > 0.5;
+  const clean = s.view === 'vr';
   const navColor = s.mustReturn ? RED : NAV;
 
   // the guide stays clear of the side panels (full view) or only of the screen edge (focus view, panels are up top)
@@ -50,7 +41,8 @@ export function drawVisorHud(ctx, w, h, s, images) {
 
   drawCompass(ctx, cx, 15 * row, Math.min(w * 0.46, 64 * u), u, s.heading ?? 0, s.targetBearing, navColor);
 
-  if (full) {
+  if (level > 0) {                         // every panel, fading in / out
+    ctx.globalAlpha = level;
     plate(ctx, left - 2 * u, 13 * row, 30 * u, 74 * row, { fill: PANEL, radius: 1.2 * u });
     plate(ctx, right - 28 * u, 11 * row, 30 * u, 78 * row, { fill: PANEL, radius: 1.2 * u });
     drawLocation(ctx, left, 17 * row, u, s);
@@ -61,16 +53,21 @@ export function drawVisorHud(ctx, w, h, s, images) {
     drawMiniMap(ctx, right - 13 * u, 40 * row, 12 * u, u, s);
     drawIntegrity(ctx, right, 58 * row, u, s);
     drawLayer(ctx, right, 79 * row, u, s.layer);
-  } else if (clean) {
-    drawOxygenChip(ctx, left, 9 * row, u, s);
-    drawLinkChip(ctx, right, 9 * row, u, s);
-  } else {
-    drawVitals(ctx, left, 16 * row, u, s);
-    const mapR = 11 * u;
-    drawMiniMap(ctx, right - mapR - 1 * u, 16 * row + mapR, mapR, u, s);
-    drawDelayTag(ctx, right - mapR - 1 * u, 16 * row + 2 * mapR + 5 * u, u, s);
-    if (s.layer) drawLayer(ctx, right, 16 * row + 2 * mapR + 11 * u, u, s.layer);
   }
+  if (level < 1) {                         // while walking: the light view
+    ctx.globalAlpha = 1 - level;
+    if (clean) {
+      drawOxygenChip(ctx, left, 9 * row, u, s);
+      drawLinkChip(ctx, right, 9 * row, u, s);
+    } else {
+      drawVitals(ctx, left, 16 * row, u, s);
+      const mapR = 11 * u;
+      drawMiniMap(ctx, right - mapR - 1 * u, 16 * row + mapR, mapR, u, s);
+      drawDelayTag(ctx, right - mapR - 1 * u, 16 * row + 2 * mapR + 5 * u, u, s);
+      if (s.layer) drawLayer(ctx, right, 16 * row + 2 * mapR + 11 * u, u, s.layer);
+    }
+  }
+  ctx.globalAlpha = 1;
 
   if (s.card) drawStopCard(ctx, w, h, u, s.card, images.get(s.card.photo), { underAlert: s.alerts.length > 0 });
   else if (s.waiting) drawWaiting(ctx, cx, h / 2, u, s.waiting);
@@ -84,7 +81,6 @@ export function drawVisorHud(ctx, w, h, s, images) {
   if (!s.waiting) drawDirectionArrow(ctx, cx, arrowRow * row, u, s.arrowDeg, navColor, { label: !s.card });
   drawVoice(ctx, cx, (s.card ? 89 : 86) * row, u, w, s);
   if (s.view !== 'vr' && !s.waiting) drawFooter(ctx, left, 88 * row, u, s);
-  if (clean && !s.card) say(ctx, 'LOOK DOWN FOR SUIT', cx, 93 * row, 1.7 * u, { align: 'center', color: AMBER_SOFT, weight: 600 });
 }
 
 export { AMBER };

@@ -1,7 +1,7 @@
 // Map layers from mission/layers/layers.json on the Ground Control map: slope, minerals (3 CRISM scenes), heat,
 // wider CTX context; a colour key with the credit, and "Show on visor" to paint the same layer on the
 // astronaut's 3D ground. Stops get their slope and thermal inertia in the hover label.
-const VISOR_IDS = new Set(["slope", "minerals_frt0000b6f1", "thermal"]);   // the layers the 3D sim can paint
+const VISOR_IDS = new Set(["photo", "slope", "minerals_frt0000b6f1", "thermal"]);   // the layers the 3D sim can paint
 
 // One layer at a time, picked from a short button bar: Photo | Slope | Minerals | Heat | Context.
 // Minerals has three CRISM scenes; the key offers a choice between them.
@@ -55,14 +55,14 @@ export async function addMapLayers({ map, L, base = "../mission/layers/", onShow
     const l = id ? byId.get(id) : null;
     if (l) overlayOf(l).addTo(map);
     buttons.forEach(({ b, g }) => b.classList.toggle("on", id ? g.ids.includes(id) : g.name === "Photo"));
-    drawKey(l);
+    drawKey(l ?? byId.get("photo"));
   }
 
   function drawKey(l) {
     keyEl.replaceChildren();
     keyEl.hidden = !l;
     if (!l) return;
-    const group = groups.find((g) => g.ids.includes(l.id));
+    const group = groups.find((g) => g.ids.includes(l.id)) ?? { name: "Photo", ids: [] };
     const title = document.createElement("b");
     title.textContent = `${group.name} · ${l.instrument} ${l.resolution_m} m`;
     keyEl.append(title);
@@ -92,7 +92,7 @@ export async function addMapLayers({ map, L, base = "../mission/layers/", onShow
   }
 
   show(null);
-  return data.layers;
+  return { layers: data.layers, showPhoto: () => show(null) };
 }
 
 /** Stop label with what the layers say at that stop, e.g. "2 · Steep ridge · slope 22° · TI 396". */

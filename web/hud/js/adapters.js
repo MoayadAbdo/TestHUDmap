@@ -10,6 +10,9 @@ export function asSim(mod) {
   return typeof sim?.getPosition === 'function' && typeof sim?.getBackground === 'function' ? sim : null;
 }
 
+/** The agent's words for the visor, without voice-style tags like "[calm]" or "[laughs]". */
+export const visorText = (text) => String(text ?? '').replace(/\[[^\]\n]{1,24}\]\s*/g, '').replace(/\s{2,}/g, ' ').trim();
+
 /**
  * T1.2 exposes toggleVoice() and a conversation with sendContextualUpdate().
  * Optional: onUserText(cb) (the astronaut's words) and getVoiceState() ('disconnected' | 'connecting' | 'connected').
@@ -21,7 +24,7 @@ export function asVoice(mod) {
   return {
     toggle: () => mod.toggleVoice(),
     sendContext: (text) => conversation()?.sendContextualUpdate?.(text),
-    onText: (callback) => (mod.onAgentText ?? mod.onText)?.(callback),
+    onText: (callback) => (mod.onAgentText ?? mod.onText)?.((text) => callback(visorText(text))),
     onUserText: (callback) => mod.onUserText?.(callback),
     get listening() {
       return listening();

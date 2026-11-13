@@ -50,7 +50,7 @@ function hudStream() {
   return state.stream;
 }
 
-const DEMO_NAMES = new Set(["oxygenFast", "oxygenLow", "steepGround", "nextStop", "solarStorm", "o2Leak", "recall", "toggleDetail"]);
+const DEMO_NAMES = new Set(["oxygenFast", "oxygenLow", "steepGround", "nextStop", "solarStorm", "o2Leak", "recall", "toggleDetail", "reset"]);
 
 function send(msg) {
   for (const c of state.conns) if (c.open) { try { c.send(msg); } catch (_) { /* closed */ } }

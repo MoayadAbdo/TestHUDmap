@@ -56,20 +56,18 @@ export function drawNextStop(ctx, cx, y, u, s) {
 }
 
 export function drawVoice(ctx, cx, y, u, w, s) {
-  if (s.listening) {
-    ctx.fillStyle = RED;
-    ctx.beginPath();
-    ctx.arc(cx - 6 * u, y - 4 * u, 0.9 * u, 0, Math.PI * 2);
-    ctx.fill();
-    say(ctx, 'LISTENING', cx - 4.4 * u, y - 4 * u, 1.9 * u, { color: INK });
+  const dot = (x, yy) => { ctx.fillStyle = RED; ctx.beginPath(); ctx.arc(x, yy, 0.9 * u, 0, Math.PI * 2); ctx.fill(); };
+  if (!s.aiText) {
+    if (s.listening) { dot(cx - 5.4 * u, y); say(ctx, 'LISTENING', cx - 3.8 * u, y, 1.9 * u, { color: INK }); }
+    return;
   }
-  if (!s.aiText) return;
   ctx.font = `600 ${2.4 * u}px Rajdhani, system-ui, sans-serif`;
-  const lines = wrap(ctx, s.aiText, w * 0.46, 2);
+  const lines = wrap(ctx, s.aiText, w * 0.44, 2);
   const boxW = w * 0.5;
   const boxH = lines.length * 3 * u + 2 * u;
   plate(ctx, cx - boxW / 2, y - boxH / 2, boxW, boxH, { fill: PANEL, radius: 0.8 * u });
   brackets(ctx, cx - boxW / 2, y - boxH / 2, boxW, boxH, 1.4 * u);
+  if (s.listening) dot(cx - boxW / 2 + 1.8 * u, y);                 // inside the box: listening now
   lines.forEach((line, i) => say(ctx, line, cx, y - boxH / 2 + 2.5 * u + i * 3 * u, 2.4 * u, { align: 'center' }));
 }
 
