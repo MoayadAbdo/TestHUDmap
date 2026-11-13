@@ -4,7 +4,8 @@ import { config } from './config.js';
 import { createFieldSource, requestMotionPermission } from './sources/field-source.js';
 import { createSimSource } from './sources/sim-source.js';
 import { createMarsWalkSource } from './sources/marswalk-source.js';
-import { bindInput } from './input.js';
+import { SIM_CLICKER_KEYS, bindInput } from './input.js';
+import { createMoveInput } from './move-input.js';
 import { startWakeWord } from './wake-word.js';
 import { createDemoPanel } from './view/demo-panel.js';
 import { createRenderer } from './view/renderer.js';
@@ -117,7 +118,10 @@ async function start(mode, view, motionAsked) {
     sim3d.setAutopilot(walking);
     app.notify(walking ? 'Walking: tap to stop' : 'Stopped: tap to walk');
   };
-  bindInput({ canvas, onTap: sim3d ? toggleWalk : app.onTap, onLongPress: demo.toggle, onClicker: app.onTap });
+  bindInput({ canvas, onTap: sim3d ? toggleWalk : app.onTap, onLongPress: demo.toggle, onClicker: app.onTap,
+    clickerKeys: sim3d ? SIM_CLICKER_KEYS : undefined });
+  // Sim mode: move without walking for real (WASD, gamepad, or Ground Control driving)
+  const moveInput = sim3d?.setMoveInput ? createMoveInput({ sim: sim3d, onVoice: app.onTap, onToggleWalk: toggleWalk }) : null;
   // Mars walk: every frame, put the 3D Mars view where the real GPS puts you
   if (source.world3d) {
     const follow = () => {
@@ -128,11 +132,14 @@ async function start(mode, view, motionAsked) {
     follow();
   }
 
-  window.hud = { getStatus: app.getStatus, demo: app.demo, standInLive: live.real ? null : live.part, sim: source.world3d ?? source.sim ?? null };
+  window.hud = {
+    getStatus: app.getStatus, demo: app.demo, standInLive: live.real ? null : live.part, sim: source.world3d ?? source.sim ?? null,
+    move: (v) => moveInput?.remote(v),
+  };
   console.info('[hud] mission', url, 'live', live.real ? 'real' : 'stand-in', 'voice', voice.real ? 'real' : 'stand-in');
   await Promise.race([document.fonts?.load?.('600 20px Rajdhani'), new Promise((resolve) => setTimeout(resolve, 1500))]);
   app.start();
-  if (sim3d) app.notify('Tap the screen to start walking');
+  if (sim3d) app.notify(moveInput ? 'Move: WASD / gamepad, or tap to auto-walk' : 'Tap the screen to start walking');
   if (source.world3d) app.notify('Walk for real: GPS moves you on Mars');
   // hands-free voice: "Hey suit" (only with the real voice agent, and unless ?wake=0)
   if (voice.real && params.get('wake') !== '0') setTimeout(() => startWakeWord({ voice: voice.part, notify: app.notify }), 4000);

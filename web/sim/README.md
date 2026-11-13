@@ -43,6 +43,7 @@ const pos = sim.getPosition();   // { mars: [lat, lon], heading, pitch, stop, ne
 sim.on("arrive", ({ stop }) => showStopCard(stop));
 sim.on("scan",   ({ stop }) => showSampleCollected(stop));
 sim.event("dust");               // dust storm (from Ground Control)
+sim.setMoveInput({ forward, right, turn, run });  // steer without walking (-1..1): WASD, gamepad or Ground Control
 ```
 In stereo mode the screen is split in two halves, so the HUD draws its overlay twice (left and right half).
 

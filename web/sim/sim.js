@@ -38,7 +38,10 @@ const S = {
   walking: false, keyWalking: false, pos: new THREE.Vector3(), bob: 0,
   visited: [], scanned: [], scanT: 0, dustUntil: 0, stereo: true,
   autopilot: false, rIdx: 1, pauseUntil: 0, lastManualLook: -1e9,
+  move: { forward: 0, right: 0, turn: 0, run: false }, yaw: 0,   // keyboard / gamepad / Ground Control steering
 };
+const TURN_DEG_PER_S = 90;
+const RUN_FACTOR = 2.5;
 const PAUSE_AT_STOP_MS = 8000;     // autopilot waits this long at each beacon (time to look and scan)
 
 // ---------- helpers ----------
@@ -413,14 +416,22 @@ function tick(now) {
 
 function update(dt, now) {
   const t = now / 1000;
-  // look direction
+  // look direction; turning (Q/E, arrows, right stick) adds to the head direction in VR
+  const m = S.move;
+  if (m.turn) {
+    if (S.sensorHeading != null) S.yaw = wrap360(S.yaw + m.turn * TURN_DEG_PER_S * dt);
+    else { S.heading = wrap360(S.heading + m.turn * TURN_DEG_PER_S * dt); S.lastManualLook = now; }
+  }
   if (S.sensorHeading != null) {
-    S.heading = wrap360(S.heading + angleDiff(S.sensorHeading, S.heading) * Math.min(1, dt * 10));
+    S.heading = wrap360(S.heading + angleDiff(wrap360(S.sensorHeading + S.yaw), S.heading) * Math.min(1, dt * 10));
     S.pitch += (S.sensorPitch - S.pitch) * Math.min(1, dt * 10);
   }
-  // walking
-  const pad = navigator.getGamepads ? [...navigator.getGamepads()].find(Boolean) : null;
-  const manual = S.walking || S.keyWalking || !!(pad && pad.buttons[0] && pad.buttons[0].pressed);
+  // walking; steering (WASD, left stick, Ground Control) walks where you look, sideways or back too
+  const stick = Math.min(1, Math.hypot(m.forward, m.right));
+  const steering = stick > 0.1;
+  if (steering && S.autopilot) S.autopilot = false;                  // the player takes over
+  const pad = !S.opts.hud && navigator.getGamepads ? [...navigator.getGamepads()].find(Boolean) : null;   // HUD reads the pad itself
+  const manual = steering || S.walking || S.keyWalking || !!(pad && pad.buttons[0] && pad.buttons[0].pressed);
   // Mars walk mode: the HUD gives us the astronaut's real GPS position, already mapped onto Mars
   let extMoving = false;
   if (S.external) {
@@ -439,9 +450,10 @@ function update(dt, now) {
     S.heading = wrap360(S.heading + angleDiff(autoDir, S.heading) * Math.min(1, dt * 1.5));
     S.pitch += (-8 - S.pitch) * Math.min(1, dt * 1.5);
   }
-  S.moveHeading = autoDir ?? S.heading;
+  S.moveHeading = steering ? wrap360(S.heading + Math.atan2(m.right, m.forward) / DEG) : autoDir ?? S.heading;
   if (walking) {
-    const sp = (S.mission.suit?.walk_speed_mps || 0.8) * S.opts.speed;
+    const pace = steering ? stick * (m.run ? RUN_FACTOR : 1) : 1;
+    const sp = (S.mission.suit?.walk_speed_mps || 0.8) * S.opts.speed * pace;
     const h = S.moveHeading * DEG;
     const nx = S.pos.x + Math.sin(h) * sp * dt, nz = S.pos.z - Math.cos(h) * sp * dt;
     const T = S.T, lim = (v, half, off) => Math.max(-half - off + 5, Math.min(half - off - 5, v));
@@ -611,6 +623,11 @@ export const sim = {
   /** Walk by yourself along the route, pausing at each beacon. You only look around. */
   setAutopilot(on) { S.autopilot = !!on; S.pauseUntil = 0; if (on) S.rIdx = nearestRouteIndex(); },
   isAutopilot() { return S.autopilot; },
+  /** Steer without walking for real: forward / right in -1..1 (back / left when negative), turn in -1..1, run. */
+  setMoveInput({ forward = 0, right = 0, turn = 0, run = false } = {}) {
+    const clamp = (v) => Math.max(-1, Math.min(1, Number(v) || 0));
+    S.move = { forward: clamp(forward), right: clamp(right), turn: clamp(turn), run: !!run };
+  },
   setStereo(on) { S.stereo = !!on; if (S.renderer) resize(); },
   /** Jump next to a stop (testing). */
   teleport(i) {

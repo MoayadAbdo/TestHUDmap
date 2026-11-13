@@ -2,6 +2,7 @@
 // Listens on both links at once: the laptop's local link (when server/server.mjs serves this page) and
 // PeerJS with the room code. If both bring phone data, the local link wins (link-choice.js).
 import { createDelayedView } from "./delayed-view.js";
+import { createDrive } from "./drive.js";
 import { createLinkChoice } from "./link-choice.js";
 import { startLocalLink } from "./local-link.js";
 import { createPeerLink } from "./peer-link.js";
@@ -138,6 +139,19 @@ $("delayOn").addEventListener("change", () => {
   log($("delayOn").checked ? `Mars delay ON (${$("delaySec").value} s each way). The view is delayed too.` : "Mars delay OFF", "info");
 });
 $("delaySec").addEventListener("change", applyDelay);
+
+// Drive (WASD): straight to the phone, no Mars delay and no log line per key (it's a test tool)
+function sendNow(msg) {
+  const via = route();
+  if (via === "local") local.send(msg).catch(() => {});
+  else if (via === "peer") peerLink.send(msg);
+}
+const drive = createDrive({ send: sendNow });
+$("driveOn").addEventListener("change", (e) => {
+  drive.setOn(e.target.checked);
+  if (e.target.checked) e.target.blur();          // keys go to the page, not the switch
+  log(e.target.checked ? "Drive ON: W/S walk, A/D sideways, Q/E or arrows turn, Shift runs (sim mode)" : "Drive OFF", "info");
+});
 applyDelay();   // the browser may restore the switch on reload
 
 // local link too, when the laptop server serves this page
