@@ -5,7 +5,7 @@
 const KEY_MOVES = {
   KeyW: ['forward', 1], ArrowUp: ['forward', 1], KeyS: ['forward', -1], ArrowDown: ['forward', -1],
   KeyA: ['right', -1], KeyD: ['right', 1],
-  KeyQ: ['turn', -1], ArrowLeft: ['turn', -1], KeyE: ['turn', 1], ArrowRight: ['turn', 1],
+  KeyQ: ['turn', -1], KeyE: ['turn', 1],   // ←/→ stay free for page-turner clickers (they talk to the AI)
 };
 const RUN_CODES = new Set(['ShiftLeft', 'ShiftRight']);
 // boost: speed × for this steering (Ground Control's Drive speed); 0 = use the phone's own ?speed

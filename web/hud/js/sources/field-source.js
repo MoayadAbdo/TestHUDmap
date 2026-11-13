@@ -1,4 +1,4 @@
-import { cameraHeading, smoothHeading } from '../core/compass.js';
+import { cameraHeading, cameraPitch, smoothHeading } from '../core/compass.js';
 import { wrap360 } from '../core/geo.js';
 
 const MIN_SPEED_FOR_GPS_COURSE = 0.7;
@@ -28,10 +28,13 @@ export function createFieldSource({ doc = document, nav = navigator, win = windo
   const screenAngle = () => win.screen?.orientation?.angle ?? win.orientation ?? 0;
 
   /** Android: absolute angles. iPhone: webkitCompassHeading, shifted by the screen turn (best effort, check on the phone). */
+  let pitch = null;
   function onOrientation(event) {
     let h = null;
     if (event.webkitCompassHeading != null) h = wrap360(event.webkitCompassHeading + screenAngle());
     else if (event.absolute || event.type === 'deviceorientationabsolute') h = cameraHeading(event.alpha, event.beta, event.gamma);
+    const p = cameraPitch(event.beta, event.gamma);
+    if (p != null) pitch = pitch == null ? p : pitch + 0.25 * (p - pitch);
     if (h == null) return;
     compassSeen = true;
     heading = smoothHeading(heading, h);
@@ -73,7 +76,7 @@ export function createFieldSource({ doc = document, nav = navigator, win = windo
       video.srcObject?.getTracks().forEach((t) => t.stop());
     },
     getPosition() {
-      return position ? { at: position, heading: heading ?? 0, accuracy, hasHeading: heading != null, fixAt } : null;
+      return position ? { at: position, heading: heading ?? 0, pitch: pitch ?? 0, accuracy, hasHeading: heading != null, fixAt } : null;
     },
     getBackground() {
       return video;

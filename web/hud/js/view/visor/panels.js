@@ -1,6 +1,8 @@
 import { AMBER, AMBER_FAINT, AMBER_SOFT, RED, bar, brackets, say } from './style.js';
 
 const STATUS_COLOR = { ok: AMBER_SOFT, warn: '#ffd27a', danger: RED };
+/** Side panels are about this wide (in u, from the panel's x); the visor keeps its guide out of them. */
+export const PANEL_W_U = 27;
 
 function header(ctx, text, x, y, u, align = 'left') {
   say(ctx, text, x, y, 2.3 * u, { weight: 700, align });

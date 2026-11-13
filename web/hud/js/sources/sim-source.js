@@ -13,7 +13,7 @@ export function createSimSource(sim, mission, view = 'single', assetsBase = '../
       fit();
       addEventListener('resize', () => { fit(); dispatchEvent(new Event('sim-resize')); });  // one eye's shape
       document.body.appendChild(box);
-      await sim.start?.(mission, { container: box, assetsBase, speed, stereo: false, autopilot: false, hud: true, hfovDeg: 62, lockPitch: true });
+      await sim.start?.(mission, { container: box, assetsBase, speed, stereo: false, autopilot: false, hud: true, hfovDeg: 62, lockPitch: false });
       await sim.enableSensors?.();
     },
     stop() {
@@ -23,7 +23,7 @@ export function createSimSource(sim, mission, view = 'single', assetsBase = '../
       const p = sim.getPosition();
       if (!p) return null;
       const at = Array.isArray(p) ? p : p.at ?? [p.lat, p.lon];
-      return { at, heading: p.heading ?? 0, accuracy: 0, hasHeading: true };
+      return { at, heading: p.heading ?? 0, pitch: p.pitch ?? 0, accuracy: 0, hasHeading: true };
     },
     getBackground() {
       return sim.getBackground();

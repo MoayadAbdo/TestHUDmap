@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { STILL, combine, createMoveInput, keyVector, padVector } from '../js/move-input.js';
 
-test('keys: W walks, S backs, A/D sideways, Q/E and arrows turn, Shift runs', () => {
+test('keys: W walks, S backs, A/D sideways, Q/E turn, Shift runs; ←/→ left for clickers', () => {
   assert.deepEqual(keyVector(new Set(['KeyW', 'ShiftLeft'])), { forward: 1, right: 0, turn: 0, run: true, boost: 0 });
   assert.deepEqual(keyVector(new Set(['KeyS', 'KeyD'])), { forward: -1, right: 1, turn: 0, run: false, boost: 0 });
-  assert.deepEqual(keyVector(new Set(['ArrowLeft'])), { forward: 0, right: 0, turn: -1, run: false, boost: 0 });
+  assert.deepEqual(keyVector(new Set(['KeyQ'])), { forward: 0, right: 0, turn: -1, run: false, boost: 0 });
+  assert.deepEqual(keyVector(new Set(['ArrowLeft'])), STILL);
   assert.deepEqual(keyVector(new Set(['KeyW', 'KeyS'])), STILL);
 });
 

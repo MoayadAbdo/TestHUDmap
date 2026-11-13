@@ -15,6 +15,8 @@ export function createStatic(root) {
     if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, "index.html");
     if (!fs.existsSync(file)) { res.writeHead(404); return res.end("Not found"); }
     res.writeHead(200, { "Content-Type": TYPES[path.extname(file)] ?? "application/octet-stream", "Cache-Control": "no-cache" });
-    fs.createReadStream(file).pipe(res);
+    fs.createReadStream(file)
+      .on("error", () => { if (!res.headersSent) res.writeHead(500); res.end(); })   // one bad read must not stop the server
+      .pipe(res);
   };
 }

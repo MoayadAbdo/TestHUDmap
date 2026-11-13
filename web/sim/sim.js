@@ -435,13 +435,14 @@ function update(dt, now) {
   // Mars walk mode: the HUD gives us the astronaut's real GPS position, already mapped onto Mars
   let extMoving = false;
   if (S.external) {
-    const { target, heading } = S.external, k = Math.min(1, dt * 2.5);      // glide, so GPS jumps look smooth
+    const { target, heading, pitch } = S.external, k = Math.min(1, dt * 2.5);      // glide, so GPS jumps look smooth
     const ox = S.pos.x, oz = S.pos.z;
     S.pos.x += (target.x - S.pos.x) * k; S.pos.z += (target.z - S.pos.z) * k;
     const speed = Math.hypot(S.pos.x - ox, S.pos.z - oz) / Math.max(dt, 1e-3);
     extMoving = speed > 0.25;
     if (extMoving) S.bob += dt * speed * 6;
     if (heading != null) S.heading = wrap360(S.heading + angleDiff(heading, S.heading) * Math.min(1, dt * 8));
+    if (pitch != null) S.pitch += (pitch - S.pitch) * Math.min(1, dt * 8);   // head up / down from the phone
   }
   const autoDir = manual || S.external ? null : autopilotDirection(now);
   const walking = !S.external && (manual || autoDir != null);
@@ -614,12 +615,12 @@ export const sim = {
   event(type) { if (type === "dust") S.dustUntil = performance.now() + 20000; },
   setWalking(on) { S.walking = !!on; },
   /** Mars walk mode: put the astronaut at this Mars position (from real GPS), looking at `heading`. */
-  setExternalPosition(mars, heading = null) {
+  setExternalPosition(mars, heading = null, pitch = null) {
     if (!S.toLocal || !mars) return;
     S.autopilot = false;
     const target = S.toLocal(mars[0], mars[1]);
     if (!S.external) S.pos.set(target.x, S.pos.y, target.z);     // first fix: jump there
-    S.external = { target, heading };
+    S.external = { target, heading, pitch };
   },
   /** Walk by yourself along the route, pausing at each beacon. You only look around. */
   setAutopilot(on) { S.autopilot = !!on; S.pauseUntil = 0; if (on) S.rIdx = nearestRouteIndex(); },

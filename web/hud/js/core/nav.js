@@ -12,10 +12,9 @@ export function createNavigator({ stops, base, r, arrivalM = 20, dwellMs = 3000 
   let lastReached = -1;
   let homeward = false;
 
-  /** First stop not reached yet, looking ahead of `from` first, then back. stops.length when all are done. */
-  function firstOpen(from) {
-    for (let i = from; i < stops.length; i++) if (!visited.has(i)) return i;
-    for (let i = 0; i < from; i++) if (!visited.has(i)) return i;
+  /** The earliest stop not reached yet (stops.length when all are done), so passing a later one never skips earlier ones. */
+  function firstOpen() {
+    for (let i = 0; i < stops.length; i++) if (!visited.has(i)) return i;
     return stops.length;
   }
 
@@ -33,7 +32,7 @@ export function createNavigator({ stops, base, r, arrivalM = 20, dwellMs = 3000 
         visited.add(i);
         insideSince.delete(i);
         lastReached = i;
-        next = firstOpen(i + 1);
+        next = firstOpen();
         return stops[i];
       }
     }

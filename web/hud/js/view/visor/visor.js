@@ -3,8 +3,8 @@ import { drawCompass } from './compass.js';
 import { drawVisorFrame } from './frame.js';
 import { drawGroundGuide } from './ground.js';
 import { drawMiniMap } from './minimap.js';
-import { drawAlerts, drawMessage, drawNextStop, drawVoice, drawWaiting } from './overlay.js';
-import { drawBiosigns, drawComms, drawIntegrity, drawLocation, drawRadiation, drawSuit } from './panels.js';
+import { drawAlerts, drawDirectionArrow, drawMessage, drawNextStop, drawVoice, drawWaiting } from './overlay.js';
+import { PANEL_W_U, drawBiosigns, drawComms, drawIntegrity, drawLocation, drawRadiation, drawSuit } from './panels.js';
 import { AMBER, RED } from './style.js';
 
 /** One eye of the amber helmet visor. Sizes follow the eye's short side; rows follow its height. */
@@ -15,8 +15,9 @@ export function drawVisorHud(ctx, w, h, s, images) {
   const right = w - left;
   const cx = w / 2;
 
-  // side panels are about 27u wide, the pin label about 8u each side: the guide only shows in the clear middle
-  if (!s.card && !s.waiting) drawGroundGuide(ctx, w, h, u, s, { minX: left + 36 * u, maxX: right - 36 * u });
+  // the guide stays between the side panels; the pin also needs room for its label (about 8u each side)
+  const edge = (PANEL_W_U + 1) * u;
+  if (!s.waiting) drawGroundGuide(ctx, w, h, u, s, { minX: left + edge, maxX: right - edge }, { minX: left + edge + 8 * u, maxX: right - edge - 8 * u });
   drawVisorFrame(ctx, w, h, { vr: s.view === 'vr' });
 
   drawCompass(ctx, cx, 15 * row, Math.min(w * 0.46, 64 * u), u, s.heading ?? 0, s.targetBearing, s.mustReturn ? RED : AMBER);
@@ -35,5 +36,7 @@ export function drawVisorHud(ctx, w, h, s, images) {
   if (s.card) drawStopCard(ctx, w, h, u, s.card, images.get(s.card.photo));
   else if (s.waiting) drawWaiting(ctx, cx, h / 2, u, s.waiting);
   else drawNextStop(ctx, cx, 72 * row, u, s);
+  // always visible: which way to go along the path (below the card when one is open)
+  if (!s.waiting) drawDirectionArrow(ctx, cx, (s.card ? 75 : 64) * row, u, s.arrowDeg, s.mustReturn ? RED : AMBER);
   drawVoice(ctx, cx, 83 * row, u, w, s);
 }

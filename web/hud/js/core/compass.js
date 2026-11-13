@@ -18,6 +18,13 @@ export function cameraHeading(alpha, beta, gamma) {
   return wrap360((Math.atan2(east, north) * 180) / Math.PI);
 }
 
+/** How far the back camera looks up (+) or down (−), degrees, from the same angles (phone upright in the box = 0). */
+export function cameraPitch(beta, gamma) {
+  if (beta == null || gamma == null) return null;
+  const up = -Math.cos(rad(beta)) * Math.cos(rad(gamma));
+  return (Math.asin(Math.max(-1, Math.min(1, up))) * 180) / Math.PI;
+}
+
 /** Smooths a jittery heading without jumping at the 0/360 seam. */
 export function smoothHeading(previous, next, weight = 0.2) {
   if (previous == null) return next;

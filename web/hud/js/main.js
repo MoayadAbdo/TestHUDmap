@@ -126,7 +126,7 @@ async function start(mode, view, motionAsked) {
   if (source.world3d) {
     const follow = () => {
       const m = app.marsPosition();
-      if (m) source.world3d.setExternalPosition(m.mars, m.heading);
+      if (m) source.world3d.setExternalPosition(m.mars, m.heading, m.pitch);
       requestAnimationFrame(follow);
     };
     follow();

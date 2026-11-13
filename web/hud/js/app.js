@@ -1,11 +1,12 @@
 import { evaluateAlerts } from './core/alerts.js';
 import { createBiosigns } from './core/biosigns.js';
-import { EARTH_RADIUS_M, MARS_RADIUS_M, distanceM } from './core/geo.js';
+import { EARTH_RADIUS_M, MARS_RADIUS_M, bearingDeg, distanceM } from './core/geo.js';
 import { arrowAngle, createNavigator, etaMinutes } from './core/nav.js';
 import { slopeAhead } from './core/route.js';
 import { baseMessage, createBaseFix } from './core/base-fix.js';
 import { gpsWarning } from './core/gps-health.js';
 import { sideReadouts } from './core/readouts.js';
+import { createRoutePlanner, pathGuide } from './core/path.js';
 import { buildScene } from './core/scene.js';
 import { createStopCard, nearbyReachedStop } from './core/stop-card.js';
 import { buildStatus } from './core/status.js';
@@ -16,6 +17,7 @@ const TICK_MS = 250;
 const TELEMETRY_MS = 1000;
 const PHOTO_MS = 2000;
 const MESSAGE_MS = 12000;
+const STEEP_DEG = 12;
 
 /**
  * The HUD's brain: position in, navigation, oxygen, alerts, cards and messages out.
@@ -40,6 +42,7 @@ export function createHudApp({
 
   let world = null;
   let nav = null;
+  let planner = null;
   let step = null;
   let mustReturn = false;
   let alerts = [];
@@ -60,6 +63,8 @@ export function createHudApp({
     const route = (mission.route ?? []).map((p) => (Array.isArray(p) ? { at: toFrame(p), slope_deg: 0 } : { ...p, at: toFrame(p.mars) }));
     world = { stops, route, base: { at: toFrame(mission.anchor.mars) }, r, marsPerFrameMetre, toMars };
     nav = createNavigator({ stops, base: world.base, r });
+    planner = createRoutePlanner({ route, r });   // swap for a slope-map planner when one exists
+    if (mustReturn) nav.goHome();                  // a new base doesn't cancel return-to-base
   }
 
   /** Sim walks on Mars directly. Field mode maps Mars to the desert; with no desert anchor, the first good GPS fix is base. */
@@ -146,10 +151,17 @@ export function createHudApp({
     alerts = result.alerts;
   }
 
+  /** The walking path from here to the target (not the straight line), and what the visor needs from it. */
+  function guideFrom(position) {
+    return pathGuide(planner.plan(position.at, step.target.at), world.r);
+  }
+
   function status() {
     if (!step) return null;
+    const position = source.getPosition();
+    const alongM = position ? guideFrom(position).lengthM : step.distanceM;
     return buildStatus({
-      nav: step,
+      nav: { ...step, distanceM: alongM },
       stopCount,
       marsPerFrameMetre: world.marsPerFrameMetre,
       o2Pct: suit.o2Pct,
@@ -229,7 +241,7 @@ export function createHudApp({
       const position = source.getPosition();
       if (!world || !position) return null;
       const rotation = mission.anchor.rotation_deg ?? 0;
-      return { mars: world.toMars(position.at), heading: (((position.heading - rotation) % 360) + 360) % 360 };
+      return { mars: world.toMars(position.at), heading: (((position.heading - rotation) % 360) + 360) % 360, pitch: position.pitch ?? 0 };
     },
     /** Short message from the suit itself (not from Ground Control). */
     notify(text) {
@@ -258,17 +270,20 @@ export function createHudApp({
       Object.assign(hud, { timeMs: t }, sideReadouts({
         wallMs: now(), mission, conditionStop: conditionStop(), suit, bio, link, radDoseUsv, mustReturn, slopeDeg: slopeNow,
       }));
-      if (step) {
-        const heading = position?.heading ?? 0;
+      if (step && position) {
+        const heading = position.heading ?? 0;
+        const guide = guideFrom(position);
         hud.heading = heading;
+        hud.pitch = position.pitch ?? 0;
         hud.targetBearing = step.bearingDeg;
-        hud.arrowDeg = arrowAngle(step.bearingDeg, heading);
-        hud.distanceM = step.distanceM * world.marsPerFrameMetre;
+        hud.arrowDeg = arrowAngle(bearingDeg(position.at, guide.toward), heading);   // along the path, not straight
+        hud.distanceM = guide.lengthM * world.marsPerFrameMetre;
         hud.distanceLabel = `${Math.round(hud.distanceM)} m`;
-        hud.etaMin = Math.max(1, Math.round(etaMinutes(step.distanceM, walkSpeed)));
+        hud.etaMin = Math.max(1, Math.round(etaMinutes(guide.lengthM, walkSpeed)));
         hud.targetName = step.target.isBase ? 'Base' : step.target.name;
         hud.targetLabel = `${hud.targetName}, about ${hud.etaMin} min`;
-        if (position) hud.scene = buildScene({ world, position, heading, isVisited: nav.isVisited, target: step.target });
+        const path = guide.samples.map((p) => ({ ...p, steep: planner.slopeAt(p.at) > STEEP_DEG }));
+        hud.scene = buildScene({ world, position, heading, isVisited: nav.isVisited, target: step.target, path });
       }
       return { background: source.getBackground(), hud };
     },
@@ -281,7 +296,7 @@ export function createHudApp({
       },
       // the sims count stops as in mission.json (base included), so find the target there by id
       nextStop: () => {
-        const id = step?.target && !step.target.isBase ? step.target.id : mission.stops[0]?.id;
+        const id = step?.target && !step.target.isBase ? step.target.id : mission.stops.at(-1)?.id;   // heading home: last stop
         const i = rawMission.stops.findIndex((s) => s.id === id);
         if (i >= 0) source.sim?.jumpToStop?.(i);
       },

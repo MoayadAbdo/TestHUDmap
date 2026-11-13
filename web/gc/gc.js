@@ -99,8 +99,7 @@ const peerLink = createPeerLink({
   log,
 });
 function join(code) {
-  peerLink.connect(code);
-  const room = String(code).toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const room = peerLink.connect(code);   // one rule for cleaning the code, in peer-link.js
   if (room) { params.set("room", room); history.replaceState(null, "", `?${params}`); }
 }
 async function allowLocalNetwork() {

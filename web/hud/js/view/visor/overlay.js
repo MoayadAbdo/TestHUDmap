@@ -54,3 +54,27 @@ export function drawVoice(ctx, cx, y, u, w, s) {
 export function drawWaiting(ctx, cx, cy, u, text) {
   say(ctx, text, cx, cy, 3 * u, { align: 'center', weight: 700 });
 }
+
+/** Always-on arrow under the view centre: the way to go along the path (0 = straight ahead, + = right). */
+export function drawDirectionArrow(ctx, cx, cy, u, deg, color) {
+  if (deg == null) return;
+  const r = 3.2 * u;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate((deg * Math.PI) / 180);
+  ctx.fillStyle = color;
+  ctx.strokeStyle = 'rgba(18, 7, 0, 0.6)';
+  ctx.lineWidth = 0.35 * u;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 1.5 * u;
+  ctx.beginPath();
+  ctx.moveTo(0, -r);
+  ctx.lineTo(r * 0.75, r * 0.7);
+  ctx.lineTo(0, r * 0.25);
+  ctx.lineTo(-r * 0.75, r * 0.7);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.fill();
+  ctx.restore();
+  if (Math.abs(deg) > 150) say(ctx, 'TURN AROUND', cx, cy + r + 2.2 * u, 2.2 * u, { align: 'center', color, weight: 700 });
+}

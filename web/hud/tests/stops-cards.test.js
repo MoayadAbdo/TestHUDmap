@@ -13,6 +13,14 @@ const stops = [
 ];
 const nav = () => createNavigator({ stops, base: { at: BASE }, r: EARTH_RADIUS_M });
 
+test('passing a later stop by chance never skips the earlier ones', () => {
+  const n = nav();
+  n.update(at(0, 200), 0);
+  const step = n.update(at(0, 200), 3000);
+  assert.equal(step.arrived.name, 'Two');
+  assert.equal(step.target.name, 'One');
+});
+
 test('skipping a stop: the Exit still counts, then it guides back to the one you missed', () => {
   const n = nav();
   n.update(at(0, 300), 0);
@@ -46,8 +54,12 @@ test('stop card stays while you are there, closes when you walk away', () => {
   card.show(stops[0], 0);
   card.update(at(0, 100), 60_000, EARTH_RADIUS_M);
   assert.equal(card.stop?.name, 'One', 'still standing at the stop after 60 s');
-  card.update(at(0, 140), 2000 + 60_000, EARTH_RADIUS_M);
-  assert.equal(card.stop, null, '40 m away: closed');
+  card.update(at(0, 140), 61_000, EARTH_RADIUS_M);
+  assert.equal(card.stop?.name, 'One', 'one GPS jump away is not leaving');
+  card.update(at(0, 100), 62_000, EARTH_RADIUS_M);
+  card.update(at(0, 140), 63_000, EARTH_RADIUS_M);
+  card.update(at(0, 140), 66_500, EARTH_RADIUS_M);
+  assert.equal(card.stop, null, '40 m away for 3.5 s: closed');
 });
 
 test('stop card: no flicker in the first seconds, never stuck open', () => {

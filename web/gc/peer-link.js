@@ -11,9 +11,10 @@ export function createPeerLink({ onData, onStream, onStatus, hasVideo, log }) {
   let peer = null, conn = null, room = null, retryTimer = null, lastData = 0;
   const retry = () => { clearTimeout(retryTimer); retryTimer = setTimeout(() => connect(room), RETRY_MS); };
 
+  /** Connects to the phone's room code; returns the cleaned code ('' if none). */
   function connect(code) {
     room = String(code).toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (!room) return;
+    if (!room) return "";
     clearTimeout(retryTimer);
     const oldConn = conn, oldPeer = peer;
     conn = null; peer = null;                       // old ones' events are ignored from here on
@@ -38,6 +39,7 @@ export function createPeerLink({ onData, onStream, onStatus, hasVideo, log }) {
       onStatus(err.type === "peer-unavailable" ? "astronaut not online yet: retrying" : `error: ${err.type}`, "warn");
       retry();
     });
+    return room;
   }
 
   // watchdog: no data (not even the heartbeat) for 6 s means the link is dead: reconnect

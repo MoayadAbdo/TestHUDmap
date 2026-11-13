@@ -4,7 +4,7 @@ REMS_URL = "https://mars.nasa.gov/rss/api/?feed=weather&category=msl&feedtype=js
 
 
 def _number(value):
-    return None if value in (None, "", "--") else int(value)
+    return None if value in (None, "", "--") else float(value)
 
 
 class RemsWeatherSource:

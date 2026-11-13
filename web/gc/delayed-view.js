@@ -13,9 +13,10 @@ const sizeOf = (el) => (el instanceof HTMLVideoElement ? [el.videoWidth, el.vide
 export function createDelayedView({ screen, output, label, live, now = () => Date.now() }) {
   const buffer = createDelayBuffer();
   const canvas = document.createElement("canvas");
-  let delaySec = 0, timer = null, shown = null, shownUrl = "";
+  let delaySec = 0, timer = null, shown = null, shownUrl = "", generation = 0;
 
   async function sample() {
+    const gen = generation;
     const el = live();
     const [w, h] = el ? sizeOf(el) : [0, 0];
     if (w && h) {
@@ -23,7 +24,7 @@ export function createDelayedView({ screen, output, label, live, now = () => Dat
       try {
         canvas.getContext("2d").drawImage(el, 0, 0, canvas.width, canvas.height);
         const blob = await new Promise((ok) => canvas.toBlob(ok, "image/jpeg", QUALITY));
-        if (blob && delaySec) buffer.add(now(), blob);
+        if (blob && delaySec && gen === generation) buffer.add(now(), blob);
       } catch { /* picture not ready yet */ }
     }
     show();
@@ -46,6 +47,7 @@ export function createDelayedView({ screen, output, label, live, now = () => Dat
 
   function stop() {
     clearInterval(timer); timer = null; delaySec = 0;
+    generation += 1;                  // pictures still being made belong to the old buffer
     buffer.clear();
     URL.revokeObjectURL(shownUrl); shown = null; shownUrl = "";
     output.removeAttribute("src");

@@ -6,8 +6,9 @@
 export const LONG_PRESS_MS = 800;
 export const CLICKER_KEYS = new Set([' ', 'Enter', 'PageDown', 'PageUp', 'ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown',
   'v', 'V', 'MediaPlayPause', 'AudioVolumeUp', 'AudioVolumeDown']);
-// Sim mode: WASD and the arrows move you, so only these talk to the AI
-export const SIM_CLICKER_KEYS = new Set([' ', 'Enter', 'PageDown', 'PageUp', 'v', 'V', 'MediaPlayPause', 'AudioVolumeUp', 'AudioVolumeDown']);
+// Sim mode: WASD and ↑/↓ move you; ←/→ stay here because page-turner clickers send them
+export const SIM_CLICKER_KEYS = new Set([' ', 'Enter', 'PageDown', 'PageUp', 'ArrowLeft', 'ArrowRight', 'v', 'V',
+  'MediaPlayPause', 'AudioVolumeUp', 'AudioVolumeDown']);
 
 export function bindInput({ canvas, win = window, clock = () => performance.now(), onTap, onLongPress, onClicker, onCard, clickerKeys = CLICKER_KEYS }) {
   let pressStart = 0;
