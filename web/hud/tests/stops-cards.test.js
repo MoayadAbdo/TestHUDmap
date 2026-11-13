@@ -76,3 +76,12 @@ test('reopen: the reached stop you are standing at', () => {
   assert.equal(nearbyReachedStop(stops, visited, at(0, 205), EARTH_RADIUS_M)?.name, 'Two');
   assert.equal(nearbyReachedStop(stops, visited, at(0, 100), EARTH_RADIUS_M), null, 'stop One not reached yet');
 });
+
+test('3D sim: the card closes as soon as you step out of the circle', () => {
+  const card = createStopCard({ awayMs: 0 });
+  card.show(stops[0], 0);
+  card.update(at(0, 115), 2000, EARTH_RADIUS_M);
+  assert.equal(card.stop?.name, 'One', '15 m from the stop: still inside');
+  card.update(at(0, 125), 2100, EARTH_RADIUS_M);
+  assert.equal(card.stop, null, '25 m: out of the circle');
+});

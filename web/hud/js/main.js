@@ -141,7 +141,8 @@ async function start(mode, view, motionAsked) {
     sim3d.setAutopilot(walking);
     app.notify(walking ? 'Walking: tap to stop' : 'Stopped: tap to walk');
   };
-  bindInput({ canvas, onTap: sim3d ? toggleWalk : app.onTap, onLongPress: demo.toggle, onClicker: app.onTap, onCard: app.toggleCard, onLayer: layerSwitch.next,
+  const tap = () => app.dismissCard() || (sim3d ? toggleWalk() : app.onTap());   // a tap closes an open stop card first
+  bindInput({ canvas, onTap: tap, onLongPress: demo.toggle, onClicker: app.onTap, onCard: app.toggleCard, onLayer: layerSwitch.next,
     clickerKeys: sim3d ? SIM_CLICKER_KEYS : undefined });
   // Sim mode: move without walking for real (WASD, gamepad, or Ground Control driving)
   const moveInput = sim3d?.setMoveInput ? createMoveInput({ sim: sim3d, onVoice: app.onTap, onToggleWalk: toggleWalk, onCard: app.toggleCard, onLayer: layerSwitch.next }) : null;

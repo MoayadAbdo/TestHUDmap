@@ -40,6 +40,7 @@ export function drawStopCard(ctx, w, h, u, card, photo) {
     textX = x + pad * 2 + pw;
   }
 
+  say(ctx, 'TAP OR C TO CLOSE  ·  CLOSES WHEN YOU LEAVE THE STOP', x + cw / 2, y + ch - 1.2 * u, 1.6 * u, { align: 'center', color: AMBER_SOFT, weight: 600 });
   const tw = x + cw - pad - textX;
   let ty = top + 0.8 * u;
   for (const [label, value, lines] of [['TASK', card.task, 2], ['HAZARD', card.hazard, 2], ['SCIENCE', card.science, 4]]) {

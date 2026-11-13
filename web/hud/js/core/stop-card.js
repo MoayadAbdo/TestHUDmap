@@ -1,12 +1,13 @@
 import { distanceM } from './geo.js';
 
-/** The stop card stays while you are at the stop and closes when you walk away (or when asked to). */
-export const CARD_MIN_MS = 5000;        // at least this long, so it doesn't flicker at the edge of the circle
-export const CARD_LEAVE_M = 30;         // the stop circle is 20 m; close a bit beyond it
+/** The stop card shows only while you are inside the stop's circle; tap, C or gamepad Y closes it sooner. */
+export const CARD_MIN_MS = 1500;        // no flicker right at the edge of the circle
+export const CARD_LEAVE_M = 22;         // the stop circle is 20 m, plus a little margin
 export const CARD_MAX_MS = 180000;      // never stuck open
-export const AWAY_MS = 3000;            // away this long in a row (one GPS jump is not leaving)
+export const AWAY_MS = 2000;            // field mode: out of the circle this long (one GPS jump is not leaving)
 
-export function createStopCard() {
+/** awayMs: how long outside the circle counts as leaving (0 in the 3D sim, where the position doesn't jitter). */
+export function createStopCard({ awayMs = AWAY_MS } = {}) {
   let card = null;
   return {
     show(stop, t) {
@@ -20,7 +21,7 @@ export function createStopCard() {
       if (!card) return;
       const away = distanceM(position, card.stop.at, r) > CARD_LEAVE_M;
       card.awaySince = away ? card.awaySince ?? t : null;
-      const left = away && t - card.awaySince >= AWAY_MS && t - card.shownAt > CARD_MIN_MS;
+      const left = away && t - card.awaySince >= awayMs && t - card.shownAt > CARD_MIN_MS;
       if (left || t - card.shownAt > CARD_MAX_MS) card = null;
     },
     get stop() {

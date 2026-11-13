@@ -92,3 +92,11 @@ test('input: tap, long-press and clicker keys', () => {
   assert.ok(prevented);
   assert.ok(CLICKER_KEYS.has('MediaPlayPause'));
 });
+
+test('one word for the way to go', async () => {
+  const { turnWord } = await import('../js/view/visor/overlay.js');
+  assert.equal(turnWord(10), '');
+  assert.equal(turnWord(-60), 'TURN LEFT');
+  assert.equal(turnWord(90), 'TURN RIGHT');
+  assert.equal(turnWord(-170), 'TURN AROUND');
+});

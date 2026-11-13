@@ -47,7 +47,7 @@ export function createHudApp({
   let step = null;
   let mustReturn = false;
   let alerts = [];
-  const card = createStopCard();
+  const card = createStopCard({ awayMs: source.frame === 'mars' ? 0 : undefined });
   let message = null;
   let aiText = '';
   let forcedSlopeUntil = 0;
@@ -238,6 +238,12 @@ export function createHudApp({
     getStatus: status,
     onTap() {
       voice.toggle();
+    },
+    /** Tap while a stop card is open: close it. Returns true if it closed one. */
+    dismissCard() {
+      if (!card.stop) return false;
+      card.close();
+      return true;
     },
     /** Close the stop card, or show it again while standing at a reached stop (C key, gamepad Y). */
     toggleCard() {

@@ -7,7 +7,9 @@ export function createRenderer({ canvas, getFrame, view = 'vr', maxPixelRatio = 
   // what Ground Control sees: one eye, copied every frame (live.js streams this canvas)
   const streamCanvas = document.createElement('canvas');
   streamCanvas.id = 'hud-stream';
-  streamCanvas.width = 960; streamCanvas.height = 540;
+  const STREAM_W = 960, STREAM_H = 540, STREAM_MS = 66;
+  let lastStreamMs = 0;
+  streamCanvas.width = STREAM_W; streamCanvas.height = STREAM_H;
   streamCanvas.style.cssText = 'position:fixed;left:-10000px;top:0;width:2px;height:2px;pointer-events:none';
   document.body.appendChild(streamCanvas);
   const streamCtx = streamCanvas.getContext('2d');
@@ -54,10 +56,14 @@ export function createRenderer({ canvas, getFrame, view = 'vr', maxPixelRatio = 
       drawHud(ctx, r.w, r.h, hud, images);
       ctx.restore();
     }
-    // Ground Control gets ONE view (the left eye), not the two-eye split
-    const e = rects[0], sw = 960, sh = Math.round((e.h / e.w) * sw);
-    if (streamCanvas.width !== sw || streamCanvas.height !== sh) { streamCanvas.width = sw; streamCanvas.height = sh; }
-    streamCtx.drawImage(canvas, e.x, e.y, e.w, e.h, 0, 0, sw, sh);
+    // Ground Control gets its own wide 16:9 view, drawn for it about 15 times a second (in VR one eye is tall
+    // and narrow, so copying it left black bars). Same 62° across the width, so the arrows still line up.
+    const t = performance.now();
+    if (t - lastStreamMs >= STREAM_MS) {
+      lastStreamMs = t;
+      drawBackground(streamCtx, STREAM_W, STREAM_H, background);
+      drawHud(streamCtx, STREAM_W, STREAM_H, { ...hud, view: 'single' }, images);
+    }
     win.requestAnimationFrame(frame);
   }
 

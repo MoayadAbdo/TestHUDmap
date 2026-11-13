@@ -18,7 +18,6 @@ export function guideSide(target, view, clear, coneDeg = GUIDE_CONE_DEG) {
   return at && at.x >= clear.minX && at.x <= clear.maxX ? 'guide' : turn;
 }
 
-const TURN_HINT_DEG = 35;      // the way to go is this far off: say which way to turn
 const STEEP = '#ff7a4d';
 
 /** Path point d metres ahead (scene.path has a point every 0.5 m). */
@@ -69,18 +68,6 @@ export function drawGroundGuide(ctx, w, h, u, s, clear = { minX: 0, maxX: w }, p
 
   const ground = projectGround(target, { ...view, eyeHeightM: target.eye ?? 1.6 });   // null when behind you or under your feet
   if (ground && inside(ground, pinClear) && guideSide(target, view, pinClear) === 'guide') drawPin(ctx, ground, u, view, target.forward, color, s);
-  if (Math.abs(s.arrowDeg ?? 0) > TURN_HINT_DEG) drawTurnHint(ctx, w, h, u, s.arrowDeg < 0 ? -1 : 1, color);
-}
-
-function drawTurnHint(ctx, w, h, u, side, color) {
-  const x = w / 2 + side * Math.min(w * 0.18, 26 * u);
-  const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 220);
-  for (let i = 0; i < 3; i++) {
-    ctx.globalAlpha = pulse * (1 - i * 0.25);
-    say(ctx, side < 0 ? '‹' : '›', x + side * i * 3 * u, h * 0.47, 10 * u, { align: 'center', color, weight: 500 });
-  }
-  ctx.globalAlpha = 1;
-  say(ctx, side < 0 ? 'TURN LEFT' : 'TURN RIGHT', x + side * 3 * u, h * 0.47 + 7.5 * u, 2.8 * u, { align: 'center', color, weight: 700 });
 }
 
 function drawPin(ctx, ground, u, view, forward, color, s) {

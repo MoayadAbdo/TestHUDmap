@@ -76,5 +76,14 @@ export function drawDirectionArrow(ctx, cx, cy, u, deg, color) {
   ctx.stroke();
   ctx.fill();
   ctx.restore();
-  if (Math.abs(deg) > 150) say(ctx, 'TURN AROUND', cx, cy + r + 2.2 * u, 2.2 * u, { align: 'center', color, weight: 700 });
+  const turn = turnWord(deg);
+  if (turn) say(ctx, turn, cx, cy + r + 2.2 * u, 2.2 * u, { align: 'center', color, weight: 700 });
+}
+
+/** One word for the way to go: '' when roughly ahead. */
+export function turnWord(deg) {
+  if (Math.abs(deg) > 150) return 'TURN AROUND';
+  if (deg < -35) return 'TURN LEFT';
+  if (deg > 35) return 'TURN RIGHT';
+  return '';
 }
