@@ -6,7 +6,11 @@ import { createDrive } from "./drive.js";
 import { createLinkChoice } from "./link-choice.js";
 import { addMapLayers, stopLabel } from "./map-layers.js";
 import { startLocalLink } from "./local-link.js";
+import { createPairPanel } from "./pair-panel.js";
 import { createPeerLink } from "./peer-link.js";
+import { createQrSvg } from "./qr-svg.js";
+import { makeRoomCode } from "./room-code.js";
+import { createScienceReadout } from "./science-readout.js";
 import { createStatusPill } from "./status-pill.js";
 
 const $ = (id) => document.getElementById(id);
@@ -73,6 +77,7 @@ const astro = L.marker(mission.anchor.mars, { icon: L.divIcon({ className: "", h
 let followed = false;
 
 // ---------- incoming data ----------
+const science = createScienceReadout({ value: $("science"), last: $("scienceLast"), log });
 function onTelemetry(t) {
   const set = (id, text, cls = "") => { const el = $(id); el.textContent = text; el.className = cls; };
   const hm = (min) => (min == null ? "" : `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, "0")}m left`);
@@ -89,6 +94,7 @@ function onTelemetry(t) {
   $("dbase").textContent = t.dist_base_m != null ? `· ${t.dist_base_m} m straight` : "";
   set("eva", t.eva_min != null ? `${t.eva_min} min` : "—");
   set("heading", t.heading != null ? `${t.heading}°` : "—");
+  science.update(t);
   $("viewMode").textContent = { field: "· camera", sim: "· 3D simulation" }[t.mode] ?? "";
   const alerts = t.alerts ?? [];
   const state = $("evaState");
@@ -144,7 +150,14 @@ function join(code) {
   const room = peerLink.connect(code);   // one rule for cleaning the code, in peer-link.js
   status.setRoom(room);
   if (room) { params.set("room", room); history.replaceState(null, "", `?${params}`); }
+  pairing.refresh();
 }
+// "Pair phone": no room yet? make one and join it (peer-link retries until the phone opens it)
+const pairing = createPairPanel({
+  byId: $, page: () => location.href, currentRoom: () => peerLink.room,
+  newRoom: () => { $("room").value = makeRoomCode(); join($("room").value); },
+  makeQr: createQrSvg(window.qrcode), copyText: (text) => navigator.clipboard.writeText(text),
+});
 async function allowLocalNetwork() {
   try { (await navigator.mediaDevices.getUserMedia({ audio: true })).getTracks().forEach((t) => t.stop()); } catch { /* fine */ }
 }

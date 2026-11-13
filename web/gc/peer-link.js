@@ -1,7 +1,7 @@
 // PeerJS link to the phone, joined with the room code. Retries by itself; a heartbeat watchdog spots a dead link.
 import { PEER_PREFIX, ICE } from "../live/live-config.js";
 
-const RETRY_MS = 1500, DEAD_MS = 6000, WEAK_MS = 2500, VIDEO_CHECK_MS = 4000;
+const RETRY_MS = 1500, DEAD_MS = 6000, WEAK_MS = 2500, VIDEO_CHECK_MS = 4000, OPEN_MS = 8000;
 
 /**
  * onData(msg): phone messages (heartbeats left out); onStream(stream): live video;
@@ -24,7 +24,12 @@ export function createPeerLink({ onData, onStream, onStatus, hasVideo, log }) {
     p.on("open", () => {
       if (peer !== p) return;
       const c = (conn = p.connect(PEER_PREFIX + room, { reliable: true }));
+      // a second try at a room nobody has opened yet gets no answer at all: give up and try again
+      const openTimer = setTimeout(() => {
+        if (conn === c && !c.open) { onStatus("astronaut not online yet: retrying", "warn"); retry(); }
+      }, OPEN_MS);
       c.on("open", () => {
+        clearTimeout(openTimer);
         lastData = Date.now();
         onStatus(`connected · ${room}`, "on"); log(`Connected with room code ${room}`, "link");
         // no video after 4 s? ask the phone to send it again
@@ -55,5 +60,7 @@ export function createPeerLink({ onData, onStream, onStatus, hasVideo, log }) {
     connect,
     send(msg) { if (!conn?.open) return false; conn.send(msg); return true; },
     get open() { return Boolean(conn?.open); },
+    /** The room code joined last ('' if none). */
+    get room() { return room ?? ""; },
   };
 }

@@ -13,9 +13,24 @@
   <form id="join">
     <label>Room code <input id="room" placeholder="e.g. K7Q2XM" autocomplete="off" maxlength="10"></label>
     <button>Connect</button>
+    <button type="button" id="pairOpen" aria-expanded="false" aria-controls="pair">Pair phone</button>
     <span id="status" class="pill off">not connected</span>
   </form>
 </header>
+
+<aside id="pair" class="pair" role="dialog" aria-labelledby="pairTitle" hidden>
+  <div class="pair-head"><span id="pairTitle">PAIR PHONE</span><button type="button" id="pairClose">Close</button></div>
+  <p class="pair-help">Scan with the phone camera: the HUD opens in this room.</p>
+  <div id="pairQr" class="pair-qr" role="img"></div>
+  <div id="pairCode" class="pair-code">—</div>
+  <label class="pair-mode">Phone opens in
+    <select id="pairMode"><option value="sim">Sim</option><option value="marswalk">Mars walk</option><option value="field">Camera</option></select>
+  </label>
+  <p id="pairNote" class="pair-note" hidden>This page is on localhost, so the phone can't open this link. Open Ground Control with the laptop's network address.</p>
+  <div class="label sub">MORE LAPTOPS</div>
+  <input id="pairGcLink" readonly aria-label="Ground Control link for this room">
+  <button type="button" id="pairCopy">Copy Ground Control link</button>
+</aside>
 
 <main>
   <section class="view">
@@ -26,7 +41,7 @@
       <img id="snap" alt="">
       <img id="delayed" alt="">
       <div id="delayLabel"></div>
-      <div id="noVideo">Waiting for the astronaut…<br><small>Open the HUD on the phone, then type the code shown under COMMS.</small></div>
+      <div id="noVideo">Waiting for the astronaut…<br><small>Press Pair phone and scan the QR, or open the HUD on the phone and type the code shown under COMMS.</small></div>
     </div>
   </section>
 
@@ -45,6 +60,7 @@
     <div class="tile"><b id="home">—</b><span>Walk home <em id="dbase"></em></span></div>
     <div class="tile"><b id="eva">—</b><span>EVA time</span></div>
     <div class="tile"><b id="heading">—</b><span>Heading</span></div>
+    <div class="tile"><b id="science">—</b><span>Science <em id="scienceLast"></em></span></div>
   </section>
 
   <section class="panel controls">
@@ -84,6 +100,7 @@
 </main>
 
 <script src="vendor/leaflet.js"></script>
+<script src="vendor/qrcode.js"></script>
 <script src="../live/vendor/peerjs.min.js"></script>
 <script type="module" src="gc.js"></script>
 </body>
