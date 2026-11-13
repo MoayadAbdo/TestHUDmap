@@ -23,7 +23,8 @@ test('roughness: a block sticking up stands out from flat ground', () => {
   heights[12] = 1;                                   // the middle of a 5×5 grid
   const r = roughGrid(heights, 5, 5);
   assert.equal(r[12], 1);
-  assert.equal(r[6], 0.25);
+  assert.equal(r[7], 0.25, 'the cell beside it (the block is 1 of its 4 neighbours)');
+  assert.equal(r[6], 0, 'a corner cell does not count it');
 });
 
 test('which danger views are on, from the link', () => {
