@@ -508,7 +508,9 @@ function update(dt, now) {
     const isNext = i === next && !S.visited[i];
     const col = S.visited[i] ? "#4ade80" : isNext ? "#22d3ee" : "#7c8aa0";
     s.beamMat.color.set(col); s.ringMat.color.set(col);
-    s.beamMat.opacity = isNext ? 0.3 + Math.sin(t * 3) * 0.15 : 0.18;
+    // the light beam fades out when you stand next to it, so it doesn't fill the view (or cover the stop card)
+    const near = Math.min(1, Math.max(0, (Math.hypot(S.pos.x - s.pos.x, S.pos.z - s.pos.z) - 4) / 20));
+    s.beamMat.opacity = (isNext ? 0.3 + Math.sin(t * 3) * 0.15 : 0.18) * near;
     s.ring.scale.setScalar(isNext ? 1 + Math.sin(t * 3) * 0.04 : 1);
     s.ringMat.opacity = S.visited[i] ? 0.15 : 0.8;
     s.glow.material.opacity = S.scanned[i] ? 0 : 0.35 + Math.sin(t * 4) * 0.25;

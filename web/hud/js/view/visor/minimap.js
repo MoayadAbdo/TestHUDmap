@@ -1,4 +1,4 @@
-import { AMBER, AMBER_FAINT, AMBER_SOFT, PANEL, RED, say } from './style.js';
+import { AMBER, AMBER_FAINT, AMBER_SOFT, NAV, PANEL, RED, say } from './style.js';
 
 const RANGE_M = 80;
 
@@ -37,7 +37,7 @@ export function drawMiniMap(ctx, cx, cy, radius, u, s) {
     ctx.setLineDash([]);
 
     if (scene.plan?.length > 1) {                 // the way the arrows lead: around steep ground
-      ctx.strokeStyle = s.mustReturn ? RED : AMBER;
+      ctx.strokeStyle = s.mustReturn ? RED : NAV;
       ctx.lineWidth = Math.max(2, 0.6 * u);
       ctx.beginPath();
       scene.plan.forEach((p, i) => { const [x, y] = xy(p); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
@@ -53,12 +53,12 @@ export function drawMiniMap(ctx, cx, cy, radius, u, s) {
       const [x, y] = xy(stop);
       if (stop.isTarget) {
         const pulse = 1.6 * u + 0.6 * u * Math.sin(s.timeMs / 250);
-        ctx.strokeStyle = AMBER;
+        ctx.strokeStyle = NAV;
         ctx.beginPath();
         ctx.arc(x, y, pulse, 0, Math.PI * 2);
         ctx.stroke();
       }
-      ctx.fillStyle = stop.visited ? AMBER_FAINT : stop.isTarget ? AMBER : AMBER_SOFT;
+      ctx.fillStyle = stop.visited ? AMBER_FAINT : stop.isTarget ? NAV : AMBER_SOFT;
       ctx.beginPath();
       ctx.arc(x, y, (stop.isTarget ? 1.0 : 0.7) * u, 0, Math.PI * 2);
       ctx.fill();
@@ -85,5 +85,5 @@ export function drawMiniMap(ctx, cx, cy, radius, u, s) {
   ctx.lineTo(cx - 1.1 * u, cy + 1.2 * u);
   ctx.fill();
   ctx.shadowBlur = 0;
-  say(ctx, `MAP  ${RANGE_M} M`, cx, cy + radius + 2.4 * u, 1.9 * u, { align: 'center', color: AMBER_SOFT });
+  say(ctx, `MAP ${RANGE_M} M`, cx, cy + radius + 2.2 * u, 1.7 * u, { align: 'center', color: AMBER_SOFT, weight: 700 });
 }

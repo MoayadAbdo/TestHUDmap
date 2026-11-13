@@ -64,3 +64,13 @@ describe("get_status values", () => {
     await expect(tool({})).rejects.toBeInstanceOf(StatusUnavailableError);
   });
 });
+
+describe("newer HUD fields", () => {
+  it("passes the return reason, walk home and dose to the agent when the HUD sends them", async () => {
+    const { toAgentStatus } = await import("../src/voice/getStatusTool");
+    const s = toAgentStatus({ o2_pct: 90, must_return: true, return_reason: "Solar storm: radiation rising", walk_home_min: 6, rad_dose_uSv: 10.3 });
+    expect(s.return_reason).toBe("Solar storm: radiation rising");
+    expect(s.walk_home_min).toBe(6);
+    expect(s.rad_dose_uSv).toBe(10.3);
+  });
+});

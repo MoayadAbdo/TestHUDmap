@@ -1,7 +1,25 @@
 # Mars Walk HUD
 
-A cheap helmet display for astronauts on a Marswalk: an Android phone in a VR box shows a HUD over the real camera (desert) or a Mars panorama (VR simulation), with a voice assistant and a live Ground Control screen. Built for NASA Space Apps 2026.
+A low-cost helmet display that guides an astronaut on a Marswalk through the boxwork ridges of Mount Sharp (Gale Crater), the formations Curiosity studied up close in 2025. An Android phone in a VR box shows a heads-up display over a 3D Mars built from real NASA data, with a voice assistant and a live Ground Control screen. Built for NASA Space Apps 2026, challenge "Interplanetary Survival Guide: Martian Map".
 
+**Try it:** [Helmet HUD (3D sim)](https://moayadabdo.github.io/TestHUDmap/web/hud/?mode=sim) · [Ground Control](https://moayadabdo.github.io/TestHUDmap/web/gc/) (type the code the HUD shows under the mini-map / COMMS)
+
+## How it answers the challenge
+| The brief asks for | What we built |
+|---|---|
+| A layered view of one location / route | One walk, ~700 m, 5 science stops on Curiosity's real boxwork route |
+| At least 3 kinds of data from several missions | Optical (HiRISE, MRO), topographic (HiRISE 1 m DEM → slope), spectral (CRISM minerals), thermal (THEMIS thermal inertia), atmospheric (REMS, Curiosity), radiation (RAD, Curiosity), ground photos (Navcam, Curiosity) |
+| Safety first | Safest path (A*) on the 1 m slope map; caution > 12°, **no-go > 20° (NASA's Artemis EVA limit)**; oxygen reserve with the walk home measured along the route; solar storm / O₂ leak send the astronaut home at once |
+| Route map avoiding obstacles | Arrows on the ground follow the planned path, coloured where it gets steep; Ground Control map shows the route coloured by slope |
+| What the astronaut will see | Stop cards with real Curiosity Navcam photos, the task, the hazard and the science |
+| Current conditions / space weather | Oxygen time, radiation now + dose this walk, temperature, daylight left, Earth delay |
+| HUD / tablet / habitat format | Helmet visor (phone in VR box), with a calm **focus view** and an **all-panels view** (I key / pad Select / Ground Control) |
+
+**The Mars delay scene:** turn on "Mars delay" in Ground Control and press "Solar storm". The suit turns the astronaut home in a second; Ground Control's warning arrives minutes later. On Mars, help from Earth is minutes away — the suit has to decide by itself.
+
+Data credits: NASA/JPL/University of Arizona (HiRISE image and Gale DEM, via JPL Mars Trek), NASA/JPL/JHUAPL (CRISM, PDS Geosciences Node), NASA/JPL/ASU (THEMIS thermal inertia, Fergason et al., USGS Astrogeology), NASA/JPL/MSSS (CTX), NASA/JPL-Caltech (Curiosity Navcam, REMS weather, RAD radiation, route). NASA does not endorse this project.
+
+## For the team
 - System design: [docs/system-design.md](docs/system-design.md)
 
 ## Folders and owners

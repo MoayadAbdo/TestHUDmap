@@ -30,7 +30,7 @@ function a(e) {
 	if (typeof e != "object" || !e) throw new r("status provider returned no data");
 	let t = e, i = [];
 	if (o(t.o2_pct) || i.push("o2_pct"), typeof t.must_return != "boolean" && i.push("must_return"), i.length > 0) throw new r(`invalid or missing fields: ${i.join(", ")}`);
-	return {
+	let a = {
 		stop: s(t.stop),
 		stop_name: typeof t.stop_name == "string" && t.stop_name.trim() !== "" ? t.stop_name : n,
 		dist_next_m: s(t.dist_next_m),
@@ -41,6 +41,7 @@ function a(e) {
 		rad_uSv_h: s(t.rad_uSv_h),
 		temp_c: s(t.temp_c)
 	};
+	return typeof t.return_reason == "string" && t.return_reason.trim() !== "" && (a.return_reason = t.return_reason), o(t.walk_home_min) && (a.walk_home_min = t.walk_home_min), o(t.rad_dose_uSv) && (a.rad_dose_uSv = t.rad_dose_uSv), a;
 }
 function o(e) {
 	return typeof e == "number" && Number.isFinite(e);

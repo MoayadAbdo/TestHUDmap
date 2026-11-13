@@ -1,5 +1,5 @@
 import { wrap180 } from '../../core/geo.js';
-import { AMBER, AMBER_SOFT, say } from './style.js';
+import { AMBER, AMBER_SOFT, INK, say } from './style.js';
 
 const SPAN_DEG = 90;
 const NAMES = { 0: 'N', 45: 'NE', 90: 'E', 135: 'SE', 180: 'S', 225: 'SW', 270: 'W', 315: 'NW' };
@@ -20,7 +20,7 @@ export function drawCompass(ctx, cx, y, width, u, heading, targetBearing, color 
     ctx.moveTo(x, y);
     ctx.lineTo(x, y - tall);
     ctx.stroke();
-    if (NAMES[deg]) say(ctx, NAMES[deg], x, y - 4.2 * u, 2.6 * u, { align: 'center', weight: 700 });
+    if (NAMES[deg]) say(ctx, NAMES[deg], x, y - 4.2 * u, 2.6 * u, { align: 'center', weight: 700, color: INK });
     else if (deg % 30 === 0) say(ctx, String(deg), x, y - 3.6 * u, 1.9 * u, { align: 'center', color: AMBER_SOFT });
   }
   ctx.globalAlpha = 1;

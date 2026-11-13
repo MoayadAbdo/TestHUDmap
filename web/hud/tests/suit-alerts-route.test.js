@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EARTH_RADIUS_M, fromOffset } from '../js/core/geo.js';
-import { evaluateAlerts } from '../js/core/alerts.js';
+import { RETURN_REASONS, alertLevel, evaluateAlerts } from '../js/core/alerts.js';
 import { slopeAhead } from '../js/core/route.js';
 import { createSuit } from '../js/core/suit.js';
 
@@ -30,13 +30,34 @@ test('oxygen never goes below zero', () => {
 const calm = { slopeAheadDeg: 5, o2Pct: 80, o2MinutesLeft: 300, walkBackMinutes: 5, alreadyReturning: false };
 
 test('no alerts when everything is fine', () => {
-  assert.deepEqual(evaluateAlerts(calm), { alerts: [], mustReturn: false });
+  assert.deepEqual(evaluateAlerts(calm), { alerts: [], mustReturn: false, reason: null });
 });
 
 test('each alert fires at its limit', () => {
   assert.deepEqual(evaluateAlerts({ ...calm, slopeAheadDeg: 12.5 }).alerts, ['SLOPE_AHEAD']);
-  assert.deepEqual(evaluateAlerts({ ...calm, o2Pct: 29 }).alerts, ['LOW_O2']);
+  assert.deepEqual(evaluateAlerts({ ...calm, slopeAheadDeg: 20.5 }).alerts, ['SLOPE_NO_GO']);   // NASA's 20° EVA limit
   assert.deepEqual(evaluateAlerts({ ...calm, o2MinutesLeft: 14.9 }).alerts, ['RETURN_TO_BASE']);
+});
+
+test('low oxygen ends the walk, not just a warning', () => {
+  const r = evaluateAlerts({ ...calm, o2Pct: 29 });
+  assert.deepEqual(r.alerts, ['RETURN_TO_BASE', 'LOW_O2']);
+  assert.equal(r.mustReturn, true);
+  assert.equal(r.reason, 'low_o2');
+});
+
+test('a solar storm or O2 leak sends the astronaut home at once, with the reason', () => {
+  const solar = evaluateAlerts({ ...calm, hazard: 'solar' });
+  assert.deepEqual(solar, { alerts: ['RETURN_TO_BASE', 'SOLAR_STORM'], mustReturn: true, reason: 'solar' });
+  assert.equal(RETURN_REASONS[solar.reason], 'Solar storm: radiation rising');
+  assert.equal(evaluateAlerts({ ...calm, hazard: 'o2leak' }).alerts.includes('O2_LEAK'), true);
+});
+
+test('alert level: red for act-now, yellow for be-careful', () => {
+  assert.equal(alertLevel([]), null);
+  assert.equal(alertLevel(['SLOPE_AHEAD']), 'caution');
+  assert.equal(alertLevel(['SLOPE_NO_GO']), 'danger');
+  assert.equal(alertLevel(['RETURN_TO_BASE', 'LOW_O2']), 'danger');
 });
 
 test('return to base stays on once triggered', () => {

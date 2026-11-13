@@ -1,11 +1,55 @@
-import { AMBER, AMBER_FAINT, AMBER_SOFT, RED, bar, brackets, say } from './style.js';
+import { AMBER, AMBER_FAINT, AMBER_SOFT, CAUTION, INK, RED, bar, brackets, hm, plate, say } from './style.js';
 
-const STATUS_COLOR = { ok: AMBER_SOFT, warn: '#ffd27a', danger: RED };
+const STATUS_COLOR = { ok: INK, warn: CAUTION, danger: RED };
+const STATUS_WORD = { ok: 'OK', warn: 'CHECK', danger: 'ALERT' };
 /** Side panels are about this wide (in u, from the panel's x); the visor keeps its guide out of them. */
 export const PANEL_W_U = 27;
 
 function header(ctx, text, x, y, u, align = 'left') {
-  say(ctx, text, x, y, 2.3 * u, { weight: 700, align });
+  say(ctx, text, x, y, 2.1 * u, { weight: 700, align, color: AMBER });
+}
+
+/** Dose: 0.4 µSv, 12 µSv, 1.2 mSv — never stuck at "0" for the first minutes. */
+export function doseText(usv) {
+  const d = usv ?? 0;
+  if (d >= 1000) return `${(d / 1000).toFixed(2)} mSv`;
+  return d < 10 ? `${d.toFixed(1)} µSv` : `${Math.round(d)} µSv`;
+}
+
+/**
+ * Focus view (default): only what the astronaut needs while walking — oxygen time, radiation, temperature,
+ * Mars time and daylight. Everything else is one key / button away (full view) or shows itself when it matters.
+ */
+export function drawVitals(ctx, x, y, u, s) {
+  const w = 25 * u;
+  plate(ctx, x - 1.6 * u, y - 2.6 * u, w + 3.2 * u, 25.2 * u, { radius: 1 * u, edge: s.level === 'danger' ? RED : null });
+  const o2Bad = s.o2Pct < 30 || s.mustReturn;
+  const o2Color = o2Bad ? RED : INK;
+  header(ctx, 'OXYGEN', x, y, u);
+  say(ctx, `${Math.round(s.o2Pct)}%`, x + w, y, 2.1 * u, { align: 'right', color: AMBER_SOFT, weight: 700 });
+  say(ctx, `${hm(s.o2MinutesLeft)} left`, x, y + 3.9 * u, 3.6 * u, { color: o2Color, weight: 700 });
+  bar(ctx, x, y + 6.6 * u, w, 1 * u, s.o2Pct / 100, { color: o2Bad ? RED : AMBER });
+
+  const radColor = s.radHigh ? RED : INK;
+  header(ctx, 'RADIATION', x, y + 10.4 * u, u);
+  say(ctx, `${s.radUsvH ?? '--'} µSv/h`, x + w, y + 10.4 * u, 2.4 * u, { align: 'right', color: radColor, weight: 700 });
+  say(ctx, `dose this walk ${doseText(s.radDoseUsv)}`, x, y + 13.3 * u, 1.9 * u, { color: AMBER_SOFT, weight: 600 });
+
+  header(ctx, 'OUTSIDE', x, y + 17 * u, u);
+  say(ctx, `${s.tempC ?? '--'} °C`, x + w, y + 17 * u, 2.4 * u, { align: 'right', weight: 700 });
+  const time = s.daylightMin != null ? `Mars ${s.marsTime}  ·  daylight ${hm(s.daylightMin)}` : `Mars ${s.marsTime}`;
+  say(ctx, time, x, y + 20.2 * u, 1.9 * u, { color: AMBER_SOFT, weight: 600 });
+}
+
+/** Earth delay and link, small under the mini-map (focus view). */
+export function drawDelayTag(ctx, cx, y, u, s) {
+  const bars = s.link?.bars ?? 0;
+  say(ctx, `EARTH ${s.lightMin?.toFixed(1) ?? '--'} MIN AWAY`, cx, y, 1.8 * u, { align: 'center', color: AMBER_SOFT, weight: 700 });
+  for (let i = 0; i < 4; i++) {
+    const bh = (0.8 + i * 0.6) * u;
+    ctx.fillStyle = i < bars ? AMBER : AMBER_FAINT;
+    ctx.fillRect(cx - 3 * u + i * 1.6 * u, y + 3.4 * u - bh, 1.1 * u, bh);
+  }
 }
 
 export function drawLocation(ctx, x, y, u, s) {
@@ -13,8 +57,8 @@ export function drawLocation(ctx, x, y, u, s) {
   const rows = [
     [`${s.tempC ?? '--'} °C`, `${s.pressurePa ?? '--'} Pa`],
     [s.site, ''],
-    [`Mars ${s.marsTime}`, `Sol ${s.sol}`],
-    [`Earth ${s.earthTime}`, 'UTC'],
+    [`Mars ${s.marsTime}`, s.daylightMin != null ? `light ${hm(s.daylightMin)}` : `Sol ${s.sol}`],
+    [`Earth ${s.earthTime} UTC`, ''],
     [s.dataSol ? `Weather: sol ${s.dataSol}` : '', ''],   // REMS data is from that sol, not today
   ];
   rows.forEach(([a, b], i) => {
@@ -53,8 +97,8 @@ export function drawRadiation(ctx, x, y, u, s) {
     ctx.arc(x + r, y, r * 0.8, a - 0.5, a + 0.5);
     ctx.fill();
   }
-  say(ctx, `${s.radUsvH ?? '--'} µSv/h`, x + 2 * r + 1.4 * u, y - 1.3 * u, 2.4 * u);
-  say(ctx, `Dose ${Math.round(s.radDoseUsv ?? 0)} µSv`, x + 2 * r + 1.4 * u, y + 1.5 * u, 2 * u, { color: AMBER_SOFT });
+  say(ctx, `${s.radUsvH ?? '--'} µSv/h`, x + 2 * r + 1.4 * u, y - 1.3 * u, 2.4 * u, { color: s.radHigh ? RED : INK });
+  say(ctx, `Dose ${doseText(s.radDoseUsv)}`, x + 2 * r + 1.4 * u, y + 1.5 * u, 2 * u, { color: AMBER_SOFT });
 }
 
 export function drawBiosigns(ctx, x, y, u, s) {
@@ -99,7 +143,7 @@ export function drawComms(ctx, right, y, u, s) {
 
 export function drawIntegrity(ctx, right, y, u, s) {
   header(ctx, 'SUIT INTEGRITY', right, y, u, 'right');
-  const fx = right - 20 * u;
+  const fx = right - 24 * u;
   const fy = y + 4 * u;
   ctx.strokeStyle = AMBER_SOFT;
   ctx.lineWidth = 1.5;
@@ -115,8 +159,11 @@ export function drawIntegrity(ctx, right, y, u, s) {
   ctx.moveTo(fx + 1.2 * u, fy + 9.2 * u);
   ctx.lineTo(fx + 1.6 * u, fy + 15 * u);
   ctx.stroke();
+  say(ctx, 'simulated', right - 22 * u, y, 1.6 * u, { align: 'right', color: AMBER_SOFT });
   Object.entries(s.integrity ?? {}).forEach(([part, state], i) => {
-    say(ctx, part, right, fy + (1.4 + i * 3) * u, 2.2 * u, { align: 'right', color: STATUS_COLOR[state] ?? AMBER_SOFT });
+    const ry = fy + (1.4 + i * 3) * u;
+    say(ctx, part, right - 8.5 * u, ry, 2.2 * u, { align: 'right', color: AMBER_SOFT });
+    say(ctx, STATUS_WORD[state] ?? '--', right, ry, 2.2 * u, { align: 'right', color: STATUS_COLOR[state] ?? INK, weight: 700 });
   });
 }
 
