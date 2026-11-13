@@ -25,9 +25,13 @@ Camera, GPS and compass need HTTPS, so test on the deployed site: `https://<proj
 Use Android Chrome.
 
 ## Screen controls
-- **Tap** (or the Cardboard lever): talk to the voice agent.
+- **Tap** (or the Cardboard lever): talk to the voice agent (sim mode: start / stop walking).
+- **Bluetooth clicker**: talk to the voice agent. It must send keys (Enter, arrows, Page Down, Play/Pause).
+  Cheap selfie remotes send volume keys, which phone browsers usually keep: test yours first.
+- **"Hey suit"** (real voice agent only): hands-free talk. Plain "suit" does not wake it.
 - **Long-press** (about 1 second): show or hide the demo panel. It can speed up oxygen, set it to 25%,
-  fake steep ground, jump to the next stop (sim), send a Ground Control message, and switch VR/hand-held.
+  fake steep ground, jump to the next stop (sim), set the base here (field), send a Ground Control message,
+  and switch VR/hand-held.
 
 ## Link options
 | Option | Meaning |

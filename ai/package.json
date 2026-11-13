@@ -12,12 +12,17 @@
     "typecheck": "tsc --noEmit",
     "check": "tsc --noEmit && vitest run",
     "kb:export": "node scripts/export-knowledge-base.mjs",
-    "build:hud": "cp ../web/mission/mission.json src/data/mission.json && tsc --noEmit && VITE_MISSION_DATA_SOURCE=official vite build --config vite.hud.config.mjs"
+    "build:hud": "tsc --noEmit && vite build --config vite.hud.config.mjs --mode hud",
+    "kb:export:official": "npm run sync:mission && node scripts/export-knowledge-base.mjs official",
+    "sync:mission": "cp ../web/mission/mission.json src/data/mission.json"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "dependencies": {
     "@elevenlabs/client": "^1.35.0"
   },

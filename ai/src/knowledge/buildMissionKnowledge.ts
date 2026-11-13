@@ -50,7 +50,7 @@ export function buildMissionKnowledgeText(
 
   lines.push(
     "LIVE STATUS",
-    "This document does not contain live values. For the current stop, distances,",
+    "This document does not contain live values. For the stop being walked to, distances,",
     "oxygen, radiation, temperature and return-to-base decisions, use the get_status tool.",
   );
 

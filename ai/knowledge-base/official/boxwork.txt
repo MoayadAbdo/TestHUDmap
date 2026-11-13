@@ -1,0 +1,37 @@
+
+MARS MISSION KNOWLEDGE BASE
+Location: Mount Sharp, Gale Crater, Mars
+
+WHAT IS BOXWORK?
+Boxwork is a network of intersecting, erosion-resistant
+mineral ridges within rock.
+
+WHY IS BOXWORK IMPORTANT?
+These structures can form when mineral-rich water moves
+through fractures in rock and deposits minerals.
+Later erosion can expose the harder mineral-filled
+fractures as raised ridges.
+
+WHY STUDY BOXWORK ON MARS?
+Boxwork-like structures may preserve evidence of past
+groundwater activity on Mars.
+
+Studying their geometry, mineral composition, and
+surrounding rocks can help scientists investigate
+the history of water and environmental conditions.
+
+ASTRONAUT GUIDANCE
+Use the mission stop cards for specific observation
+instructions and planned activities.
+
+Do not invent stop locations, routes, distances,
+hazards, or safety procedures.
+
+LIVE STATUS
+For oxygen, distances, radiation, temperature,
+the stop being walked to, and return-to-base decisions,
+use the get_status tool.
+
+STOP CARDS
+Stop details and tasks are in the mission stop cards file.
+Do not invent their contents.

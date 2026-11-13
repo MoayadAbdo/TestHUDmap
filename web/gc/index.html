@@ -11,9 +11,11 @@
 <header>
   <div class="brand">GROUND CONTROL <span>Mount Sharp boxwork · Gale Crater</span></div>
   <form id="join">
+    <span id="local" class="pill off" hidden>local link</span>
     <label>Room code <input id="room" placeholder="e.g. K7Q2XM" autocomplete="off" maxlength="10"></label>
     <button>Connect</button>
     <span id="link" class="pill off">not connected</span>
+    <span id="source" class="pill off">no phone data</span>
   </form>
 </header>
 
@@ -21,8 +23,11 @@
   <section class="view">
     <div class="label">ASTRONAUT VIEW <span id="viewMode">—</span></div>
     <div class="screen">
+      <img id="mjpeg" alt="">
       <video id="video" autoplay playsinline muted></video>
       <img id="snap" alt="">
+      <img id="delayed" alt="">
+      <div id="delayLabel"></div>
       <div id="noVideo">Waiting for the astronaut…<br><small>Open the HUD on the phone, then type the code shown under COMMS.</small></div>
     </div>
   </section>

@@ -20,6 +20,9 @@ main { display: grid; grid-template-columns: 1.5fr 1fr; grid-template-rows: 1fr 
 .screen { position: relative; flex: 1; background: #000; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); }
 .screen video, .screen img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 .screen img { display: none; }
+.screen #delayed { background: #000; z-index: 1; }
+#delayLabel { display: none; position: absolute; top: 8px; left: 8px; z-index: 2; padding: 3px 8px; border-radius: 6px; background: #3b2a12; color: var(--amber); font-size: 13px; }
+.screen.delayed #delayed, .screen.delayed #delayLabel { display: block; }
 #noVideo { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--mute); text-align: center; }
 #map { flex: 1; border-radius: 12px; border: 1px solid var(--line); background: #1a1410; }
 .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }

@@ -1,6 +1,6 @@
 import { eyeRects } from '../view/vr-layout.js';
 /** Mars walk: you walk for real (GPS + compass) and see T1.3's 3D Mars instead of the camera. */
-export function createMarsWalkSource(field, sim, mission, view = 'single') {
+export function createMarsWalkSource(field, sim, mission, view = 'single', assetsBase = '../mission/') {
   return {
     frame: 'field',
     async start() {
@@ -12,7 +12,7 @@ export function createMarsWalkSource(field, sim, mission, view = 'single') {
       fit();
       addEventListener('resize', () => { fit(); dispatchEvent(new Event('sim-resize')); });
       document.body.appendChild(box);
-      await sim.start?.(mission, { container: box, assetsBase: '/mission/', stereo: false, autopilot: false, hud: true, hfovDeg: 62, lockPitch: true });
+      await sim.start?.(mission, { container: box, assetsBase, stereo: false, autopilot: false, hud: true, hfovDeg: 62, lockPitch: true });
       // GPS + compass start right away; the camera (only used for Ground Control photos) must not block the walk
       field.start().catch((e) => console.warn('[marswalk] camera unavailable:', e?.message ?? e));
     },

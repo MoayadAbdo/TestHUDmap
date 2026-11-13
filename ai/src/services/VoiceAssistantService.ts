@@ -9,6 +9,7 @@ import type {
   VoiceSessionCallbacks,
 } from "../contracts/VoiceSession";
 import { createGetStatusTool, GET_STATUS_TOOL_NAME } from "../voice/getStatusTool";
+import { MissionContextMemory } from "../voice/MissionContextMemory";
 import { errorMessage } from "../utils/errorMessage";
 
 export type VoiceConnectionState =
@@ -32,13 +33,17 @@ export type VoiceAssistantEvent =
 export type VoiceAssistantListener = (event: VoiceAssistantEvent) => void;
 
 export interface VoiceAssistantDependencies {
-  /** ElevenLabs public agent ID (from VITE_ELEVENLABS_AGENT_ID). */
+  /** ElevenLabs public agent ID. */
   agentId: string | undefined;
   /** Live status source for `get_status`: MockStatusProvider today, HudStatusProvider later. */
   statusProvider: StatusProvider;
   startSession: StartVoiceSession;
   requestMicrophoneAccess: () => Promise<void>;
   statusTimeoutMs?: number;
+  /** Clock for the age of re-sent mission context. Default: Date.now. */
+  clock?: () => number;
+  /** Re-sent mission context older than this is dropped. */
+  contextMaxAgeMs?: number;
 }
 
 /**
@@ -50,7 +55,7 @@ export interface VoiceAssistantDependencies {
  * - Callbacks from an old session are ignored, using a generation counter.
  * - Registers the `get_status` client tool on the injected `StatusProvider`.
  * - Forwards mission context (e.g. stop arrival) as contextual updates and
- *   re-sends the latest one on every new connection.
+ *   re-sends the latest one, with its age, on a new connection (dropped when too old).
  *
  * Everything external (SDK, microphone, status source) is injected.
  */
@@ -59,10 +64,12 @@ export class VoiceAssistantService {
   private session: VoiceSession | null = null;
   private pendingStart: { generation: number; promise: Promise<boolean> } | null = null;
   private generation = 0;
-  private latestContext: string | null = null;
+  private readonly context: MissionContextMemory;
   private readonly listeners = new Set<VoiceAssistantListener>();
 
-  constructor(private readonly deps: VoiceAssistantDependencies) {}
+  constructor(private readonly deps: VoiceAssistantDependencies) {
+    this.context = new MissionContextMemory(deps.clock ?? Date.now, deps.contextMaxAgeMs);
+  }
 
   getState(): VoiceConnectionState {
     return this.state;
@@ -115,10 +122,10 @@ export class VoiceAssistantService {
 
   /**
    * Tell the agent about mission context it can't see (e.g. "arrived at stop 3").
-   * Stored and re-sent on the next connection if no session is open.
+   * Also kept for the next connection (see MissionContextMemory).
    */
   updateMissionContext(text: string): void {
-    this.latestContext = text;
+    this.context.remember(text);
     if (this.session) this.sendContext(this.session, text);
   }
 
@@ -126,10 +133,7 @@ export class VoiceAssistantService {
     const agentId = this.deps.agentId?.trim();
     if (!agentId) {
       this.setState("disconnected");
-      this.emitError(
-        "configuration",
-        "VITE_ELEVENLABS_AGENT_ID is not set. Add it to .env.local (see .env.example) and restart the dev server.",
-      );
+      this.emitError("configuration", "No ElevenLabs agent ID is set.");
       return false;
     }
 
@@ -169,7 +173,8 @@ export class VoiceAssistantService {
 
     this.session = session;
     this.setState("connected");
-    if (this.latestContext) this.sendContext(session, this.latestContext);
+    const earlier = this.context.forNewSession();
+    if (earlier) this.sendContext(session, earlier);
     return true;
   }
 

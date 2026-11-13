@@ -89,9 +89,9 @@ describe("Mock mission data", () => {
     } satisfies MissionData);
   });
 
-  it("is consistent with the mock live status (stop 2 = Steep ridge)", async () => {
+  it("is consistent with the mock live status (walking to stop 2 = Steep ridge)", async () => {
     const status = await new MockStatusProvider().getStatus();
-    const stop = await new MissionService(new MockMissionDataProvider()).getStop(status.stop);
+    const stop = await new MissionService(new MockMissionDataProvider()).getStop(status.stop ?? -1);
     expect(stop?.name).toBe(status.stop_name);
   });
 });
@@ -302,5 +302,6 @@ describe("Knowledge base export", () => {
     const text = buildMissionKnowledgeText(mission, buildStopCards(mission));
     expect(text).not.toContain("MOCK");
     expect(text).toContain("Planned tasks: none listed.");
+    expect(text).toContain("For the stop being walked to");
   });
 });

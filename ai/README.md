@@ -1,71 +1,75 @@
 # ai/ (AI2)
-ElevenLabs agent setup: `prompt.md` (system prompt), `knowledge/` (files uploaded to the agent), `tests.md` (10 test questions + results).
-The agent ID is not secret, but **never commit the ElevenLabs API key**.
-Task: T1.2 in docs/backlog.md
+ElevenLabs voice assistant for the Mars Walk HUD. Task: T1.2 in docs/backlog.md.
 
+- `prompt.md`: system prompt and `get_status` tool description to paste into ElevenLabs.
+- `knowledge-base/official/`: knowledge files to upload (made by `npm run kb:export:official`).
+- `tests.md`: live voice test results and the re-test list.
 
+Never commit an ElevenLabs API key or the agent ID. The repo is public.
 
-## Local Development
+## Set up
 
-Install dependencies:
+Needs Node 22.12 or newer (vite 8 and vitest 5).
 
 ```bash
 cd ai
 npm ci
 ```
 
-Create `.env.local` using `.env.example` and configure:
+## Dev page
+
+Copy `.env.example` to `.env.development.local` (git ignores it) and set:
 
 ```dotenv
 VITE_ELEVENLABS_AGENT_ID=YOUR_AGENT_ID
 VITE_MISSION_DATA_SOURCE=mock
 ```
 
-Run the application:
+Use `.env.development.local`, not `.env.local`: `build:hud` refuses to run while the id is in `.env` or `.env.local`.
 
 ```bash
 npm run dev
 ```
 
-Run automated tests and production build:
+## Tests
 
 ```bash
-npm run check
-npm run build
+npm test          # 103 tests
+npm run typecheck
 ```
 
-## Testing
+`npm run build` only checks that the dev page compiles.
 
-- 66/66 automated tests passed.
-- 10/10 voice questions answered correctly using mock data.
-- Emergency return test passed.
-- HUD outage test passed.
-- AI offline fallback test passed.
+## HUD build
 
-See `tests.md` for detailed results.
+`src/hudBridge.ts` gives the HUD `toggleVoice()`, `getConversation().sendContextualUpdate()`, `onAgentText()`, `onUserText()`, `isListening()` and `getVoiceState()`, and reads live status from `window.hud.getStatus()`.
 
-## Pending Integration
+```bash
+npm run build:hud   # writes ../web/ai/voice.js
+```
 
-- Replace mock mission data with official `mission.json` from T1.1.
-- Connect the real HUD using `HudStatusProvider`.
-- Configure the production domain allowlist using the T1.5 website domain.
+- The agent ID is read **at runtime only**. Open the HUD once with `?agent=<id>`; the phone remembers it (localStorage).
+- `build:hud` stops with an error if `VITE_ELEVENLABS_AGENT_ID` is set in the shell, `.env`, `.env.local` or `.env.hud*`.
+- `voice.js` holds only the voice code. It no longer bundles mission data, so it doesn't need a rebuild when `web/mission/mission.json` changes.
+- The visor shows only short errors ("AI offline: no connection", "AI not set up: open with ?agent=<id>"). Details go to the browser console.
 
-## Security Note
+## Knowledge files
 
-ElevenLabs rejected local development hosts such as
-`localhost:5173` and `127.0.0.1:5173` in its allowlist.
+| File | What it is |
+|---|---|
+| `knowledge-base/official/mission_stops.txt`, `boxwork.txt` | **Upload these.** Made from `web/mission/mission.json` |
+| `knowledge/mission_stops_MOCK.txt` | **MOCK.** Made-up demo stops. Do not upload with the official files |
+| `knowledge/boxwork.txt` | Copy of `src/data/boxwork.txt` |
+| `src/data/mission.json` | Copy of `web/mission/mission.json` (refreshed by `npm run sync:mission`) |
 
-The public agent must be restricted to the final website
-domain before production deployment.
+Re-run `npm run kb:export:official` whenever `web/mission/mission.json` changes. It copies the file, then writes `knowledge-base/official/`. The copies above are kept on purpose; edit `src/data/boxwork.txt` and `web/mission/mission.json`, not the copies.
 
-Never put an ElevenLabs API key in frontend code.
+See `docs/REPLACING_MOCK_DATA.md` for the data mapping.
 
-## Replacing Mock Data
+## Owner checklist (by hand in ElevenLabs; can't be done from code)
 
-See `docs/REPLACING_MOCK_DATA.md`.
-
-## HUD integration (merged)
-- `src/hudBridge.ts` exposes the assistant to the HUD as `toggleVoice()`, `getConversation().sendContextualUpdate()`, `onAgentText()`, `isListening()`, reading live status from `window.hud.getStatus()`.
-- Build it into the website with `npm run build:hud` → `web/ai/voice.js` (copies the official `web/mission/mission.json` into `src/data/` and builds with `VITE_MISSION_DATA_SOURCE=official`).
-- Agent ID: put it in `.env.local` (`VITE_ELEVENLABS_AGENT_ID=...`) before `npm run build:hud`, or open the HUD with `?agent=<id>`.
-- `src/adapters/missionDataAdapter.ts` now also reads the official schema: skips the stop marked `"is_base": true`, maps `science` → `description` and `task` → `tasks`. Test: `tests/officialMission.test.ts`. All 68 tests pass.
+1. Turn on **authentication** for the agent, or set the **domain allowlist** to the deployed HUD domain only. Publish, then check a session can't start from another site.
+2. Paste the system prompt and the `get_status` tool description from `prompt.md`. Publish.
+3. Knowledge base: remove `mission_stops_MOCK.txt` and the old `boxwork.txt`; upload both files from `knowledge-base/official/`.
+4. Open the HUD once on each phone with `?agent=<id>`. Don't share that link in the public repo.
+5. Run the re-test list in `tests.md` (section 2b) and record the results.

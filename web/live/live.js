@@ -1,12 +1,15 @@
 // live.js (T1.5): live link from the astronaut's phone to Ground Control.
 //
 // The HUD loads this module and calls sendTelemetry() every second, sendPhoto() every 2 s (field mode)
-// and onMessage() for Ground Control messages. Ground Control (web/gc/) connects with the same room code.
+// and onMessage() for Ground Control messages.
 //
-// How: WebRTC through the free PeerJS service (no account). The phone streams its HUD screen
-// (camera or 3D Mars + HUD) as live video, plus data. Backup: a small screenshot every 2 s.
-// Who can watch: anyone who knows the room code. Tip: put the Ground Control laptop on the phone's
-// hotspot so phone and laptop can always reach each other.
+// What is sent: the HUD screen as live video. In field mode that is the real phone camera (people and
+// places around you), plus position and HUD numbers.
+// Two links, picked when the page loads:
+// - Local link: the page is served by server/server.mjs on the Ground Control laptop (same Wi-Fi or hotspot).
+//   Who can watch: devices on that network that have the team password.
+// - PeerJS (fallback): WebRTC through the free PeerJS service, joined with the room code (optional TURN
+//   relay, see turn.js). Who can watch: anyone who knows the room code. Backup: a small screenshot every 2 s.
 
 import { PEER_PREFIX, ICE } from "./live-config.js";
 export { PEER_PREFIX, ICE };
@@ -73,11 +76,38 @@ function callViewer(conn) {
   call.on("close", () => state.calls.delete(call));
 }
 
+function sendSnapshot() {
+  if (!state.conns.size) return;
+  const canvas = document.getElementById("hud-stream") || document.getElementById("hud");
+  if (!canvas) return;
+  const w = 480, c = document.createElement("canvas");
+  c.width = w; c.height = Math.round((canvas.height / canvas.width) * w) || 270;
+  c.getContext("2d").drawImage(canvas, 0, 0, c.width, c.height);
+  send({ type: "snap", data: c.toDataURL("image/jpeg", 0.55) });
+}
+
+// Timers and the page-close hook run once; a reconnect only replaces the peer.
+let peerTimersStarted = false, retryTimer = null;
+function startPeerTimers() {
+  if (peerTimersStarted) return;
+  peerTimersStarted = true;
+  // free the room code at once when the page closes, so a reload reconnects fast
+  addEventListener("pagehide", () => state.peer?.destroy());
+  // heartbeat: Ground Control notices a dead link within seconds and reconnects
+  setInterval(() => send({ type: "ping", t: Date.now() }), PING_MS);
+  // backup picture for Ground Control if the video can't play
+  setInterval(sendSnapshot, SNAP_MS);
+}
+function retrySoon() { clearTimeout(retryTimer); retryTimer = setTimeout(connect, 2000); }
+
 async function connect() {
+  startPeerTimers();
   const Peer = await loadPeerJs();
+  state.peer?.destroy();
   const peer = new Peer(PEER_PREFIX + getRoom(), { config: ICE });
   state.peer = peer;
-  peer.on("open", () => { state.status = "waiting for Ground Control"; });
+  const current = () => state.peer === peer;
+  peer.on("open", () => { if (current()) state.status = "waiting for Ground Control"; });
   peer.on("connection", (conn) => {
     conn.on("open", () => {
       state.conns.add(conn);
@@ -88,29 +118,19 @@ async function connect() {
     conn.on("data", onData.bind(conn));
     conn.on("close", () => { state.conns.delete(conn); if (!state.conns.size) state.status = "waiting for Ground Control"; });
   });
-  peer.on("disconnected", () => { state.status = "reconnecting"; setTimeout(() => peer.reconnect(), 2000); });
+  peer.on("disconnected", () => {
+    if (!current() || peer.destroyed) return;
+    state.status = "reconnecting";
+    setTimeout(() => { if (current() && peer.disconnected && !peer.destroyed) peer.reconnect(); }, 2000);
+  });
   peer.on("error", (err) => {
+    if (!current()) return;                          // an old peer: already replaced
     state.status = `link error: ${err.type}`;
-    if (err.type === "unavailable-id") {            // an old tab still holds the code: retry in a moment
-      peer.destroy(); setTimeout(connect, 2000);
-    } else if (["network", "server-error", "socket-error", "socket-closed"].includes(err.type)) {
-      peer.destroy(); setTimeout(connect, 2000);    // lost the internet for a moment: start over
+    // an old tab still holds the code, or the internet dropped for a moment: start over
+    if (["unavailable-id", "network", "server-error", "socket-error", "socket-closed"].includes(err.type)) {
+      peer.destroy(); retrySoon();
     }
   });
-  // free the room code at once when the page closes, so a reload reconnects fast
-  addEventListener("pagehide", () => peer.destroy(), { once: true });
-  // heartbeat: Ground Control notices a dead link within seconds and reconnects
-  setInterval(() => send({ type: "ping", t: Date.now() }), PING_MS);
-  // backup picture for Ground Control if the video can't play
-  setInterval(() => {
-    if (!state.conns.size) return;
-    const canvas = document.getElementById("hud-stream") || document.getElementById("hud");
-    if (!canvas) return;
-    const w = 480, c = document.createElement("canvas");
-    c.width = w; c.height = Math.round((canvas.height / canvas.width) * w) || 270;
-    c.getContext("2d").drawImage(canvas, 0, 0, c.width, c.height);
-    send({ type: "snap", data: c.toDataURL("image/jpeg", 0.55) });
-  }, SNAP_MS);
 }
 
 // ---------- local link: the Ground Control laptop runs server/server.mjs and serves this page ----------
@@ -123,8 +143,9 @@ function startRelay() {
   state.status = "local link";
   const events = new EventSource("/api/phone-events");          // reconnects by itself
   events.onmessage = (e) => {
-    const msg = JSON.parse(e.data);
-    if (msg.type === "ping") { state.viewers = msg.viewers; state.status = msg.viewers ? "Ground Control connected" : "waiting for Ground Control"; }
+    let msg;
+    try { msg = JSON.parse(e.data); } catch { return; }   // one bad message must not stop the link
+    if (msg?.type === "ping") { state.viewers = msg.viewers; state.status = msg.viewers ? "Ground Control connected" : "waiting for Ground Control"; }
     else onData(msg);
   };
   events.onerror = () => { state.status = "reconnecting to laptop"; };

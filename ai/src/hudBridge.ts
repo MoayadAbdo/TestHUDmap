@@ -1,62 +1,48 @@
 /**
- * HUD BRIDGE: exposes the voice assistant in the shape the Phone HUD (T1.4) expects.
+ * HUD BRIDGE entry, built into `web/ai/voice.js` with `npm run build:hud`.
+ * The HUD (web/hud/js/adapters.js) calls:
+ *   toggleVoice()            start / stop talking (ignored while connecting)
+ *   getConversation()        -> { sendContextualUpdate(text) }
+ *   onAgentText(callback)    the agent's words + short visor error lines
+ *   onUserText(callback)     the astronaut's transcribed words
+ *   isListening()            true while connected
+ *   getVoiceState()          'disconnected' | 'connecting' | 'connected'
  *
- * Built into `web/ai/voice.js` with `npm run build:hud`. The HUD loads it and calls:
- *   toggleVoice()            start / stop talking (Cardboard lever or clicker)
- *   getConversation()        -> { sendContextualUpdate(text) }   (arrivals, return-to-base)
- *   onAgentText(callback)    the agent's words, shown at the bottom of the HUD
- *   isListening()            true while connected (red dot on the HUD)
- *
- * Live status comes from `window.hud.getStatus()` (the HUD sets it).
- * Agent ID (public, not a secret): `?agent=` in the URL, `window.MARS_AGENT_ID`,
- * or VITE_ELEVENLABS_AGENT_ID at build time.
+ * Live status comes from `window.hud.getStatus()`. The agent id is read at
+ * runtime only (`?agent=<id>`, remembered on the phone); never at build time.
  */
-import { createAssistantApp } from "./config/appComposition";
-import type { MissionStatus } from "./contracts/MissionStatus";
+import { VoiceAssistantService } from "./services/VoiceAssistantService";
+import { HudStatusProvider } from "./providers/HudStatusProvider";
+import { startElevenLabsVoiceSession } from "./adapters/elevenLabsVoiceSession";
+import { requestBrowserMicrophone } from "./adapters/browserMicrophone";
+import { createHudStatusReader, type HudWindowApi } from "./hud/hudStatusReader";
+import { resolveRuntimeAgentId } from "./hud/runtimeAgentId";
+import { HudVoiceBridge } from "./hud/HudVoiceBridge";
 
-type HudStatus = Partial<Record<keyof MissionStatus, unknown>> | null | undefined;
-type HudWindow = Window & { hud?: { getStatus?: () => HudStatus }; MARS_AGENT_ID?: string };
-
-function resolveAgentId(): string | undefined {
-  const w = window as HudWindow;
-  return (
-    new URLSearchParams(location.search).get("agent") ||
-    w.MARS_AGENT_ID ||
-    import.meta.env.VITE_ELEVENLABS_AGENT_ID ||
-    undefined
-  );
+function localStorageOrUndefined(): Storage | undefined {
+  try {
+    return window.localStorage;
+  } catch {
+    return undefined;
+  }
 }
 
-/** Reads the HUD's status. While walking back to base the HUD reports stop = null: that is stop 0 (base). */
-function readHudStatus(): MissionStatus {
-  const status = (window as HudWindow).hud?.getStatus?.();
-  if (!status) throw new Error("HUD status is not ready yet");
-  return { ...status, stop: status.stop ?? 0 } as MissionStatus;
-}
+const hudWindow = window as Window & { hud?: HudWindowApi };
 
-const app = createAssistantApp({ hud: { getStatus: readHudStatus }, agentId: resolveAgentId() });
-const assistant = app.voiceAssistant;
-const textListeners = new Set<(text: string) => void>();
+const bridge = new HudVoiceBridge(
+  new VoiceAssistantService({
+    agentId: resolveRuntimeAgentId(location.search, localStorageOrUndefined()),
+    statusProvider: new HudStatusProvider({ getStatus: createHudStatusReader(() => hudWindow.hud) }),
+    startSession: startElevenLabsVoiceSession,
+    requestMicrophoneAccess: () => requestBrowserMicrophone(),
+    clock: Date.now,
+  }),
+  console,
+);
 
-assistant.subscribe((event) => {
-  if (event.type === "transcript" && event.role === "agent") textListeners.forEach((cb) => cb(event.text));
-  if (event.type === "error") textListeners.forEach((cb) => cb(`AI offline: ${event.message}`));
-});
-
-export async function toggleVoice(): Promise<void> {
-  if (assistant.getState() === "disconnected") await assistant.start();
-  else await assistant.stop();
-}
-
-export function getConversation() {
-  return { sendContextualUpdate: (text: string) => assistant.updateMissionContext(text) };
-}
-
-export function onAgentText(callback: (text: string) => void): () => void {
-  textListeners.add(callback);
-  return () => textListeners.delete(callback);
-}
-
-export function isListening(): boolean {
-  return assistant.isConnected();
-}
+export const toggleVoice = () => bridge.toggleVoice();
+export const getConversation = () => bridge.getConversation();
+export const onAgentText = (callback: (text: string) => void) => bridge.onAgentText(callback);
+export const onUserText = (callback: (text: string) => void) => bridge.onUserText(callback);
+export const isListening = () => bridge.isListening();
+export const getVoiceState = () => bridge.getVoiceState();

@@ -1,5 +1,5 @@
 
-import type { MissionStatus, StatusProvider } from "../contracts/MissionStatus";
+import { BASE_STOP_ID, type MissionStatus, type StatusProvider } from "../contracts/MissionStatus";
 import type { MissionStop, StopCard } from "../contracts/MissionData";
 import type { MissionService } from "./MissionService";
 import type { StopCardService } from "./StopCardService";
@@ -9,23 +9,24 @@ export interface MissionSnapshot {
   /** Latest live status, or `null` if the status provider failed this time. */
   status: MissionStatus | null;
   statusError: string | null;
-  /** Current stop from the latest status, or the last known one if the status failed. */
-  stopId: number | null;
-  /** Local stop card for `stopId`. Comes from bundled data and doesn't need ElevenLabs. */
-  stopCard: StopCard | undefined;
+  /** Stop the astronaut is walking to (`status.stop`), or the last known one. 0 = base. */
+  targetStopId: number | null;
+  /** Local stop card for the target. Comes from bundled data and doesn't need ElevenLabs. */
+  targetCard: StopCard | undefined;
   stopCardError: string | null;
-  nextStop: MissionStop | undefined;
-  /** True only on the refresh where the astronaut's stop changed. */
-  stopChanged: boolean;
+  /** The stop after the target, in planned order. */
+  stopAfterTarget: MissionStop | undefined;
+  /** True only on the refresh where the target changed (the previous stop was reached). */
+  targetChanged: boolean;
 }
 
 /**
  * Combines live status (`StatusProvider`) with local mission knowledge
  * (`MissionService`, `StopCardService`). Works without any voice
- * connection, so the HUD can always show the current stop card.
+ * connection, so a screen can always show the card of the stop ahead.
  */
 export class MissionContextService {
-  private lastStopId: number | null = null;
+  private lastTargetId: number | null = null;
 
   constructor(
     private readonly statusProvider: StatusProvider,
@@ -42,50 +43,54 @@ export class MissionContextService {
       statusError = errorMessage(error);
     }
 
-    const stopId = status?.stop ?? this.lastStopId;
-    const stopChanged = status !== null && status.stop !== this.lastStopId;
-    if (status) this.lastStopId = status.stop;
+    const reported = status?.stop ?? null;
+    const targetStopId = reported ?? this.lastTargetId;
+    const targetChanged = reported !== null && reported !== this.lastTargetId;
+    if (reported !== null) this.lastTargetId = reported;
 
-    let stopCard: StopCard | undefined;
-    let nextStop: MissionStop | undefined;
+    let targetCard: StopCard | undefined;
+    let stopAfterTarget: MissionStop | undefined;
     let stopCardError: string | null = null;
-    if (stopId !== null) {
+    if (targetStopId !== null && targetStopId !== BASE_STOP_ID) {
       try {
-        stopCard = await this.stopCardService.getStopCard(stopId);
-        nextStop = await this.missionService.getNextStop(stopId);
+        targetCard = await this.stopCardService.getStopCard(targetStopId);
+        stopAfterTarget = await this.missionService.getNextStop(targetStopId);
       } catch (error) {
         stopCardError = errorMessage(error);
       }
     }
 
-    return { status, statusError, stopId, stopCard, stopCardError, nextStop, stopChanged };
+    return { status, statusError, targetStopId, targetCard, stopCardError, stopAfterTarget, targetChanged };
   }
 }
 
 /**
- * Text for an ElevenLabs contextual update when the astronaut reaches a stop.
- * Built only from local mission data, never from invented details.
+ * Text for an ElevenLabs contextual update when the astronaut starts walking
+ * to a new stop. Built only from local mission data, never from invented details.
  */
-export function describeStopArrival(snapshot: MissionSnapshot): string | null {
-  const { stopId, stopCard, nextStop } = snapshot;
-  if (stopId === null) return null;
+export function describeNewTarget(snapshot: MissionSnapshot): string | null {
+  const { targetStopId, targetCard, stopAfterTarget } = snapshot;
+  if (targetStopId === null) return null;
+  if (targetStopId === BASE_STOP_ID) return "The astronaut is now walking back to base.";
 
-  if (!stopCard) {
+  if (!targetCard) {
     return (
-      `The astronaut has arrived at stop ${stopId}. No stop card is available for this stop. ` +
+      `The astronaut is now walking to stop ${targetStopId}. No stop card is available for this stop. ` +
       "Do not invent its location details or tasks."
     );
   }
 
   const parts = [
-    `The astronaut has arrived at stop ${stopCard.stopId}: ${stopCard.title}.`,
-    stopCard.description,
-    stopCard.tasks.length > 0
-      ? `Planned tasks: ${stopCard.tasks.join("; ")}.`
+    `The astronaut is now walking to stop ${targetCard.stopId}: ${targetCard.title}.`,
+    targetCard.description,
+    targetCard.tasks.length > 0
+      ? `Planned tasks there: ${targetCard.tasks.join("; ")}.`
       : "No planned tasks are listed for this stop.",
-    nextStop ? `Next planned stop: ${nextStop.id}. ${nextStop.name}.` : "This is the last planned stop.",
+    stopAfterTarget
+      ? `After that: stop ${stopAfterTarget.id}, ${stopAfterTarget.name}.`
+      : "This is the last planned stop.",
   ];
-  if (stopCard.source === "mock") {
+  if (targetCard.source === "mock") {
     parts.push("Note: this stop information is MOCK demonstration data, not official mission data.");
   }
   parts.push("For live oxygen, distance, radiation and temperature values, call get_status.");

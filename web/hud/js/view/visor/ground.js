@@ -4,13 +4,25 @@ import { AMBER, RED, say } from './style.js';
 const FOV_DEG = 62;
 const SPACING_M = 2.5;
 const FARTHEST_M = 30;
-const GUIDE_CONE_DEG = 24; // beyond this the side panels cover the view, so show a turn hint instead
+const GUIDE_CONE_DEG = 24;
+
+/**
+ * 'guide' when the pin lands in the clear middle of the visor (between the side panels), else the way to turn.
+ * clear = { minX, maxX } in pixels.
+ */
+export function guideSide(target, view, clear, coneDeg = GUIDE_CONE_DEG) {
+  const relDeg = (Math.atan2(target.right, target.forward) * 180) / Math.PI;
+  const turn = relDeg < 0 ? 'left' : 'right';
+  if (target.forward <= 1 || Math.abs(relDeg) > coneDeg) return turn;
+  const x = view.centerX + (view.focalPx * target.right) / target.forward;
+  return x >= clear.minX && x <= clear.maxX ? 'guide' : turn;
+}
 
 /**
  * Pokémon GO style guidance in the camera view: chevrons painted on the ground towards the next stop,
- * and a glowing pin standing over the stop itself. If the stop is out of view, a turn hint at the edge.
+ * and a glowing pin standing over the stop itself. If the stop is out of the clear middle, a turn hint.
  */
-export function drawGroundGuide(ctx, w, h, u, s) {
+export function drawGroundGuide(ctx, w, h, u, s, clear = { minX: 0, maxX: w }) {
   const scene = s.scene;
   if (!scene) return;
   const target = scene.stops.find((p) => p.isTarget) ?? (scene.base.isTarget ? scene.base : null);
@@ -21,9 +33,9 @@ export function drawGroundGuide(ctx, w, h, u, s) {
   const dir = { forward: target.forward / dist, right: target.right / dist };
   const left = { forward: dir.right, right: -dir.forward };
 
-  const relDeg = (Math.atan2(target.right, target.forward) * 180) / Math.PI;
-  if (target.forward <= 1 || Math.abs(relDeg) > GUIDE_CONE_DEG) {
-    drawTurnHint(ctx, w, h, u, relDeg < 0 ? -1 : 1, color);
+  const side = guideSide(target, view, clear);
+  if (side !== 'guide') {
+    drawTurnHint(ctx, w, h, u, side === 'left' ? -1 : 1, color);
     return;
   }
 
@@ -36,7 +48,7 @@ export function drawGroundGuide(ctx, w, h, u, s) {
       right: dir.right * (d + along) + left.right * across,
     }, view);
     const corners = [at(0.8, 0), at(-0.5, 0.75), at(-0.1, 0), at(-0.5, -0.75)];
-    if (corners.some((c) => !c)) continue;
+    if (corners.some((c) => !c || c.x < clear.minX || c.x > clear.maxX)) continue;   // never over the side panels
     ctx.globalAlpha = Math.max(0.12, 0.9 - d / FARTHEST_M);
     ctx.shadowBlur = 1.2 * u;
     ctx.beginPath();
@@ -47,7 +59,8 @@ export function drawGroundGuide(ctx, w, h, u, s) {
   ctx.globalAlpha = 1;
   ctx.shadowBlur = 0;
 
-  drawPin(ctx, projectGround(target, view), u, view, target.forward, color, s);
+  const ground = projectGround(target, view);   // null when the stop is under your feet
+  if (ground) drawPin(ctx, ground, u, view, target.forward, color, s);
 }
 
 function drawTurnHint(ctx, w, h, u, side, color) {

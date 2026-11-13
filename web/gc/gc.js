@@ -1,11 +1,15 @@
 // Ground Control (T1.5): watch the astronaut live, follow them on the Mars map, send messages and events.
-import { PEER_PREFIX, ICE } from "../live/live-config.js";
+// Listens on both links at once: the laptop's local link (when server/server.mjs serves this page) and
+// PeerJS with the room code. If both bring phone data, the local link wins (link-choice.js).
+import { createDelayedView } from "./delayed-view.js";
+import { createLinkChoice } from "./link-choice.js";
+import { startLocalLink } from "./local-link.js";
+import { createPeerLink } from "./peer-link.js";
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
-const video = $("video"), snap = $("snap"), noVideo = $("noVideo");
-let peer = null, conn = null, room = null, retryTimer = null, lastAlerts = new Set(), lastData = 0;
-const RETRY_MS = 1500, DEAD_MS = 6000;
+const mjpeg = $("mjpeg"), video = $("video"), snap = $("snap"), noVideo = $("noVideo");
+let lastAlerts = new Set(), local = null;
 
 // ---------- log ----------
 function log(text, kind = "info") {
@@ -14,7 +18,7 @@ function log(text, kind = "info") {
   li.textContent = `${new Date().toLocaleTimeString()}  ${text}`;
   $("log").prepend(li);
 }
-function setLink(text, cls) { const el = $("link"); el.textContent = text; el.className = `pill ${cls}`; }
+function setPill(id, text, kind) { const el = $(id); el.textContent = text; el.className = `pill ${kind}`; }
 
 // ---------- Mars delay ----------
 const delayMs = () => ($("delayOn").checked ? Number($("delaySec").value) * 1000 : 0);
@@ -54,76 +58,67 @@ function onTelemetry(t) {
   for (const a of now) if (!lastAlerts.has(a)) log(`ALERT ${a.replaceAll("_", " ")}`, "alert");
   lastAlerts = now;
 }
-let localLink = false;
-function videoPlaying() { return localLink || (video.srcObject && video.videoWidth > 0); }
-function onData(msg) {
-  if (!msg || typeof msg !== "object") return;
-  lastData = Date.now();
-  if (msg.type === "ping") return;
+const choice = createLinkChoice();
+function onPhoneData(source, msg) {
+  if (!msg || typeof msg !== "object" || !choice.accept(source)) return;
+  if (msg.type === "snap" && !(video.videoWidth > 0)) snap.src = msg.data;   // live; the delayed view delays it
   later(() => {
     if (msg.type === "telemetry") onTelemetry(msg);
-    if (msg.type === "snap" && !videoPlaying()) {
-      snap.src = msg.data; snap.style.display = "block"; noVideo.style.display = "none";
-    }
     if (msg.type === "hello") log(`Linked to astronaut (room ${msg.room})`, "info");
   });
 }
 
-// ---------- connection ----------
-function connect(code) {
-  room = code.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  if (!room) return;
-  history.replaceState(null, "", `?room=${room}`);
-  clearTimeout(retryTimer);
-  conn?.close();
-  peer?.destroy();
-  setLink("connecting…", "warn");
-  peer = new Peer({ config: ICE });
-  peer.on("open", () => {
-    conn = peer.connect(PEER_PREFIX + room, { reliable: true });
-    conn.on("open", () => {
-      lastData = Date.now();
-      setLink(`connected · ${room}`, "on"); log("Connected", "info");
-      // no video after 4 s? ask the phone to send it again
-      setTimeout(() => { if (!videoPlaying() && conn?.open) conn.send({ type: "want-video" }); }, 4000);
-    });
-    conn.on("data", onData);
-    conn.on("close", () => { setLink("lost: reconnecting", "warn"); retryTimer = setTimeout(() => connect(room), RETRY_MS); });
-  });
-  peer.on("call", (call) => {
-    call.answer();
-    call.on("stream", (stream) => {
-      video.srcObject = stream;
-      video.play().catch(() => {});
-      snap.style.display = "none"; noVideo.style.display = "none";
-    });
-  });
-  peer.on("error", (err) => {
-    if (err.type === "peer-unavailable") setLink("astronaut not online yet: retrying", "warn");
-    else setLink(`error: ${err.type}`, "warn");
-    retryTimer = setTimeout(() => connect(room), RETRY_MS);
-  });
+// ---------- the picture: local MJPEG, else PeerJS video, else PeerJS snapshots ----------
+function liveElement() {
+  if (local?.phoneOnline) return mjpeg;
+  if (video.videoWidth > 0) return video;
+  if (snap.getAttribute("src")) return snap;
+  return null;
 }
-// watchdog: no data (not even the heartbeat) for 6 s means the link is dead: reconnect
+function showView() {
+  const el = liveElement();
+  for (const e of [mjpeg, video, snap]) e.style.display = e === el ? "block" : "none";
+  noVideo.style.display = el ? "none" : "flex";
+}
+const SOURCE = { local: ["data: local link", "on"], peer: ["data: room code (PeerJS)", "on"] };
 setInterval(() => {
-  if (room && conn?.open && Date.now() - lastData > DEAD_MS) { log("Link silent: reconnecting", "alert"); connect(room); }
-  if (conn?.open && Date.now() - lastData > 2500) setLink(`weak link · ${Math.round((Date.now() - lastData) / 1000)} s`, "warn");
-  else if (conn?.open) setLink(`connected · ${room}`, "on");
+  showView();
+  setPill("source", ...(SOURCE[choice.current()] ?? ["no phone data", "off"]));
 }, 1000);
+showView();
+// with Mars delay on, the picture is delayed too
+const delayedView = createDelayedView({ screen: document.querySelector(".screen"), output: $("delayed"), label: $("delayLabel"), live: liveElement });
+
+// ---------- links ----------
+const peerLink = createPeerLink({
+  onData: (msg) => onPhoneData("peer", msg),
+  onStream: (stream) => { video.srcObject = stream; video.play().catch(() => {}); },
+  onStatus: (text, kind) => setPill("link", text, kind),
+  hasVideo: () => video.videoWidth > 0,
+  log,
+});
+function join(code) {
+  peerLink.connect(code);
+  const room = String(code).toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (room) { params.set("room", room); history.replaceState(null, "", `?${params}`); }
+}
 async function allowLocalNetwork() {
   try { (await navigator.mediaDevices.getUserMedia({ audio: true })).getTracks().forEach((t) => t.stop()); } catch { /* fine */ }
 }
-$("join").addEventListener("submit", async (e) => { e.preventDefault(); await allowLocalNetwork(); connect($("room").value); });
-if (params.get("room")) { $("room").value = params.get("room"); connect(params.get("room")); }
+$("join").addEventListener("submit", async (e) => { e.preventDefault(); await allowLocalNetwork(); join($("room").value); });
+if (params.get("room")) { $("room").value = params.get("room"); join(params.get("room")); }
 
 // ---------- outgoing ----------
+const route = () => (local?.phoneOnline ? "local" : peerLink.open ? "peer" : local ? "local" : null);
 function sendToAstronaut(msg, label) {
-  if (!localLink && !conn?.open) { log("Not connected", "alert"); return; }
+  if (!route()) { log("Not connected", "alert"); return; }
   const d = delayMs();
   log(d ? `${label} (arrives in ${d / 1000} s, Mars delay)` : label, "gc");
   later(() => {
-    if (localLink) fetch("/api/message", { method: "POST", body: JSON.stringify(msg), headers: { "Content-Type": "application/json" } }).catch(() => log("Send failed", "alert"));
-    else if (conn?.open) conn.send(msg);
+    const via = route();
+    if (via === "local") local.send(msg).catch(() => log("Send failed", "alert"));
+    else if (via === "peer") peerLink.send(msg);
+    else log("Send failed: no link", "alert");
   });
 }
 $("msgForm").addEventListener("submit", (e) => {
@@ -137,31 +132,18 @@ document.querySelectorAll("[data-event]").forEach((b) =>
   b.addEventListener("click", () => sendToAstronaut({ type: "event", name: b.dataset.event }, `EVENT ${b.textContent}`)));
 document.querySelectorAll("[data-demo]").forEach((b) =>
   b.addEventListener("click", () => sendToAstronaut({ type: "demo", name: b.dataset.demo }, `TEST ${b.textContent}`)));
-$("delayOn").addEventListener("change", () => log($("delayOn").checked ? `Mars delay ON (${$("delaySec").value} s each way). Video stays live.` : "Mars delay OFF", "info"));
+const applyDelay = () => delayedView.setDelay(delayMs() / 1000);
+$("delayOn").addEventListener("change", () => {
+  applyDelay();
+  log($("delayOn").checked ? `Mars delay ON (${$("delaySec").value} s each way). The view is delayed too.` : "Mars delay OFF", "info");
+});
+$("delaySec").addEventListener("change", applyDelay);
+applyDelay();   // the browser may restore the switch on reload
 
-// ---------- local link (this page is served by server/server.mjs on the laptop) ----------
-async function startLocalLink() {
-  try { if (!(await fetch("/api/ping", { cache: "no-store" })).ok) return; } catch { return; }
-  localLink = true;
-  clearTimeout(retryTimer); conn?.close(); peer?.destroy(); room = null;
-  $("join").querySelector("label").style.display = "none";
-  $("join").querySelector("button").style.display = "none";
-  setLink("local link: waiting for phone", "warn");
-  snap.src = "/api/video.mjpg";                                    // live picture stream from the phone
-  snap.style.display = "block"; video.style.display = "none";
-  snap.onload = () => { noVideo.style.display = "none"; };
-  snap.onerror = () => setTimeout(() => { snap.src = `/api/video.mjpg?${Date.now()}`; }, 1000);
-  const events = new EventSource("/api/events");                  // reconnects by itself
-  let phoneOnline = false;
-  events.onmessage = (e) => {
-    const msg = JSON.parse(e.data);
-    if (msg.type === "ping") {
-      if (msg.phoneOnline !== phoneOnline) { phoneOnline = msg.phoneOnline; log(phoneOnline ? "Phone connected" : "Phone not sending", phoneOnline ? "info" : "alert"); }
-      setLink(phoneOnline ? "local link · phone online" : "local link: waiting for phone", phoneOnline ? "on" : "warn");
-      return;
-    }
-    onData(msg);
-  };
-  events.onerror = () => setLink("laptop server not reachable", "warn");
-}
-startLocalLink();
+// local link too, when the laptop server serves this page
+startLocalLink({
+  picture: mjpeg,
+  onData: (msg) => onPhoneData("local", msg),
+  onStatus: (text, kind) => setPill("local", text, kind),
+  log,
+}).then((link) => { local = link; $("local").hidden = !link; });

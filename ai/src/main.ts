@@ -7,7 +7,7 @@
 import { createAssistantApp } from "./config/appComposition";
 import { MockStatusProvider } from "./providers/MockStatusProvider";
 import { SimulatedStatusProvider } from "./dev/SimulatedStatusProvider";
-import { describeStopArrival, type MissionSnapshot } from "./services/MissionContextService";
+import { describeNewTarget, type MissionSnapshot } from "./services/MissionContextService";
 import type { MissionStatus } from "./contracts/MissionStatus";
 import type { VoiceAssistantEvent } from "./services/VoiceAssistantService";
 
@@ -117,13 +117,15 @@ window.addEventListener("beforeunload", () => void voiceAssistant.stop());
 
 // ---- Mission status and stop card (works without ElevenLabs) ----------------
 
+const shown = (value: unknown, unit = "") => (value === null || value === undefined ? "unknown" : `${value}${unit}`);
+
 const STATUS_ROWS: [keyof MissionStatus, string, (v: MissionStatus) => string][] = [
-  ["stop", "Stop", (s) => `${s.stop} · ${s.stop_name}`],
-  ["o2_pct", "Oxygen", (s) => `${s.o2_pct}% (${s.o2_minutes_left} min left)`],
-  ["dist_next_m", "To next stop", (s) => `${s.dist_next_m} m`],
-  ["dist_base_m", "To base", (s) => `${s.dist_base_m} m`],
-  ["rad_uSv_h", "Radiation", (s) => `${s.rad_uSv_h} µSv/h`],
-  ["temp_c", "Temperature", (s) => `${s.temp_c} °C`],
+  ["stop", "Walking to", (s) => `${shown(s.stop)} · ${shown(s.stop_name)}`],
+  ["o2_pct", "Oxygen", (s) => `${s.o2_pct}% (${shown(s.o2_minutes_left, " min")} left)`],
+  ["dist_next_m", "To that stop", (s) => shown(s.dist_next_m, " m")],
+  ["dist_base_m", "To base", (s) => shown(s.dist_base_m, " m")],
+  ["rad_uSv_h", "Radiation", (s) => shown(s.rad_uSv_h, " µSv/h")],
+  ["temp_c", "Temperature", (s) => shown(s.temp_c, " °C")],
   ["must_return", "Must return", (s) => (s.must_return ? "YES, RETURN TO BASE" : "no")],
 ];
 
@@ -148,13 +150,13 @@ function renderStopCard(snapshot: MissionSnapshot): void {
     root.append(el("p", `Stop card unavailable: ${snapshot.stopCardError}`, "alert"));
     return;
   }
-  if (snapshot.stopId === null) {
-    root.append(el("p", "Current stop unknown (no status received yet).", "muted"));
+  if (snapshot.targetStopId === null) {
+    root.append(el("p", "Stop ahead unknown (no status received yet).", "muted"));
     return;
   }
-  const card = snapshot.stopCard;
+  const card = snapshot.targetCard;
   if (!card) {
-    root.append(el("p", `No stop card for stop ${snapshot.stopId}.`, "muted"));
+    root.append(el("p", `No stop card for stop ${snapshot.targetStopId}.`, "muted"));
     return;
   }
   const title = el("h3", `Stop ${card.stopId}: ${card.title} `);
@@ -165,7 +167,13 @@ function renderStopCard(snapshot: MissionSnapshot): void {
   card.tasks.forEach((task) => tasks.append(el("li", task)));
   root.append(el("strong", "Planned tasks"), tasks);
   root.append(
-    el("p", snapshot.nextStop ? `Next: ${snapshot.nextStop.id}. ${snapshot.nextStop.name}` : "Last planned stop.", "muted"),
+    el(
+      "p",
+      snapshot.stopAfterTarget
+        ? `After that: ${snapshot.stopAfterTarget.id}. ${snapshot.stopAfterTarget.name}`
+        : "Last planned stop.",
+      "muted",
+    ),
   );
 }
 
@@ -177,9 +185,9 @@ async function refresh(): Promise<void> {
     const snapshot = await missionContext.refresh();
     renderStatus(snapshot);
     renderStopCard(snapshot);
-    if (snapshot.stopChanged) {
-      logEvent(`astronaut at stop ${snapshot.stopId}`);
-      const text = describeStopArrival(snapshot);
+    if (snapshot.targetChanged) {
+      logEvent(`astronaut now walking to stop ${snapshot.targetStopId}`);
+      const text = describeNewTarget(snapshot);
       if (text) voiceAssistant.updateMissionContext(text);
     }
   } finally {
@@ -220,7 +228,7 @@ async function boot(): Promise<void> {
   await refresh();
   setInterval(() => void refresh(), STATUS_POLL_MS);
   if (!import.meta.env.VITE_ELEVENLABS_AGENT_ID) {
-    logEvent("VITE_ELEVENLABS_AGENT_ID is not set. Voice will not start.", true);
+    logEvent("VITE_ELEVENLABS_AGENT_ID is not set (put it in .env.development.local). Voice will not start.", true);
   }
 }
 

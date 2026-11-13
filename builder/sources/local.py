@@ -2,6 +2,8 @@ import json
 
 
 class JsonFileWaypointSource:
+    """Waypoints from a file written by save_cache.py (same shape as NasaWaypointSource)."""
+
     def __init__(self, path):
         self.path = path
 

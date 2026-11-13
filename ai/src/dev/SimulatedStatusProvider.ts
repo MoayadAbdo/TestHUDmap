@@ -3,7 +3,7 @@ import type { MissionStatus, StatusProvider } from "../contracts/MissionStatus";
 
 /**
  * DEV ONLY. Wraps a real StatusProvider so the dev page can simulate
- * arriving at another stop, or a HUD outage. Every other field comes from
+ * walking to another stop, or a HUD outage. Every other field comes from
  * the wrapped provider unchanged.
  * Not used in production wiring. The HUD provides real stop changes.
  */

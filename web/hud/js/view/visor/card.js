@@ -1,3 +1,4 @@
+import { creditLine } from '../../core/mission-info.js';
 import { AMBER, AMBER_FAINT, AMBER_SOFT, brackets, say, wrap } from './style.js';
 
 /** Stop card styled as the wrist tablet in the reference: dark screen, amber text, photo on the left. */
@@ -31,6 +32,8 @@ export function drawStopCard(ctx, w, h, u, card, photo) {
     ctx.drawImage(photo, x + pad + (pw - photo.naturalWidth * scale) / 2, top + (ph - photo.naturalHeight * scale) / 2,
       photo.naturalWidth * scale, photo.naturalHeight * scale);
     ctx.globalAlpha = 1;
+    const credit = creditLine(card.photo_credit);   // clipped to the photo
+    if (credit) say(ctx, credit, x + pad + 0.6 * u, top + ph - 1.2 * u, 1.5 * u, { color: AMBER_SOFT, weight: 500 });
     ctx.restore();
     ctx.strokeStyle = AMBER_FAINT;
     ctx.strokeRect(x + pad, top, pw, ph);

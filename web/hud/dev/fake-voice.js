@@ -28,5 +28,8 @@ export function createFakeVoice({ getStatus, timers = window, log = console }) {
     get listening() {
       return listening;
     },
+    get state() {
+      return listening ? 'connected' : 'disconnected';
+    },
   };
 }

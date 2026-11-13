@@ -4,6 +4,7 @@ import { config } from './config.js';
 import { createFieldSource, requestMotionPermission } from './sources/field-source.js';
 import { createSimSource } from './sources/sim-source.js';
 import { createMarsWalkSource } from './sources/marswalk-source.js';
+import { bindInput } from './input.js';
 import { startWakeWord } from './wake-word.js';
 import { createDemoPanel } from './view/demo-panel.js';
 import { createRenderer } from './view/renderer.js';
@@ -11,21 +12,24 @@ import { createFakeLive } from '../dev/fake-live.js';
 import { createFakeSim } from '../dev/fake-sim.js';
 import { createFakeVoice } from '../dev/fake-voice.js';
 
-const LONG_PRESS_MS = 800;
 const params = new URLSearchParams(location.search);
+const fromPage = (path) => new URL(path, document.baseURI).href;
 const startScreen = document.getElementById('start');
 const startError = document.getElementById('startError');
 
 async function loadMission() {
   for (const url of [params.get('mission') ?? config.mission, config.sampleMission]) {
     try {
-      const response = await fetch(url, { cache: 'no-store' });
+      const response = await fetch(fromPage(url), { cache: 'no-store' });
       if (response.ok) {
         const mission = await response.json();
+        // photos and 3D assets are relative to mission.json
+        const assetsBase = new URL('./', response.url).href;
+        for (const s of mission.stops) if (s.photo) s.photo = new URL(s.photo, assetsBase).href;
         // fit the Mars route to the space you have: ?scale=0.3 (desert metres per Mars metre), ?rotation=90
         if (params.has('scale')) mission.anchor.scale = Number(params.get('scale'));
         if (params.has('rotation')) mission.anchor.rotation_deg = Number(params.get('rotation'));
-        return { mission, url };
+        return { mission, url, assetsBase };
       }
     } catch {
       // try the next one
@@ -38,7 +42,7 @@ async function loadMission() {
 async function loadPart(name, fit, standIn) {
   if (params.get(name) !== 'fake') {
     try {
-      const part = fit(await import(config[name]));
+      const part = fit(await import(fromPage(config[name])));
       if (part) return { part, real: true };
     } catch {
       // not deployed yet
@@ -73,7 +77,7 @@ async function start(mode, view, motionAsked) {
     const { installFakeGps } = await import('../dev/fake-gps.js');
     installFakeGps({ lat: Number(params.get('lat') ?? 31.95), lon: Number(params.get('lon') ?? 35.91) });
   }
-  const { mission, url } = await loadMission();
+  const { mission, url, assetsBase } = await loadMission();
   let app = null;
   const getStatus = () => app?.getStatus();
 
@@ -82,10 +86,10 @@ async function start(mode, view, motionAsked) {
   let source;
   if (mode === 'sim') {
     const sim = await loadPart('sim', asSim, () => createFakeSim({ mission, speedFactor: Number(params.get('speed') ?? 1) }));
-    source = createSimSource(sim.part, mission, view);
+    source = createSimSource(sim.part, mission, view, assetsBase);
   } else if (mode === 'marswalk') {
     const sim = await loadPart('sim', asSim, () => null);
-    source = sim.real ? createMarsWalkSource(createFieldSource(), sim.part, mission, view) : createFieldSource();
+    source = sim.real ? createMarsWalkSource(createFieldSource(), sim.part, mission, view, assetsBase) : createFieldSource();
   } else {
     source = createFieldSource();
   }
@@ -103,11 +107,8 @@ async function start(mode, view, motionAsked) {
   const renderer = createRenderer({ canvas, getFrame: app.frame, view });
   const demo = createDemoPanel({ element: document.getElementById('demo'), app, renderer, live: live.part });
   if (params.get('demo') === '1') demo.show();
+  renderer.preload(mission.stops.map((s) => s.photo).filter(Boolean));
 
-  let pressStart = 0;
-  canvas.addEventListener('pointerdown', () => {
-    pressStart = performance.now();
-  });
   // Sim mode: a tap (or the Cardboard button) starts / stops walking; the Bluetooth clicker talks to the AI.
   // Field mode: you walk for real, so a tap talks to the AI.
   const sim3d = mode === 'sim' && typeof source.sim?.setAutopilot === 'function' ? source.sim : null;
@@ -116,11 +117,7 @@ async function start(mode, view, motionAsked) {
     sim3d.setAutopilot(walking);
     app.notify(walking ? 'Walking: tap to stop' : 'Stopped: tap to walk');
   };
-  canvas.addEventListener('pointerup', () => {
-    if (performance.now() - pressStart >= LONG_PRESS_MS) demo.toggle();
-    else if (sim3d) toggleWalk();
-    else app.onTap();
-  });
+  bindInput({ canvas, onTap: sim3d ? toggleWalk : app.onTap, onLongPress: demo.toggle, onClicker: app.onTap });
   // Mars walk: every frame, put the 3D Mars view where the real GPS puts you
   if (source.world3d) {
     const follow = () => {
@@ -129,15 +126,6 @@ async function start(mode, view, motionAsked) {
       requestAnimationFrame(follow);
     };
     follow();
-  }
-  // The Bluetooth clicker talks to the AI (you can't touch the screen inside the VR box)
-  {
-    const VOICE_KEYS = new Set([' ', 'Enter', 'PageDown', 'PageUp', 'ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'v', 'V']);
-    window.addEventListener('keydown', (e) => {
-      if (!VOICE_KEYS.has(e.key) || e.repeat) return;
-      e.preventDefault();
-      app.onTap();
-    });
   }
 
   window.hud = { getStatus: app.getStatus, demo: app.demo, standInLive: live.real ? null : live.part, sim: source.world3d ?? source.sim ?? null };

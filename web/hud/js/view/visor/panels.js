@@ -13,13 +13,15 @@ export function drawLocation(ctx, x, y, u, s) {
     [s.site, ''],
     [`Mars ${s.marsTime}`, `Sol ${s.sol}`],
     [`Earth ${s.earthTime}`, 'UTC'],
+    [s.dataSol ? `Weather: sol ${s.dataSol}` : '', ''],   // REMS data is from that sol, not today
   ];
   rows.forEach(([a, b], i) => {
     const ry = y + (3.6 + i * 3.3) * u;
-    say(ctx, a, x, ry, 2.6 * u, { color: i === 1 ? AMBER_SOFT : AMBER });
+    const note = i === 1 || i === 4;
+    if (a) say(ctx, a, x, ry, (i === 4 ? 2.1 : 2.6) * u, { color: note ? AMBER_SOFT : AMBER });
     if (b) say(ctx, b, x + 17 * u, ry, 2.2 * u, { color: AMBER_SOFT });
   });
-  brackets(ctx, x - 1.2 * u, y - 2 * u, 27 * u, 17 * u, 1.6 * u);
+  brackets(ctx, x - 1.2 * u, y - 2 * u, 27 * u, 20 * u, 1.6 * u);
 }
 
 export function drawSuit(ctx, x, y, u, s) {

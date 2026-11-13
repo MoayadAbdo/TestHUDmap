@@ -8,6 +8,7 @@ export function createDemoPanel({ element, app, renderer, live }) {
     ['Oxygen 25%', () => app.demo.oxygenLow()],
     ['Steep ground', () => app.demo.steepGround()],
     ['Next stop (sim)', () => app.demo.nextStop()],
+    ['Set base here (field)', () => app.notify?.(app.demo.setBaseHere() ? 'Setting base here…' : 'Base: field mode with GPS only')],
     ['Ground Control message', () => (live.pushMessage ? live.pushMessage('Copy, looking good. Keep to the route.') : app.demo.message('Test message'))],
     ['VR / hand-held', () => renderer.setView(renderer.view === 'vr' ? 'single' : 'vr')],
     ['Eyes smaller', tune('size', -0.02)],

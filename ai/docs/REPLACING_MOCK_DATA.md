@@ -169,12 +169,12 @@ If the official stop cards are PDFs or images for display only, they aren't data
 
 **ElevenLabs doesn't sync with this repo.** Changing local files, redeploying, or running `kb:export` doesn't update the agent. You have to update the Knowledge Base by hand. No step below changes the agent's prompt, voice, tools (`get_status`), or other configuration.
 
-1. **Generate the files** from validated official data:
+1. **Generate the files** from validated official data (copies `web/mission/mission.json` first):
    ```bash
-   npm run kb:export -- official
+   npm run kb:export:official
    ```
    Output: `knowledge-base/official/mission_stops.txt` and `knowledge-base/official/boxwork.txt`.
-2. **Review `boxwork.txt`.** The section `STOP CARDS — The official stop cards have not been provided yet` will be out of date. Update it in `src/data/boxwork.txt` (e.g. "Use the MISSION PLAN / STOP CARDS document for stop details"), then run the export again.
+2. **Review `boxwork.txt`.** Done on 13 Nov 2026: its STOP CARDS section now points to the stop cards file. Edit `src/data/boxwork.txt` if it needs more changes, then run the export again.
 3. In the **ElevenLabs dashboard**, open the Mars Suit Assistant agent's **Knowledge Base**:
    1. **Remove** the mock document `mission_stops_MOCK.txt` and the old `boxwork.txt`. Removing mock data matters: if it stays, the agent can quote fictional stops.
    2. **Upload** `knowledge-base/official/mission_stops.txt` and `knowledge-base/official/boxwork.txt`.

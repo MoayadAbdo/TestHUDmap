@@ -12,13 +12,11 @@ import { StopCardService } from "../services/StopCardService";
 import { createMissionDataServices } from "./missionDataConfig";
 
 /**
- * APP COMPOSITION ROOT.
+ * APP COMPOSITION ROOT for the dev page (and the knowledge export).
  *
  * Wires live status, mission data and the voice assistant together. Swap
  * implementations here (or through `options`), never inside services.
- *
- * Switching to the real HUD:
- *   createAssistantApp({ hud: theHudAdapterFromTheHudTeam })
+ * The real HUD uses its own smaller wiring in `src/hudBridge.ts`.
  */
 export interface AssistantAppOptions {
   /** The HUD team's adapter. When set, `HudStatusProvider` replaces the mock. */
@@ -56,6 +54,7 @@ export function createAssistantApp(options: AssistantAppOptions = {}): Assistant
       statusProvider,
       startSession: options.startSession ?? startElevenLabsVoiceSession,
       requestMicrophoneAccess: options.requestMicrophoneAccess ?? (() => requestBrowserMicrophone()),
+      clock: Date.now,
     }),
   };
 }

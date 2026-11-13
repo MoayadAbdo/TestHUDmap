@@ -29,9 +29,9 @@ hazards, or safety procedures.
 
 LIVE STATUS
 For oxygen, distances, radiation, temperature,
-current stop, and return-to-base decisions,
+the stop being walked to, and return-to-base decisions,
 use the get_status tool.
 
 STOP CARDS
-The official stop cards have not been provided yet.
+Stop details and tasks are in the mission stop cards file.
 Do not invent their contents.

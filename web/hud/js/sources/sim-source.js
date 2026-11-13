@@ -1,6 +1,6 @@
 import { eyeRects } from '../view/vr-layout.js';
 /** Wraps T1.3's sim.js (or the stand-in) so the HUD sees the same shape as the field source, in Mars coordinates. */
-export function createSimSource(sim, mission, view = 'single') {
+export function createSimSource(sim, mission, view = 'single', assetsBase = '../mission/') {
   return {
     frame: 'mars',
     async start() {
@@ -13,7 +13,7 @@ export function createSimSource(sim, mission, view = 'single') {
       fit();
       addEventListener('resize', () => { fit(); dispatchEvent(new Event('sim-resize')); });  // one eye's shape
       document.body.appendChild(box);
-      await sim.start?.(mission, { container: box, assetsBase: '/mission/', stereo: false, autopilot: false, hud: true, hfovDeg: 62, lockPitch: true });
+      await sim.start?.(mission, { container: box, assetsBase, stereo: false, autopilot: false, hud: true, hfovDeg: 62, lockPitch: true });
       await sim.enableSensors?.();
     },
     stop() {

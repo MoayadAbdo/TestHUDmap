@@ -8,6 +8,7 @@ How it works:
   4. Save the panorama + a small JSON with the compass direction of its left edge.
 
 Usage:
+  python builder/panoramas.py --all --search 8                 # every stop in stops.json, at its sol
   python builder/panoramas.py --stop 0 --sol 4596
   python builder/panoramas.py --stop 1 --sol 4618 --search 6   # try sols 4618..4624 if 4618 has no full circle
 
@@ -23,39 +24,32 @@ import argparse
 import json
 import os
 import re
-import urllib.request
 from collections import defaultdict
 
 import numpy as np
 from PIL import Image
 
-API = ("https://mars.nasa.gov/api/v1/raw_image_items/?order=sol%20desc&per_page=50&page={page}"
-       "&condition_1=msl:mission&condition_2={sol}:sol:gte&condition_3={sol}:sol:lte")
+import paths
+from download import DownloadCache, get_json
+from sources.nasa import NasaWaypointSource
+from sources.raw_images import RawImageClient
+from stops import load_stops
+
 NAVCAM_FOV_DEG = 45.0          # Navcam field of view (1024 px wide)
 FRAME_PX = 1024
-WAYPOINTS = "https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json"
-HERE = os.path.dirname(os.path.abspath(__file__))
-CACHE = os.path.join(HERE, "cache", "navcam")
-OUT = os.path.join(HERE, "..", "web", "mission", "assets")
+ALL_SOLS = (0, 10 ** 6)
 
 
-def fetch_frames(sol):
+def fetch_frames(client, sol):
     """All full-size left-Navcam frames for a sol, with azimuth/elevation."""
     frames = []
-    for page in range(60):
-        with urllib.request.urlopen(API.format(page=page, sol=sol), timeout=30) as r:
-            items = json.load(r).get("items", [])
-        if not items:
-            break
-        for x in items:
-            e = x.get("extended") or {}
-            if x.get("instrument") != "NAV_LEFT_B" or e.get("sample_type") != "full":
-                continue
-            if e.get("mast_az") is None or e.get("mast_el") is None:
-                continue
-            m = re.search(r"NCAM\d+", x["https_url"])
-            frames.append({"url": x["https_url"], "seq": m.group(0) if m else "?",
-                           "az": float(e["mast_az"]) % 360, "el": float(e["mast_el"])})
+    for x in client.full_frames(sol):
+        e = x.get("extended") or {}
+        if e.get("mast_az") is None or e.get("mast_el") is None:
+            continue
+        m = re.search(r"NCAM\d+", x["https_url"])
+        frames.append({"url": x["https_url"], "seq": m.group(0) if m else "?",
+                       "az": float(e["mast_az"]) % 360, "el": float(e["mast_el"])})
     return frames
 
 
@@ -79,32 +73,15 @@ def pick_ring(frames, el_min=-35.0, el_max=5.0, min_sep=15.0):
     return sorted(picked, key=lambda f: f["az"])
 
 
-def load_waypoints():
-    path = os.path.join(HERE, "cache", "MSL_waypoints.json")
-    if not os.path.exists(path):
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        urllib.request.urlretrieve(WAYPOINTS, path)
-    with open(path) as fh:
-        return [f["properties"] for f in json.load(fh)["features"]]
-
-
 def rover_pose(wps, sol):
     """Rover pose (lat, lon, yaw) at the end of `sol` = last waypoint on or before it."""
-    before = [w for w in wps if int(w["sol"]) <= sol]
-    w = max(before, key=lambda w: (int(w["sol"]), w["dist_total_m"]))
-    return w["lat"], w["lon"], float(w["yaw"])
+    before = [w for w in wps if w["sol"] <= sol]
+    w = max(before, key=lambda w: (w["sol"], w["dist_total_m"]))
+    return w["lat"], w["lon"], w["yaw"]
 
 
 def moved_between(wps, sol_a, sol_b):
-    return any(sol_a < int(w["sol"]) <= sol_b for w in wps)
-
-
-def download(url):
-    os.makedirs(CACHE, exist_ok=True)
-    path = os.path.join(CACHE, url.rsplit("/", 1)[-1])
-    if not os.path.exists(path):
-        urllib.request.urlretrieve(url, path)
-    return path
+    return any(sol_a < w["sol"] <= sol_b for w in wps)
 
 
 def best_vertical_offset(a, b, dx, max_dy=400, step=4):
@@ -132,10 +109,11 @@ def best_vertical_offset(a, b, dx, max_dy=400, step=4):
     return best * step   # positive: b's content sits lower in a -> b goes down
 
 
-def stitch(frames):
+def stitch(frames, cache):
     ppd = FRAME_PX / NAVCAM_FOV_DEG                     # pixels per degree
     width = int(round(360 * ppd))
-    imgs = [np.asarray(Image.open(download(f["url"])).convert("L"), np.float64) for f in frames]
+    files = [cache.file(f["url"], os.path.join("navcam", f["url"].rsplit("/", 1)[-1])) for f in frames]
+    imgs = [np.asarray(Image.open(p).convert("L"), np.float64) for p in files]
     # vertical position of each photo, found by matching the overlap with its neighbour
     ys = [0.0]
     for i in range(1, len(frames)):
@@ -184,26 +162,19 @@ def stitch(frames):
     return Image.fromarray(np.clip(pano, 0, 255).astype(np.uint8)), ppd, gaps, top_el
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--stop", type=int, required=True)
-    ap.add_argument("--sol", type=int, required=True)
-    ap.add_argument("--yaw", type=float, help="rover heading; default: looked up in the waypoints")
-    ap.add_argument("--search", type=int, default=0, help="also try the next N sols (same spot only)")
-    ap.add_argument("--max-width", type=int, default=4096, help="resize so phones can load it")
-    a = ap.parse_args()
-
-    wps = load_waypoints()
+def build_panorama(stop, first_sol, client, waypoints, cache, search=0, yaw=None, max_width=4096, out=paths.ASSETS):
+    """client: RawImageClient; waypoints: WaypointSource; cache: DownloadCache."""
+    wps = waypoints.get_waypoints(*ALL_SOLS)
     best = None
-    for sol in range(a.sol, a.sol + a.search + 1):
-        if sol > a.sol and moved_between(wps, a.sol, sol):
+    for sol in range(first_sol, first_sol + search + 1):
+        if sol > first_sol and moved_between(wps, first_sol, sol):
             print(f"sol {sol}: rover moved, stop searching")
             break
-        frames = pick_ring(fetch_frames(sol))
+        frames = pick_ring(fetch_frames(client, sol))
         if len(frames) < 4:
             print(f"sol {sol}: only {len(frames)} usable frames")
             continue
-        pano, ppd, gaps, top_el = stitch(frames)
+        pano, ppd, gaps, top_el = stitch(frames, cache)
         missing = gaps / ppd
         print(f"sol {sol}: {len(frames)} frames, {missing:.0f}° missing")
         if best is None or missing < best[3]:
@@ -213,18 +184,18 @@ def main():
     if best is None:
         raise SystemExit("No usable Navcam ring found; try a bigger --search.")
     sol, frames, pano, missing, top_el = best
-    yaw = a.yaw if a.yaw is not None else rover_pose(wps, sol)[2]
+    yaw = yaw if yaw is not None else rover_pose(wps, sol)[2]
     if missing:
         print(f"warning: {missing:.0f}° of the circle has no photo (black)")
-    scale = min(1.0, a.max_width / pano.width)
+    scale = min(1.0, max_width / pano.width)
     if scale < 1:
         pano = pano.resize((int(pano.width * scale), int(pano.height * scale)), Image.LANCZOS)
 
-    os.makedirs(OUT, exist_ok=True)
-    jpg = os.path.join(OUT, f"pano_stop{a.stop}.jpg")
+    os.makedirs(out, exist_ok=True)
+    jpg = os.path.join(out, f"pano_stop{stop}.jpg")
     pano.save(jpg, quality=85)
     meta = {
-        "stop": a.stop, "sol": sol,
+        "stop": stop, "sol": sol,
         # rover-frame azimuth + rover yaw = compass heading. Left edge of the image is rover az 0.
         "left_heading_deg": round(yaw % 360, 2),
         "missing_deg": round(missing, 1),
@@ -234,9 +205,28 @@ def main():
         "source": "Curiosity Navcam (NASA/JPL-Caltech), raw images",
         "frames": [f["url"] for f in frames],
     }
-    with open(os.path.join(OUT, f"pano_stop{a.stop}.json"), "w") as fh:
+    with open(os.path.join(out, f"pano_stop{stop}.json"), "w") as fh:
         json.dump(meta, fh, indent=2)
     print(f"saved {jpg} ({pano.width}x{pano.height})")
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--all", action="store_true", help="every stop in stops.json, at its sol")
+    ap.add_argument("--stop", type=int)
+    ap.add_argument("--sol", type=int)
+    ap.add_argument("--yaw", type=float, help="rover heading; default: looked up in the waypoints")
+    ap.add_argument("--search", type=int, default=0, help="also try the next N sols (same spot only)")
+    ap.add_argument("--max-width", type=int, default=4096, help="resize so phones can load it")
+    a = ap.parse_args(argv)
+    if (a.all and (a.stop, a.sol) != (None, None)) or (not a.all and None in (a.stop, a.sol)):
+        ap.error("give either --all, or --stop and --sol")
+    jobs = [(s["id"], s["sol"]) for s in load_stops()] if a.all else [(a.stop, a.sol)]
+    cache = DownloadCache(paths.CACHE)
+    client, waypoints = RawImageClient(get_json), NasaWaypointSource(cache)
+    for stop, sol in jobs:
+        print(f"== panorama for stop {stop} (sol {sol})")
+        build_panorama(stop, sol, client, waypoints, cache, search=a.search, yaw=a.yaw, max_width=a.max_width)
 
 
 if __name__ == "__main__":

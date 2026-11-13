@@ -70,5 +70,9 @@ export function createRenderer({ canvas, getFrame, view = 'vr', maxPixelRatio = 
     get view() {
       return currentView;
     },
+    /** Load the stop photos at the start, so the card isn't blank on a weak connection. */
+    preload(urls) {
+      urls.forEach(photo);
+    },
   };
 }

@@ -1,6 +1,7 @@
 {
   "source_photo": "NASA MRO HiRISE (curiosity_hirise_mosaic, Mars Trek)",
   "source_heights": "Curiosity waypoint elevations (114 points) + 1.4 m visual relief from the photo",
+  "credit": "NASA/JPL/UArizona HiRISE via Mars Trek",
   "bounds": {
     "north": -4.7955322265625,
     "south": -4.8175048828125,

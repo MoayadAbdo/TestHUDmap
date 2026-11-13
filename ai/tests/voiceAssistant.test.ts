@@ -1,11 +1,6 @@
 
 import { describe, it, expect, vi } from "vitest";
 import type { MissionStatus, StatusProvider } from "../src/contracts/MissionStatus";
-import type {
-  StartVoiceSession,
-  VoiceSession,
-  VoiceSessionOptions,
-} from "../src/contracts/VoiceSession";
 import {
   VoiceAssistantService,
   type VoiceAssistantDependencies,
@@ -14,78 +9,25 @@ import {
 import { MockStatusProvider } from "../src/providers/MockStatusProvider";
 import { HudStatusProvider } from "../src/providers/HudStatusProvider";
 import { StatusUnavailableError } from "../src/voice/getStatusTool";
-
-// ---- Test doubles ----------------------------------------------------------
-
-interface FakeSession extends VoiceSession {
-  ended: boolean;
-  contextUpdates: string[];
-  options: VoiceSessionOptions;
-}
-
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  let reject!: (error: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
-}
-
-/** Fake voice SDK port. `nextStart` lets a test control when/how a connect finishes. */
-function fakeVoiceSdk() {
-  const sessions: FakeSession[] = [];
-  let nextStart: Promise<void> | null = null;
-  let failWith: Error | null = null;
-
-  const startSession = vi.fn<StartVoiceSession>(async (options) => {
-    if (nextStart) await nextStart;
-    if (failWith) throw failWith;
-    const session: FakeSession = {
-      id: `conv-${sessions.length + 1}`,
-      ended: false,
-      contextUpdates: [],
-      options,
-      sendContextualUpdate(text) {
-        this.contextUpdates.push(text);
-      },
-      async endSession() {
-        this.ended = true;
-      },
-    };
-    sessions.push(session);
-    return session;
-  });
-
-  return {
-    startSession,
-    sessions,
-    holdNextStart(gate: Promise<void>) {
-      nextStart = gate;
-    },
-    failNextStart(error: Error | null) {
-      failWith = error;
-    },
-    last: () => sessions[sessions.length - 1],
-  };
-}
+import { deferred, fakeClock, fakeVoiceSdk, type FakeSession } from "./support/fakeVoiceSdk";
 
 function setup(overrides: Partial<VoiceAssistantDependencies> = {}) {
   const sdk = fakeVoiceSdk();
+  const clock = fakeClock();
   const requestMicrophoneAccess = vi.fn(async () => undefined);
   const service = new VoiceAssistantService({
     agentId: "agent_test_123",
     statusProvider: new MockStatusProvider(),
     startSession: sdk.startSession,
     requestMicrophoneAccess,
+    clock: clock.now,
     ...overrides,
   });
   const events: VoiceAssistantEvent[] = [];
   service.subscribe((e) => events.push(e));
   const states = () => events.flatMap((e) => (e.type === "state" ? [e.state] : []));
   const errors = () => events.flatMap((e) => (e.type === "error" ? [e] : []));
-  return { service, sdk, requestMicrophoneAccess, events, states, errors };
+  return { service, sdk, clock, requestMicrophoneAccess, events, states, errors };
 }
 
 const getStatusTool = (session: FakeSession) => session.options.clientTools["get_status"];
@@ -194,7 +136,7 @@ describe("VoiceAssistantService errors", () => {
     const { service, sdk, requestMicrophoneAccess, errors } = setup({ agentId: "  " });
     await expect(service.start()).resolves.toBe(false);
     expect(errors()[0].kind).toBe("configuration");
-    expect(errors()[0].message).toContain("VITE_ELEVENLABS_AGENT_ID");
+    expect(errors()[0].message).toMatch(/agent ID/);
     expect(requestMicrophoneAccess).not.toHaveBeenCalled();
     expect(sdk.startSession).not.toHaveBeenCalled();
   });
@@ -343,19 +285,30 @@ describe("get_status client tool", () => {
 // ---- Mission context (contextual updates) -----------------------------------
 
 describe("mission contextual updates", () => {
-  it("sends context immediately while connected", async () => {
+  const MINUTE = 60_000;
+
+  it("sends context immediately while connected, without an age", async () => {
     const { service, sdk } = setup();
     await service.start();
     service.updateMissionContext("Arrived at stop 3");
     expect(sdk.last().contextUpdates).toEqual(["Arrived at stop 3"]);
   });
 
-  it("queues the latest context while offline and sends it on connect", async () => {
-    const { service, sdk } = setup();
+  it("sends the latest offline context on connect, with its age", async () => {
+    const { service, sdk, clock } = setup();
     service.updateMissionContext("Arrived at stop 1");
     service.updateMissionContext("Arrived at stop 2");
+    clock.advance(3 * MINUTE);
     await service.start();
-    expect(sdk.last().contextUpdates).toEqual(["Arrived at stop 2"]);
+    expect(sdk.last().contextUpdates).toEqual(["Earlier update, 3 min ago: Arrived at stop 2"]);
+  });
+
+  it("drops context older than the max age instead of re-sending it", async () => {
+    const { service, sdk, clock } = setup({ contextMaxAgeMs: 5 * MINUTE });
+    service.updateMissionContext("Arrived at stop 2");
+    clock.advance(6 * MINUTE);
+    await service.start();
+    expect(sdk.last().contextUpdates).toEqual([]);
   });
 
   it("resends the latest context after reconnecting", async () => {
@@ -364,6 +317,6 @@ describe("mission contextual updates", () => {
     service.updateMissionContext("Arrived at stop 2");
     sdk.last().options.callbacks.onDisconnect({ reason: "error", message: "drop" });
     await service.start();
-    expect(sdk.last().contextUpdates).toEqual(["Arrived at stop 2"]);
+    expect(sdk.last().contextUpdates).toEqual(["Earlier update, under a minute ago: Arrived at stop 2"]);
   });
 });

@@ -1,0 +1,37 @@
+MISSION PLAN
+Mission: Mount Sharp Boxwork Walk
+Mission ID: boxwork-01
+Location: Mount Sharp boxwork, Gale Crater, Mars
+Number of planned stops: 5
+Planned stop order: 1. First ridges -> 2. Steep ridge -> 3. Hollow -> 4. Main site -> 5. Exit
+
+STOP CARDS
+
+STOP 1: First ridges
+Boxwork is a web of low ridges. Groundwater flowed through cracks and left minerals that hardened them; wind later wore away the softer rock in between.
+Planned tasks:
+- Find the dark crack along a ridge top.
+
+STOP 2: Steep ridge
+The dark line along the ridge is a fracture where groundwater flowed and concentrated minerals.
+Planned tasks:
+- Photograph the central fracture along the ridge top.
+
+STOP 3: Hollow
+Curiosity found nodules along ridge walls and in hollows but not near the fractures, which is still unexplained.
+Planned tasks:
+- Look for small round nodules on the ridge walls.
+
+STOP 4: Main site
+Curiosity drilled here and found clay minerals in a ridge and carbonate minerals in a hollow.
+Planned tasks:
+- Collect paired samples: one from a ridge, one from the hollow.
+
+STOP 5: Exit
+The boxwork sits in a layer rich in salty sulfate minerals that Curiosity keeps exploring.
+Planned tasks:
+- Take a context photo of the sulfate layer, then return to base.
+
+LIVE STATUS
+This document does not contain live values. For the stop being walked to, distances,
+oxygen, radiation, temperature and return-to-base decisions, use the get_status tool.

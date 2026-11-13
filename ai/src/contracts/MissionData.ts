@@ -15,7 +15,7 @@
 export type MissionDataSource = "mock" | "official";
 
 export interface MissionStop {
-  /** Stop number. Positive integer, unique within a mission. Matches `MissionStatus.stop`. */
+  /** Stop number. Positive integer, unique within a mission. `MissionStatus.stop` is the one being walked to. */
   id: number;
   name: string;
   description: string;

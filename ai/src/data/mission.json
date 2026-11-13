@@ -24,8 +24,8 @@
    ],
    "sol": 4596,
    "elev": -3640.5,
-   "slope": 6.54,
-   "slope_deg": 8.6
+   "slope_deg": 8.6,
+   "tilt_deg": 6.54
   },
   {
    "lat": -4.804016,
@@ -36,8 +36,8 @@
    ],
    "sol": 4598,
    "elev": -3635.9,
-   "slope": 9.21,
-   "slope_deg": 15.1
+   "slope_deg": 15.1,
+   "tilt_deg": 9.21
   },
   {
    "lat": -4.804189,
@@ -48,8 +48,8 @@
    ],
    "sol": 4600,
    "elev": -3632.9,
-   "slope": 16.96,
-   "slope_deg": 13.6
+   "slope_deg": 10.8,
+   "tilt_deg": 16.96
   },
   {
    "lat": -4.8043668,
@@ -60,8 +60,8 @@
    ],
    "sol": 4602,
    "elev": -3630.8,
-   "slope": 6.81,
-   "slope_deg": 7.4
+   "slope_deg": 12.7,
+   "tilt_deg": 6.81
   },
   {
    "lat": -4.8044334,
@@ -72,8 +72,8 @@
    ],
    "sol": 4605,
    "elev": -3631.5,
-   "slope": 3.96,
-   "slope_deg": 17.3
+   "slope_deg": 17.3,
+   "tilt_deg": 3.96
   },
   {
    "lat": -4.8047401,
@@ -84,8 +84,8 @@
    ],
    "sol": 4609,
    "elev": -3624.3,
-   "slope": 13.43,
-   "slope_deg": 10.7
+   "slope_deg": 3.8,
+   "tilt_deg": 13.43
   },
   {
    "lat": -4.8049451,
@@ -96,8 +96,8 @@
    ],
    "sol": 4612,
    "elev": -3623.5,
-   "slope": 10.04,
-   "slope_deg": 8.0
+   "slope_deg": 3.6,
+   "tilt_deg": 10.04
   },
   {
    "lat": -4.805206,
@@ -108,8 +108,8 @@
    ],
    "sol": 4614,
    "elev": -3622.4,
-   "slope": 6.59,
-   "slope_deg": 6.6
+   "slope_deg": 6.6,
+   "tilt_deg": 6.59
   },
   {
    "lat": -4.8054528,
@@ -120,8 +120,8 @@
    ],
    "sol": 4616,
    "elev": -3620.6,
-   "slope": 7.41,
-   "slope_deg": 5.9
+   "slope_deg": 1.8,
+   "tilt_deg": 7.41
   },
   {
    "lat": -4.8054951,
@@ -132,8 +132,8 @@
    ],
    "sol": 4618,
    "elev": -3620.5,
-   "slope": 9.85,
-   "slope_deg": 7.9
+   "slope_deg": 2.2,
+   "tilt_deg": 9.85
   },
   {
    "lat": -4.8054139,
@@ -144,8 +144,8 @@
    ],
    "sol": 4621,
    "elev": -3620.1,
-   "slope": 4.8,
-   "slope_deg": 3.8
+   "slope_deg": 3.5,
+   "tilt_deg": 4.8
   },
   {
    "lat": -4.8054839,
@@ -156,8 +156,8 @@
    ],
    "sol": 4623,
    "elev": -3621.6,
-   "slope": 7.41,
-   "slope_deg": 9.3
+   "slope_deg": 9.3,
+   "tilt_deg": 7.41
   },
   {
    "lat": -4.8058591,
@@ -168,8 +168,8 @@
    ],
    "sol": 4625,
    "elev": -3617.7,
-   "slope": 9.83,
-   "slope_deg": 11.0
+   "slope_deg": 11.0,
+   "tilt_deg": 9.83
   },
   {
    "lat": -4.8059902,
@@ -180,8 +180,8 @@
    ],
    "sol": 4628,
    "elev": -3613.9,
-   "slope": 11.82,
-   "slope_deg": 9.5
+   "slope_deg": 0.2,
+   "tilt_deg": 11.82
   },
   {
    "lat": -4.8061668,
@@ -192,8 +192,8 @@
    ],
    "sol": 4629,
    "elev": -3614.0,
-   "slope": 12.08,
-   "slope_deg": 9.7
+   "slope_deg": 9.0,
+   "tilt_deg": 12.08
   },
   {
    "lat": -4.806458,
@@ -204,8 +204,8 @@
    ],
    "sol": 4633,
    "elev": -3611.2,
-   "slope": 13.64,
-   "slope_deg": 10.9
+   "slope_deg": 2.2,
+   "tilt_deg": 13.64
   },
   {
    "lat": -4.8063562,
@@ -216,8 +216,8 @@
    ],
    "sol": 4634,
    "elev": -3609.9,
-   "slope": 17.53,
-   "slope_deg": 14.0
+   "slope_deg": 9.3,
+   "tilt_deg": 17.53
   },
   {
    "lat": -4.8065382,
@@ -228,8 +228,8 @@
    ],
    "sol": 4636,
    "elev": -3607.1,
-   "slope": 13.27,
-   "slope_deg": 14.9
+   "slope_deg": 8.2,
+   "tilt_deg": 13.27
   },
   {
    "lat": -4.8065533,
@@ -240,8 +240,8 @@
    ],
    "sol": 4639,
    "elev": -3606.7,
-   "slope": 15.04,
-   "slope_deg": 12.0
+   "slope_deg": 7.5,
+   "tilt_deg": 15.04
   },
   {
    "lat": -4.8066905,
@@ -252,8 +252,8 @@
    ],
    "sol": 4641,
    "elev": -3608.1,
-   "slope": 13.3,
-   "slope_deg": 25.6
+   "slope_deg": 4.3,
+   "tilt_deg": 13.3
   },
   {
    "lat": -4.8067965,
@@ -264,8 +264,8 @@
    ],
    "sol": 4643,
    "elev": -3604.7,
-   "slope": 13.24,
-   "slope_deg": 13.5
+   "slope_deg": 13.5,
+   "tilt_deg": 13.24
   },
   {
    "lat": -4.8068906,
@@ -276,8 +276,8 @@
    ],
    "sol": 4647,
    "elev": -3610.5,
-   "slope": 8.33,
-   "slope_deg": 6.7
+   "slope_deg": 10.6,
+   "tilt_deg": 8.33
   },
   {
    "lat": -4.8068928,
@@ -288,8 +288,8 @@
    ],
    "sol": 4650,
    "elev": -3610.5,
-   "slope": 11.93,
-   "slope_deg": 12.3
+   "slope_deg": 12.3,
+   "tilt_deg": 11.93
   },
   {
    "lat": -4.8070803,
@@ -300,8 +300,8 @@
    ],
    "sol": 4653,
    "elev": -3608.0,
-   "slope": 10.0,
-   "slope_deg": 8.0
+   "slope_deg": 5.8,
+   "tilt_deg": 10.0
   },
   {
    "lat": -4.8071683,
@@ -312,8 +312,8 @@
    ],
    "sol": 4655,
    "elev": -3607.7,
-   "slope": 4.71,
-   "slope_deg": 6.5
+   "slope_deg": 6.5,
+   "tilt_deg": 4.71
   },
   {
    "lat": -4.8074521,
@@ -324,8 +324,8 @@
    ],
    "sol": 4660,
    "elev": -3605.5,
-   "slope": 8.2,
-   "slope_deg": 6.6
+   "slope_deg": 2.6,
+   "tilt_deg": 8.2
   },
   {
    "lat": -4.8076276,
@@ -336,8 +336,8 @@
    ],
    "sol": 4662,
    "elev": -3606.1,
-   "slope": 8.63,
-   "slope_deg": 6.9
+   "slope_deg": 2.7,
+   "tilt_deg": 8.63
   },
   {
    "lat": -4.8079252,
@@ -348,8 +348,8 @@
    ],
    "sol": 4664,
    "elev": -3605.2,
-   "slope": 5.63,
-   "slope_deg": 4.5
+   "slope_deg": 1.5,
+   "tilt_deg": 5.63
   },
   {
    "lat": -4.8080233,
@@ -360,8 +360,8 @@
    ],
    "sol": 4667,
    "elev": -3604.8,
-   "slope": 8.16,
-   "slope_deg": 6.5
+   "slope_deg": 4.5,
+   "tilt_deg": 8.16
   },
   {
    "lat": -4.8080522,
@@ -372,8 +372,8 @@
    ],
    "sol": 4669,
    "elev": -3606.5,
-   "slope": 7.37,
-   "slope_deg": 5.9
+   "slope_deg": 3.8,
+   "tilt_deg": 7.37
   },
   {
    "lat": -4.808271,
@@ -384,8 +384,8 @@
    ],
    "sol": 4671,
    "elev": -3608.3,
-   "slope": 8.35,
-   "slope_deg": 6.7
+   "slope_deg": 3.0,
+   "tilt_deg": 8.35
   },
   {
    "lat": -4.8087161,
@@ -396,8 +396,8 @@
    ],
    "sol": 4673,
    "elev": -3606.6,
-   "slope": 8.61,
-   "slope_deg": 6.9
+   "slope_deg": 1.9,
+   "tilt_deg": 8.61
   },
   {
    "lat": -4.8087123,
@@ -408,8 +408,8 @@
    ],
    "sol": 4677,
    "elev": -3606.6,
-   "slope": 4.39,
-   "slope_deg": 3.5
+   "slope_deg": 2.1,
+   "tilt_deg": 4.39
   },
   {
    "lat": -4.8082715,
@@ -420,8 +420,8 @@
    ],
    "sol": 4680,
    "elev": -3608.0,
-   "slope": 8.87,
-   "slope_deg": 7.1
+   "slope_deg": 0.2,
+   "tilt_deg": 8.87
   },
   {
    "lat": -4.808011,
@@ -432,8 +432,8 @@
    ],
    "sol": 4684,
    "elev": -3607.9,
-   "slope": 9.26,
-   "slope_deg": 13.7
+   "slope_deg": 13.7,
+   "tilt_deg": 9.26
   },
   {
    "lat": -4.8078392,
@@ -444,8 +444,8 @@
    ],
    "sol": 4687,
    "elev": -3610.4,
-   "slope": 6.71,
-   "slope_deg": 10.4
+   "slope_deg": 12.5,
+   "tilt_deg": 6.71
   },
   {
    "lat": -4.8079993,
@@ -456,8 +456,8 @@
    ],
    "sol": 4709,
    "elev": -3608.7,
-   "slope": 9.65,
-   "slope_deg": 19.5
+   "slope_deg": 9.4,
+   "tilt_deg": 9.65
   },
   {
    "lat": -4.8080076,
@@ -468,8 +468,8 @@
    ],
    "sol": 4711,
    "elev": -3607.7,
-   "slope": 11.0,
-   "slope_deg": 14.7
+   "slope_deg": 14.7,
+   "tilt_deg": 11.0
   },
   {
    "lat": -4.8077628,
@@ -480,8 +480,8 @@
    ],
    "sol": 4741,
    "elev": -3611.5,
-   "slope": 12.23,
-   "slope_deg": 9.8
+   "slope_deg": 6.7,
+   "tilt_deg": 12.23
   },
   {
    "lat": -4.807908,
@@ -492,8 +492,8 @@
    ],
    "sol": 4748,
    "elev": -3610.3,
-   "slope": 14.12,
-   "slope_deg": 14.2
+   "slope_deg": 14.2,
+   "tilt_deg": 14.12
   },
   {
    "lat": -4.8080317,
@@ -504,8 +504,8 @@
    ],
    "sol": 4752,
    "elev": -3607.6,
-   "slope": 9.53,
-   "slope_deg": 13.3
+   "slope_deg": 6.5,
+   "tilt_deg": 9.53
   },
   {
    "lat": -4.8080054,
@@ -516,8 +516,8 @@
    ],
    "sol": 4789,
    "elev": -3608.0,
-   "slope": 11.46,
-   "slope_deg": 9.2
+   "slope_deg": 6.1,
+   "tilt_deg": 11.46
   },
   {
    "lat": -4.8078367,
@@ -528,8 +528,8 @@
    ],
    "sol": 4805,
    "elev": -3610.9,
-   "slope": 4.38,
-   "slope_deg": 7.1
+   "slope_deg": 7.1,
+   "tilt_deg": 4.38
   },
   {
    "lat": -4.8075379,
@@ -540,8 +540,8 @@
    ],
    "sol": 4810,
    "elev": -3613.2,
-   "slope": 7.19,
-   "slope_deg": 9.8
+   "slope_deg": 9.8,
+   "tilt_deg": 7.19
   },
   {
    "lat": -4.80735,
@@ -552,8 +552,8 @@
    ],
    "sol": 4813,
    "elev": -3615.7,
-   "slope": 11.49,
-   "slope_deg": 9.2
+   "slope_deg": 1.5,
+   "tilt_deg": 11.49
   },
   {
    "lat": -4.8075257,
@@ -564,8 +564,8 @@
    ],
    "sol": 4816,
    "elev": -3615.2,
-   "slope": 6.68,
-   "slope_deg": 5.3
+   "slope_deg": 0.8,
+   "tilt_deg": 6.68
   },
   {
    "lat": -4.8079036,
@@ -576,8 +576,8 @@
    ],
    "sol": 4818,
    "elev": -3615.8,
-   "slope": 4.85,
-   "slope_deg": 7.0
+   "slope_deg": 1.9,
+   "tilt_deg": 4.85
   },
   {
    "lat": -4.8077848,
@@ -588,8 +588,8 @@
    ],
    "sol": 4820,
    "elev": -3617.0,
-   "slope": 3.69,
-   "slope_deg": 3.0
+   "slope_deg": 1.9,
+   "tilt_deg": 3.69
   }
  ],
  "layers": [
@@ -627,7 +627,8 @@
    ],
    "field": null,
    "sol": 4596,
-   "slope_deg": 6.54,
+   "slope_deg": 8.6,
+   "tilt_deg": 6.54,
    "hazard": "None",
    "task": "Suit check, then start the walk.",
    "tasks": [
@@ -643,10 +644,12 @@
     "rad_uSv_h": 27.9,
     "source": "REMS sol 4596 (average of min -80 / max -22 \u00b0C, pressure); RAD surface average"
    },
-   "photo": "/mission/assets/stop0.jpg",
+   "photo": "assets/stop0.jpg",
    "photos": [
     "assets/stop0.jpg"
    ],
+   "photo_credit": "NASA/JPL-Caltech, Curiosity left Navcam, sol 4596",
+   "photo_source": "https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/04596/opgs/edr/ncam/NLB_805502642EDR_F1171890NCAM00250M_.JPG",
    "panorama": "assets/pano_stop0.jpg",
    "sources": [
     "Curiosity waypoints (MMGIS)",
@@ -664,7 +667,8 @@
    ],
    "field": null,
    "sol": 4618,
-   "slope_deg": 9.85,
+   "slope_deg": 2.2,
+   "tilt_deg": 9.85,
    "hazard": "Loose sand at the foot of the ridge",
    "task": "Find the dark crack along a ridge top.",
    "tasks": [
@@ -680,10 +684,12 @@
     "rad_uSv_h": 27.9,
     "source": "REMS sol 4618 (average of min -81 / max -15 \u00b0C, pressure); RAD surface average"
    },
-   "photo": "/mission/assets/stop1.jpg",
+   "photo": "assets/stop1.jpg",
    "photos": [
     "assets/stop1.jpg"
    ],
+   "photo_credit": "NASA/JPL-Caltech, Curiosity left Navcam, sol 4618",
+   "photo_source": "https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/04618/opgs/edr/ncam/NLB_807464312EDR_F1180198NCAM00280M_.JPG",
    "panorama": "assets/pano_stop1.jpg",
    "sources": [
     "Curiosity waypoints (MMGIS)",
@@ -701,8 +707,9 @@
    ],
    "field": null,
    "sol": 4639,
-   "slope_deg": 15.04,
-   "hazard": "Steep slope (about 15 degrees): walk slowly",
+   "slope_deg": 7.5,
+   "tilt_deg": 15.04,
+   "hazard": "Steep ridge side (the rover tilted 15 degrees here): walk slowly",
    "task": "Photograph the central fracture along the ridge top.",
    "tasks": [
     "Photograph the central fracture along the ridge top."
@@ -717,10 +724,12 @@
     "rad_uSv_h": 27.9,
     "source": "REMS sol 4639 (average of min -79 / max -18 \u00b0C, pressure); RAD surface average"
    },
-   "photo": "/mission/assets/stop2.jpg",
+   "photo": "assets/stop2.jpg",
    "photos": [
     "assets/stop2.jpg"
    ],
+   "photo_credit": "NASA/JPL-Caltech, Curiosity left Navcam, sol 4639",
+   "photo_source": "https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/04639/opgs/edr/ncam/NLB_809325845EDR_F1181776NCAM00258M_.JPG",
    "panorama": "assets/pano_stop2.jpg",
    "sources": [
     "Curiosity waypoints (MMGIS)",
@@ -738,7 +747,8 @@
    ],
    "field": null,
    "sol": 4655,
-   "slope_deg": 4.71,
+   "slope_deg": 6.5,
+   "tilt_deg": 4.71,
    "hazard": "Soft sand in the hollow",
    "task": "Look for small round nodules on the ridge walls.",
    "tasks": [
@@ -754,10 +764,12 @@
     "rad_uSv_h": 27.9,
     "source": "REMS sol 4655 (average of min -79 / max -8 \u00b0C, pressure); RAD surface average"
    },
-   "photo": "/mission/assets/stop3.jpg",
+   "photo": "assets/stop3.jpg",
    "photos": [
     "assets/stop3.jpg"
    ],
+   "photo_credit": "NASA/JPL-Caltech, Curiosity left Navcam, sol 4655",
+   "photo_source": "https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/04655/opgs/edr/ncam/NLB_810748582EDR_F1182538NCAM00277M_.JPG",
    "panorama": "assets/pano_stop3.jpg",
    "sources": [
     "Curiosity waypoints (MMGIS)",
@@ -775,7 +787,8 @@
    ],
    "field": null,
    "sol": 4711,
-   "slope_deg": 11.46,
+   "slope_deg": 14.7,
+   "tilt_deg": 11.0,
    "hazard": "Sharp rock edges",
    "task": "Collect paired samples: one from a ridge, one from the hollow.",
    "tasks": [
@@ -791,10 +804,12 @@
     "rad_uSv_h": 27.9,
     "source": "REMS sol 4711 (average of min -74 / max -4 \u00b0C, pressure); RAD surface average"
    },
-   "photo": "/mission/assets/stop4.jpg",
+   "photo": "assets/stop4.jpg",
    "photos": [
     "assets/stop4.jpg"
    ],
+   "photo_credit": "NASA/JPL-Caltech, Curiosity left Navcam, sol 4711",
+   "photo_source": "https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/04711/opgs/edr/ncam/NLB_815715641EDR_F1200082NCAM00265M_.JPG",
    "panorama": "assets/pano_stop4.jpg",
    "sources": [
     "Curiosity waypoints (MMGIS)",
@@ -812,7 +827,8 @@
    ],
    "field": null,
    "sol": 4820,
-   "slope_deg": 3.69,
+   "slope_deg": 1.9,
+   "tilt_deg": 3.69,
    "hazard": "Long walk back to base",
    "task": "Take a context photo of the sulfate layer, then return to base.",
    "tasks": [
@@ -828,10 +844,12 @@
     "rad_uSv_h": 27.9,
     "source": "REMS sol 4820 (average of min -68 / max -4 \u00b0C, pressure); RAD surface average"
    },
-   "photo": "/mission/assets/stop5.jpg",
+   "photo": "assets/stop5.jpg",
    "photos": [
     "assets/stop5.jpg"
    ],
+   "photo_credit": "NASA/JPL-Caltech, Curiosity left Navcam, sol 4820",
+   "photo_source": "https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/04820/opgs/edr/ncam/NLB_825391492EDR_F1202102NCAM00299M_.JPG",
    "panorama": "assets/pano_stop5.jpg",
    "sources": [
     "Curiosity waypoints (MMGIS)",

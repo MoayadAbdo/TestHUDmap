@@ -15,7 +15,8 @@ export function drawVisorHud(ctx, w, h, s, images) {
   const right = w - left;
   const cx = w / 2;
 
-  if (!s.card && !s.waiting) drawGroundGuide(ctx, w, h, u, s);
+  // side panels are about 27u wide, the pin label about 8u each side: the guide only shows in the clear middle
+  if (!s.card && !s.waiting) drawGroundGuide(ctx, w, h, u, s, { minX: left + 36 * u, maxX: right - 36 * u });
   drawVisorFrame(ctx, w, h, { vr: s.view === 'vr' });
 
   drawCompass(ctx, cx, 15 * row, Math.min(w * 0.46, 64 * u), u, s.heading ?? 0, s.targetBearing, s.mustReturn ? RED : AMBER);
