@@ -25,7 +25,7 @@ export function drawVitals(ctx, x, y, u, s) {
   // the same panel in the hand-held view and the VR box. Oxygen: time left + a segmented gauge, yellow while fine,
   // orange when getting close to what the walk home needs (Rama's energy model), red when it's time to turn back
   const st = batteryState(s);
-  plate(ctx, x - 1.6 * u, y - 2.6 * u, w + 3.2 * u, 25.2 * u, { radius: 1 * u, edge: s.level === 'danger' ? RED : null });
+  plate(ctx, x - 1.6 * u, y - 2.6 * u, w + 3.2 * u, 22 * u, { radius: 1 * u, edge: s.level === 'danger' ? RED : null });
   header(ctx, 'OXYGEN', x, y, u);
   const tag = st.word ?? (s.energy ? `${marginText(s.energy.margin)} walks home` : `${Math.round(s.o2Pct)}%`);
   say(ctx, tag, x + w, y, 1.9 * u, { align: 'right', color: st.word ? st.color : ACCENT_SOFT, weight: 600 });
@@ -40,8 +40,6 @@ export function drawVitals(ctx, x, y, u, s) {
 
   header(ctx, 'OUTSIDE', x, y + 17 * u, u);
   say(ctx, `${s.tempC ?? '--'} °C`, x + w, y + 17 * u, 2.4 * u, { align: 'right', weight: 600 });
-  const time = s.daylightMin != null ? `Mars ${s.marsTime}  ·  daylight ${hm(s.daylightMin)}` : `Mars ${s.marsTime}`;
-  say(ctx, time, x, y + 20.2 * u, 1.9 * u, { color: ACCENT_SOFT, weight: 600 });
 }
 
 /** Earth delay and link, small under the mini-map (focus view). */
