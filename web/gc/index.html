@@ -9,7 +9,8 @@
 </head>
 <body>
 <header>
-  <div class="brand">GROUND CONTROL <span>Mount Sharp boxwork · Gale Crater</span></div>
+  <div class="brand"><b>Mars Walk HUD</b><i></i><em>Ground Control</em><i></i><span>Mount Sharp boxwork · Gale Crater</span></div>
+  <div id="utc" class="clock" aria-label="Earth time (UTC)">UTC <b>--:--:--</b></div>
   <form id="join">
     <label>Room code <input id="room" placeholder="e.g. K7Q2XM" autocomplete="off" maxlength="10"></label>
     <button>Connect</button>
@@ -102,11 +103,13 @@
     <ol id="log"></ol>
   </section>
 </main>
+<div class="credit">Data: NASA/JPL/UArizona HiRISE via Mars Trek · NASA Space Apps 2026 team project</div>
 
 <script src="vendor/leaflet.js"></script>
 <script src="vendor/qrcode.js"></script>
 <script src="../live/vendor/peerjs.min.js"></script>
 <script type="importmap">{ "imports": { "three": "../sim/vendor/three.module.min.js" } }</script>
 <script type="module" src="gc.js"></script>
+<script type="module" src="utc-clock.js"></script>
 </body>
 </html>
