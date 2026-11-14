@@ -33,6 +33,9 @@ export function drawVisorHud(ctx, w, h, s, images) {
   const level = s.detailLevel ?? (s.detail === 'full' ? 1 : 0);
   const full = level > 0.5;
   const navColor = s.mustReturn ? RED : NAV;
+  // the stop card / info card have one fixed slot: the right column (its panels step aside while a card is open)
+  const cardUp = Boolean(s.card || s.info);
+  const slot = { x: right - 28 * u, y: 11 * row, w: 30 * u, h: 78 * row };
 
   // the guide stays clear of the side panels (full view) or only of the screen edge (focus view, panels are up top)
   // the floating stop pin (it rides high in the view) always keeps out of the side columns
@@ -49,14 +52,16 @@ export function drawVisorHud(ctx, w, h, s, images) {
   if (level > 0) {                         // every panel, fading in / out
     ctx.globalAlpha = level;
     plate(ctx, left - 2 * u, 13 * row, 30 * u, 74 * row, { fill: PANEL, radius: 1.2 * u });
-    plate(ctx, right - 28 * u, 11 * row, 30 * u, 78 * row, { fill: PANEL, radius: 1.2 * u });
+    if (!cardUp) plate(ctx, right - 28 * u, 11 * row, 30 * u, 78 * row, { fill: PANEL, radius: 1.2 * u });
     drawLocation(ctx, left, 17 * row, u, s);
     drawSuit(ctx, left, 40 * row, u, s);
     drawRadiation(ctx, left, 58 * row, u, s);
     drawBiosigns(ctx, left, 66 * row, u, s);
-    drawComms(ctx, right, 14 * row, u, s);
-    drawIntegrity(ctx, right, 55 * row, u, s);
-    drawLayer(ctx, right, 75.5 * row, u, s.layer, { compact: true });
+    if (!cardUp) {
+      drawComms(ctx, right, 14 * row, u, s);
+      drawIntegrity(ctx, right, 55 * row, u, s);
+      drawLayer(ctx, right, 75.5 * row, u, s.layer, { compact: true });
+    }
   }
   if (level < 1) {                         // while walking: the light view
     ctx.globalAlpha = 1 - level;
@@ -64,31 +69,30 @@ export function drawVisorHud(ctx, w, h, s, images) {
     drawVitals(ctx, left, 16 * row, u, s);
     drawClock(ctx, left, 16 * row + (23 + VITALS_EXTRA_U) * u, u, s);           // time on its own plate, apart from the suit
     const mapR = 11 * u;
-    drawDelayTag(ctx, right - mapR - 1 * u, 16 * row + 2 * mapR + 5 * u, u, s);
-    if (s.layer) drawLayer(ctx, right, 16 * row + 2 * mapR + 11 * u, u, s.layer);
+    if (!cardUp) drawDelayTag(ctx, right - mapR - 1 * u, 16 * row + 2 * mapR + 5 * u, u, s);
+    if (s.layer && !cardUp) drawLayer(ctx, right, 16 * row + 2 * mapR + 11 * u, u, s.layer);
   }
   ctx.globalAlpha = 1;
   // one mini-map, gliding between its walking spot and its spot in the full panels (never two at once)
   const mix = (a, b) => a + (b - a) * level;
   const mapR = mix(11 * u, 10.5 * u);
-  drawMiniMap(ctx, mix(right - 12 * u, right - 12 * u), mix(16 * row + 11 * u, 37 * row), mapR, u, s);
+  if (!cardUp) drawMiniMap(ctx, mix(right - 12 * u, right - 12 * u), mix(16 * row + 11 * u, 37 * row), mapR, u, s);
 
-  if (s.card) drawStopCard(ctx, w, h, u, s.card, images.get(s.card.photo), { sample: s.cardSample });
-  else if (s.info) drawInfoCard(ctx, w, h, u, s.info);
-  else if (s.waiting) drawWaiting(ctx, cx, h / 2, u, s.waiting);
+  if (s.card) drawStopCard(ctx, slot, u, s.card, images.get(s.card.photo), { sample: s.cardSample });
+  else if (s.info) drawInfoCard(ctx, slot, u, s.info);
+  if (s.waiting) drawWaiting(ctx, cx, h / 2, u, s.waiting);
   else drawNextStop(ctx, cx, 74 * row, u, s);
-  const profile = Boolean(s.dangers?.show?.profile && !s.card && !s.info && !s.waiting);
+  const profile = Boolean(s.dangers?.show?.profile && !s.waiting);
   if (profile) drawPathProfile(ctx, cx, 81.5 * row, u, s);
   drawScanProgress(ctx, cx, h / 2, u, s);
   // alerts and messages go on top of everything, including an open stop card
   const alertH = drawAlerts(ctx, cx, 21 * row, u, s);
   drawMessage(ctx, cx, 21 * row + (alertH ? alertH + 2.4 : 1.5) * u, u, w, s.message);
   // always visible: which way to go along the path (under the card when one is open)
-  // the stop card and the info card sit bottom-left: the arrow and the AI's words move right while one is open
-  const side = Boolean(s.card || s.info);
-  if (!s.waiting) drawDirectionArrow(ctx, side ? w * 0.66 : cx, 64 * row, u, s.arrowDeg, navColor);
-  drawVoice(ctx, side ? w * 0.73 : cx, (profile ? 89.5 : 86) * row, u, side ? w * 0.8 : w, s);
-  if (s.view !== 'vr' && !s.waiting && !side) drawFooter(ctx, left, 88 * row, u, s);
+  // the cards sit in the right column, so the arrow and the AI's words never move
+  if (!s.waiting) drawDirectionArrow(ctx, cx, 64 * row, u, s.arrowDeg, navColor);
+  drawVoice(ctx, cx, (profile ? 89.5 : 86) * row, u, w, s);
+  if (s.view !== 'vr' && !s.waiting) drawFooter(ctx, left, 88 * row, u, s);
 }
 
 export { ACCENT };

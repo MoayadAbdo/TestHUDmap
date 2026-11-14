@@ -3,11 +3,11 @@ import { ACCENT, ACCENT_SOFT, CAUTION, FONT, GLASS, INK, NAV, brackets, plate, s
 /**
  * "What's here?" card (from the voice agent or the H key): the most important facts about this spot,
  * from the real layers and Curiosity's findings, with the sources at the bottom.
- * Sits bottom-left like the stop card, so the view ahead stays clear; its height fits the facts.
+ * Sits in the same fixed slot as the stop card (the right column); its height fits the facts.
  */
-export function drawInfoCard(ctx, w, h, u0, info) {
-  const u = u0 * 0.82;
-  const cw = Math.min(w * 0.5, 66 * u0);
+export function drawInfoCard(ctx, slot, u0, info) {
+  const u = u0 * 0.78;
+  const cw = slot.w;
   const pad = 2.4 * u;
   const size = 2.4;
   const lineH = size * 1.2 * u;
@@ -15,12 +15,11 @@ export function drawInfoCard(ctx, w, h, u0, info) {
 
   // lay the facts out first, so the card is only as tall as they need
   ctx.font = `600 ${size * u}px ${FONT}`;
-  const rows = info.lines.map((line) => ({ line, parts: wrap(ctx, line.text, tw, 2) }));
+  const rows = info.lines.map((line) => ({ line, parts: wrap(ctx, line.text, tw, 3) }));
   const head = 8 * u, foot = 5.4 * u;
   const body = rows.reduce((sum, r) => sum + r.parts.length * lineH + 0.6 * u, 0);
-  const ch = Math.min(h * 0.6, head + body + foot + pad);
-  const x = Math.max(4 * u0, w * 0.05);
-  const y = h * 0.9 - ch;
+  const ch = Math.min(slot.h, head + body + foot + pad);
+  const { x, y } = slot;
   plate(ctx, x, y, cw, ch, { fill: GLASS, edge: ACCENT_SOFT, radius: 1.2 * u });
   brackets(ctx, x - u, y - u, cw + 2 * u, ch + 2 * u, 2.2 * u, NAV);
 
@@ -44,5 +43,5 @@ export function drawInfoCard(ctx, w, h, u0, info) {
   ctx.font = `500 ${1.5 * u}px ${FONT}`;
   const [src] = wrap(ctx, info.sources.join(' · '), cw - 2 * pad, 1);
   say(ctx, src, x + pad, y + ch - 3.6 * u, 1.5 * u, { color: ACCENT_SOFT, weight: 500 });
-  say(ctx, 'TAP / C TO CLOSE  ·  CLOSES BY ITSELF', x + cw / 2, y + ch - 1.4 * u, 1.6 * u, { align: 'center', color: ACCENT_SOFT, weight: 600 });
+  say(ctx, 'TAP / C TO CLOSE', x + cw / 2, y + ch - 1.4 * u, 1.6 * u, { align: 'center', color: ACCENT_SOFT, weight: 600 });
 }
