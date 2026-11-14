@@ -36,7 +36,7 @@ export function drawScanProgress(ctx, cx, cy, u, s) {
   const p = s.scan?.progress ?? 0;
   if (p <= 0) return;
   const r = 3.4 * u;
-  ctx.strokeStyle = 'rgba(95, 224, 143, 0.25)';
+  ctx.strokeStyle = 'rgba(102, 252, 241, 0.25)';
   ctx.lineWidth = 0.7 * u;
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);

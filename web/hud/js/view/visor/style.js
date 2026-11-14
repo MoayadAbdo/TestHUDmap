@@ -2,7 +2,7 @@
  * Aerospace holographic vector look (Yara's design). One meaning per colour:
  *   INK      values and numbers (pure white: most contrast)
  *   ACCENT   labels and frames (ice cyan)
- *   NAV      where to go: arrows, path, pin, next stop (our green, unchanged)
+ *   NAV      where to go: arrows, path, pin, next stop (same ice cyan as the frames)
  *   CAUTION  be careful (amber, for hazards)
  *   RED      act now (return to base, oxygen, radiation)
  * Thin strokes, lots of empty space, no filled backgrounds; text has a tight glow in its own colour.
@@ -11,8 +11,9 @@ export const INK = '#ffffff';
 export const ACCENT = '#66fcf1';
 export const ACCENT_SOFT = 'rgba(102, 252, 241, 0.5)';
 export const ACCENT_FAINT = 'rgba(102, 252, 241, 0.15)';
-export const NAV = '#3ddc97';
-export const NAV_EDGE = 'rgba(61, 220, 151, 0.45)';
+export const NAV = '#66fcf1';
+export const NAV_EDGE = 'rgba(102, 252, 241, 0.45)';
+export const GLASS = 'rgba(4, 14, 20, 0.38)';            // see-through backing for cards you read
 export const CAUTION = '#ffb300';
 export const RED = '#ff4d4d';
 export const PANEL = 'rgba(0, 0, 0, 0)';

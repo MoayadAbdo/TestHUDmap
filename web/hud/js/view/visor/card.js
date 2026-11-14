@@ -1,5 +1,5 @@
 import { creditLine } from '../../core/mission-info.js';
-import { ACCENT, ACCENT_SOFT, CAUTION, FONT, INK, NAV, brackets, plate, say, wrap } from './style.js';
+import { ACCENT, ACCENT_SOFT, CAUTION, FONT, GLASS, INK, NAV, brackets, plate, say, wrap } from './style.js';
 
 /**
  * Stop card, like a wrist tablet, in the bottom-left corner: photo on the left, then TASK, HAZARD, SCIENCE.
@@ -12,7 +12,7 @@ export function drawStopCard(ctx, w, h, u, card, photo, { sample = null } = {}) 
   const ch = Math.min(h * 0.4, 33 * u);
   const x = Math.max(4 * u, w * 0.05);
   const y = h * 0.9 - ch;
-  plate(ctx, x, y, cw, ch, { fill: 'rgba(5, 11, 26, 0.94)', edge: 'rgba(143, 179, 255, 0.45)', radius: 1.2 * U });
+  plate(ctx, x, y, cw, ch, { fill: GLASS, edge: ACCENT_SOFT, radius: 1.2 * U });
   brackets(ctx, x - U, y - U, cw + 2 * U, ch + 2 * U, 2.2 * U, ACCENT);
 
   const pad = 2.4 * U;

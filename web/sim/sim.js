@@ -324,9 +324,9 @@ function addStops(mission) {
     const p = S.toLocal(st.mars[0], st.mars[1]);
     p.y = heightAt(p.x, p.z);
     const grp = new THREE.Group(); grp.position.copy(p);
-    const beamMat = new THREE.MeshBasicMaterial({ color: "#5fe08f", transparent: true, opacity: 0.35, depthWrite: false, blending: THREE.AdditiveBlending });
+    const beamMat = new THREE.MeshBasicMaterial({ color: "#66fcf1", transparent: true, opacity: 0.35, depthWrite: false, blending: THREE.AdditiveBlending });
     const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 40, 16, 1, true), beamMat); beam.position.y = 20; grp.add(beam);
-    const ringMat = new THREE.MeshBasicMaterial({ color: "#5fe08f", transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthWrite: false });
+    const ringMat = new THREE.MeshBasicMaterial({ color: "#66fcf1", transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthWrite: false });
     const ring = new THREE.Mesh(new THREE.RingGeometry(ARRIVE_M - 0.4, ARRIVE_M, 64).rotateX(-Math.PI / 2), ringMat); ring.position.y = 0.15; grp.add(ring);
     const label = makeLabel(`${st.id} · ${st.name}`); label.position.y = 4; label.visible = !S.opts.hud; grp.add(label);
     S.scene.add(grp);
@@ -334,7 +334,7 @@ function addStops(mission) {
     const ang = i * 1.7 + 0.5, rx = p.x + Math.cos(ang) * 3.2, rz = p.z + Math.sin(ang) * 3.2;
     const rock = new THREE.Mesh(rockGeometry(100 + i), new THREE.MeshLambertMaterial({ color: "#a07a5c", emissive: "#000000" }));
     rock.scale.setScalar(0.9); rock.position.set(rx, heightAt(rx, rz) + 0.25, rz);   // big enough to find and look at
-    const glow = new THREE.Mesh(rockGeometry(100 + i), new THREE.MeshBasicMaterial({ color: "#5fe08f", wireframe: true, transparent: true, opacity: 0.7 }));
+    const glow = new THREE.Mesh(rockGeometry(100 + i), new THREE.MeshBasicMaterial({ color: "#66fcf1", wireframe: true, transparent: true, opacity: 0.7 }));
     glow.scale.setScalar(1.15); rock.add(glow);
     S.scene.add(rock);
     return { st, pos: p, beamMat, ringMat, ring, rock, glow, label };
@@ -347,7 +347,7 @@ function addReticle() {
   const g = new THREE.Group(); g.position.set(0, 0, -2);
   const dot = new THREE.Mesh(new THREE.RingGeometry(0.012, 0.02, 24), new THREE.MeshBasicMaterial({ color: "#ffffff", depthTest: false, transparent: true, opacity: 0.8 }));
   dot.renderOrder = 20; g.add(dot);
-  const progMat = new THREE.MeshBasicMaterial({ color: "#4ade80", depthTest: false, side: THREE.DoubleSide });
+  const progMat = new THREE.MeshBasicMaterial({ color: "#66fcf1", depthTest: false, side: THREE.DoubleSide });
   S.progress = new THREE.Mesh(new THREE.RingGeometry(0.03, 0.045, 48, 1, Math.PI / 2, 0.001), progMat);
   S.progress.renderOrder = 21; g.add(S.progress);
   S.camera.add(g);
@@ -487,7 +487,7 @@ function update(dt, now) {
   const next = nextStopIndex();
   S.stops.forEach((s, i) => {
     const isNext = i === next && !S.visited[i];
-    const col = S.visited[i] ? "#9aa3ad" : isNext ? "#5fe08f" : "#7c8aa0";
+    const col = S.visited[i] ? "#9aa3ad" : isNext ? "#66fcf1" : "#7c8aa0";
     s.beamMat.color.set(col); s.ringMat.color.set(col);
     // the light beam fades out when you stand next to it, so it doesn't fill the view (or cover the stop card)
     const near = Math.min(1, Math.max(0, (Math.hypot(S.pos.x - s.pos.x, S.pos.z - s.pos.z) - 4) / 20));
@@ -513,7 +513,7 @@ function update(dt, now) {
     S.scanIndex = i;
     if (S.scanT >= SCAN_SECONDS) {
       S.scanned[i] = true; S.scanT = 0;
-      S.stops[i].rock.material.emissive.set("#1f5f3a");
+      S.stops[i].rock.material.emissive.set("#1d5a57");
       emit("scan", { stop: i, name: S.stops[i].st.name });
     }
   } else S.scanT = Math.max(0, S.scanT - dt * 2);
