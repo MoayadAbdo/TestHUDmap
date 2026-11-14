@@ -186,7 +186,6 @@ async function start(mode, view, motionAsked) {
   };
   const renderer = createRenderer({ canvas, getFrame, view });
   const demo = createDemoPanel({ element: document.getElementById('demo'), app, renderer, live: live.part, layers: layerSwitch });
-  if (params.get('demo') === '1') demo.show();               // test buttons: only with ?demo=1 or the M key
   renderer.preload(mission.stops.map((s) => s.photo).filter(Boolean));
 
   // Sim mode: a tap (or the Cardboard button) starts / stops walking; the Bluetooth clicker talks to the AI.

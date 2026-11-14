@@ -18,7 +18,7 @@ Plain HTML, CSS and JavaScript modules. No build step.
 cd hud
 python3 -m http.server 8765 --bind 127.0.0.1
 ```
-Open `http://127.0.0.1:8765/?mode=sim&demo=1` and press **Start the walk**.
+Open `http://127.0.0.1:8765/` and press **Start the walk** (press **M** for the test buttons).
 
 ## Run it on the phone
 Camera, GPS and compass need HTTPS, so test on the deployed site: `https://<project>.web.app/hud/`.
@@ -59,7 +59,6 @@ Use Android Chrome.
 |---|---|
 | `mode=field` or `mode=sim` | Pre-select the mode |
 | `view=vr` or `view=single` | Two eyes or one view |
-| `demo=1` | Show the demo panel at start |
 | `live=fake`, `voice=fake`, `sim=fake` | Force a stand-in even if the real part is deployed |
 | `mission=<url>` | Use another mission file |
 | `speed=5` | Stand-in sim walks 5 times faster |

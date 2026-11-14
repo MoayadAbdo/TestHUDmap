@@ -1,4 +1,4 @@
-/** Hidden buttons to fire every alert and move through the walk during a demo. Long-press the screen to show it. */
+/** Hidden buttons to fire every alert and move through the walk during a demo. Only the M key shows / hides it. */
 import { vrSettings, saveVrSettings } from './vr-layout.js';
 
 export function createDemoPanel({ element, app, renderer, live, layers }) {
