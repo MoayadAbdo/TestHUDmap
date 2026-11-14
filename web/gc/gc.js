@@ -21,11 +21,23 @@ const mjpeg = $("mjpeg"), video = $("video"), snap = $("snap"), noVideo = $("noV
 let lastAlerts = new Set(), local = null;
 
 // ---------- log ----------
+const LOG_MAX = 200;
 function log(text, kind = "info") {
+  const list = $("log");
+  const top = list.firstElementChild;
+  const stamp = new Date().toLocaleTimeString();
+  if (top?.dataset.text === text) {                      // the same line again: count it instead of a new line
+    top.dataset.n = String(Number(top.dataset.n) + 1);
+    top.textContent = `${stamp}  ${text}  ×${top.dataset.n}`;
+    return;
+  }
   const li = document.createElement("li");
   li.className = kind;
-  li.textContent = `${new Date().toLocaleTimeString()}  ${text}`;
-  $("log").prepend(li);
+  li.dataset.text = text;
+  li.dataset.n = "1";
+  li.textContent = `${stamp}  ${text}`;
+  list.prepend(li);
+  while (list.children.length > LOG_MAX) list.lastElementChild.remove();
 }
 let status = null;   // one pill for the link (made once the link choice exists)
 function setPill(id, text, kind) { status?.set(id, text, kind); }
