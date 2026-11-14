@@ -22,7 +22,10 @@ import { createFakeLive } from '../dev/fake-live.js';
 import { createFakeSim } from '../dev/fake-sim.js';
 import { createFakeVoice } from '../dev/fake-voice.js';
 
-const params = new URLSearchParams(location.search);
+const query = new URLSearchParams(location.search);
+// what a bare link opens with; the address can still change any of them (?mode=field, ?speed=1, ?dangers=none)
+const DEFAULTS = { mode: 'sim', speed: '3', dangers: 'zones' };
+const params = { get: (key) => query.get(key) ?? DEFAULTS[key] ?? null, has: (key) => query.has(key) || key in DEFAULTS };
 const fromPage = (path) => new URL(path, document.baseURI).href;
 const startScreen = document.getElementById('start');
 const startError = document.getElementById('startError');
