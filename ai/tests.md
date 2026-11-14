@@ -90,6 +90,16 @@ A later test confirmed that the voice assistant was working again after the conn
 
 **Status: PASS — basic recovery**
 
+## Location facts (`get_location_info`)
+
+| Ask | At | Expect |
+|---|---|---|
+| "What's here? What rock am I standing on?" | stop 2 | Calls `get_location_info`; clay minerals in the ridge (area), polyhydrated sulfate **hint** from orbit; the HERE card opens |
+| Same question | stop 4 | Calls `get_location_info`; clay in the ridge, carbonate in the hollow; monohydrated sulfate **hint**; a different card |
+| Same question, no position yet | anywhere | Says the location facts aren't available; no guessing |
+
+Checked 2026-11-13 by text on the live agent (stops 2 and 4) and in the browser (card opens on the tool call).
+
 ## 7. Security Review
 
 - No ElevenLabs API key is required in the browser integration.
