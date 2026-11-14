@@ -8,8 +8,9 @@ export function createDangerSound({ beep, say, clock = () => performance.now() }
   let nextBeep = 0;
   let lastSaid = -Infinity;
   let wasNear = false;
+  let wasAhead = false;
   return {
-    /** Call often (every frame is fine) with the visor's dangers ({ near, steep }). */
+    /** Call often (every frame is fine) with the visor's dangers ({ near, steep, walking }). */
     update(dangers) {
       const t = clock();
       const near = dangers?.near;
@@ -19,11 +20,13 @@ export function createDangerSound({ beep, say, clock = () => performance.now() }
       }
       if (!near) nextBeep = 0;
       const steep = dangers?.steep;
-      const ahead = steep && steep.startM >= 2 && steep.startM <= 20;
-      if ((ahead || (near && !wasNear)) && t - lastSaid > SAY_AGAIN_MS) {
+      const ahead = Boolean(dangers?.walking && steep && steep.startM >= 2 && steep.startM <= 20);   // standing still: quiet
+      const fresh = (ahead && !wasAhead) || (near && !wasNear);    // only when it starts, not every 25 s while it lasts
+      if (fresh && t - lastSaid > SAY_AGAIN_MS) {
         lastSaid = t;
-        say(ahead ? 'slope_ahead' : 'slope_close');
+        say(ahead && !wasAhead ? 'slope_ahead' : 'slope_close');
       }
+      wasAhead = ahead;
       wasNear = Boolean(near);
     },
   };

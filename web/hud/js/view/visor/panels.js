@@ -165,11 +165,12 @@ export function drawIntegrity(ctx, right, y, u, s) {
 export const legendText = (label) => String(label).split(':').pop().split('(')[0].trim();
 
 /** Which map layer is painted on the ground, with its colour key (right column, under suit integrity). */
-export function drawLayer(ctx, right, y, u, layer) {
+export function drawLayer(ctx, right, y, u, layer, { compact = false } = {}) {
   if (!layer) return;
   header(ctx, 'LAYER', right, y, u, 'right');
   say(ctx, layer.name.split(' (')[0], right, y + 3.4 * u, 2.4 * u, { align: 'right' });
-  say(ctx, `${layer.instrument} · ${layer.resolution_m} m`, right, y + 6.2 * u, 1.9 * u, { align: 'right', color: AMBER_SOFT });
+  if (!compact) say(ctx, `${layer.instrument} · ${layer.resolution_m} m`, right, y + 6.2 * u, 1.9 * u, { align: 'right', color: AMBER_SOFT });
+  const top = compact ? 6.4 : 9;            // full panels: no instrument line, so the key fits inside
   const legend = (layer.legend ?? []).filter((l) => l.color !== '#000000');
   const items = layer.showAll || legend.length <= 3 ? legend : [legend[0], legend[legend.length - 1]];   // long ramps: ends only
   // more than 3 rows: two columns, so the key fits in the panel instead of running off the bottom
@@ -179,7 +180,7 @@ export function drawLayer(ctx, right, y, u, layer) {
   items.forEach((item, i) => {
     const col = Math.floor(i / rows);
     const r = right - (cols - 1 - col) * colW;
-    const ry = y + (9 + (i % rows) * 2.8) * u;
+    const ry = y + (top + (i % rows) * 2.6) * u;
     ctx.fillStyle = item.color;
     ctx.fillRect(r - 1.6 * u, ry - 0.9 * u, 1.6 * u, 1.6 * u);
     say(ctx, legendText(item.label), r - 2.4 * u, ry, 1.75 * u, { align: 'right', color: AMBER_SOFT, weight: 500 });

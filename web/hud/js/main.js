@@ -144,6 +144,11 @@ async function start(mode, view, motionAsked) {
     ? { get label() { return live.part.linkLabel?.() ?? 'Habitat link'; }, bars: 4 }
     : { label: 'Local only (stand-in)', bars: 1 };
   const terrain = await loadTerrain(assetsBase, source.world3d ?? source.sim);
+  const mapPhoto = new Image();                                   // the mini-map's HiRISE photo
+  const photoUrl = new URL('terrain/ortho.jpg', assetsBase).href;
+  let photoTries = 0;
+  mapPhoto.onerror = () => { if (++photoTries < 5) setTimeout(() => { mapPhoto.src = `${photoUrl}?try=${photoTries}`; }, 1500 * photoTries); };
+  mapPhoto.src = photoUrl;
   const grid = terrain ? createTerrainGrid(terrain) : null;
   const dangers = dangerOptions(params.get('dangers'));       // ?dangers=zones,signs,profile,glow (or all)
   const knowledge = await loadKnowledge(assetsBase);
@@ -171,6 +176,7 @@ async function start(mode, view, motionAsked) {
   const getFrame = () => {
     const f = app.frame();
     f.hud.layer = layerSwitch.current ?? (dangers.zones ? ZONES_KEY : null);   // the zones' colour key when no layer is on
+    f.hud.mapPhoto = mapPhoto;
     sound?.update(f.hud.dangers);
     alertSounds?.update(f.hud);
     return f;

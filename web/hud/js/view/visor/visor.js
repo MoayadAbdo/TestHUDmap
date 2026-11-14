@@ -54,20 +54,22 @@ export function drawVisorHud(ctx, w, h, s, images) {
     drawRadiation(ctx, left, 58 * row, u, s);
     drawBiosigns(ctx, left, 66 * row, u, s);
     drawComms(ctx, right, 14 * row, u, s);
-    drawMiniMap(ctx, right - 13 * u, 40 * row, 12 * u, u, s);
-    drawIntegrity(ctx, right, 58 * row, u, s);
-    drawLayer(ctx, right, 79 * row, u, s.layer);
+    drawIntegrity(ctx, right, 55 * row, u, s);
+    drawLayer(ctx, right, 75.5 * row, u, s.layer, { compact: true });
   }
   if (level < 1) {                         // while walking: the light view
     ctx.globalAlpha = 1 - level;
     // one walking view for both the hand-held screen and the VR box (identical, just scaled to the eye)
     drawVitals(ctx, left, 16 * row, u, s);
     const mapR = 11 * u;
-    drawMiniMap(ctx, right - mapR - 1 * u, 16 * row + mapR, mapR, u, s);
     drawDelayTag(ctx, right - mapR - 1 * u, 16 * row + 2 * mapR + 5 * u, u, s);
     if (s.layer) drawLayer(ctx, right, 16 * row + 2 * mapR + 11 * u, u, s.layer);
   }
   ctx.globalAlpha = 1;
+  // one mini-map, gliding between its walking spot and its spot in the full panels (never two at once)
+  const mix = (a, b) => a + (b - a) * level;
+  const mapR = mix(11 * u, 10.5 * u);
+  drawMiniMap(ctx, mix(right - 12 * u, right - 12 * u), mix(16 * row + 11 * u, 37 * row), mapR, u, s);
 
   if (s.card) drawStopCard(ctx, w, h, u, s.card, images.get(s.card.photo), { sample: s.cardSample });
   else if (s.info) drawInfoCard(ctx, w, h, u, s.info);

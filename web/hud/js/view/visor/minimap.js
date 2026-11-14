@@ -14,6 +14,7 @@ export function drawMiniMap(ctx, cx, cy, radius, u, s) {
   ctx.fillStyle = PANEL;
   ctx.fill();
   ctx.clip();
+  drawPhoto(ctx, cx, cy, radius, s);
 
   ctx.strokeStyle = AMBER_FAINT;
   ctx.lineWidth = 1;
@@ -86,4 +87,26 @@ export function drawMiniMap(ctx, cx, cy, radius, u, s) {
   ctx.fill();
   ctx.shadowBlur = 0;
   say(ctx, `MAP ${RANGE_M} M`, cx, cy + radius + 2.2 * u, 1.7 * u, { align: 'center', color: AMBER_SOFT, weight: 600 });
+}
+
+/**
+ * The real HiRISE photo under the mini-map, turned so where you face is up (the map is heading-up).
+ * s.mapGeo = { mars: [lat, lon], heading (deg on Mars), bounds, W, H (metres), marsPerMetre }; s.mapPhoto = an Image.
+ */
+function drawPhoto(ctx, cx, cy, radius, s) {
+  const img = s.mapPhoto;
+  const g = s.mapGeo;
+  if (!img?.complete || !img.naturalWidth || !g) return;
+  const { north, south, west, east } = g.bounds;
+  const k = (radius / RANGE_M) / (g.marsPerMetre || 1);               // pixels per Mars metre
+  const ex = ((g.mars[1] - west) / (east - west)) * g.W;            // walker, metres from the photo's top-left
+  const ny = ((north - g.mars[0]) / (north - south)) * g.H;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate((-g.heading * Math.PI) / 180);
+  ctx.globalAlpha *= 0.75;
+  ctx.drawImage(img, -ex * k, -ny * k, g.W * k, g.H * k);
+  ctx.restore();
+  ctx.fillStyle = 'rgba(10, 5, 2, 0.35)';                           // keeps the lines and pins readable
+  ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
 }

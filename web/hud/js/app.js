@@ -17,6 +17,7 @@ import { buildScene } from './core/scene.js';
 import { createStopCard, nearbyReachedStop } from './core/stop-card.js';
 import { placeInfo, importantLines, infoTitle } from './core/place-info.js';
 import { buildStatus } from './core/status.js';
+import { createSteepWatch } from './core/steep-watch.js';
 import { createSuit } from './core/suit.js';
 import { createTwin } from './core/twin.js';
 
@@ -80,7 +81,9 @@ export function createHudApp({
   let returnReason = null;
   let homeM = null;                 // walk home along the route (Mars metres of the frame)
   let homeAt = -Infinity;
-  const detail = createDetailAuto({ moveMps: source.frame === 'mars' ? 0.35 : 0.6 });   // GPS jitters more
+  const walkingMps = source.frame === 'mars' ? 0.35 : 0.6;   // GPS jitters more
+  const detail = createDetailAuto({ moveMps: walkingMps });
+  const steepWatch = createSteepWatch({ walkingMps, limitDeg: STEEP_DEG, clock });
   const startedAt = clock();
   let lastTickMs = clock();
   let lastSpot = null;
@@ -231,7 +234,7 @@ export function createHudApp({
     energyNow = energy.readout({ o2Pct: suit.o2Pct, mars, fallbackM: (homeM ?? step.baseDistanceM) * world.marsPerFrameMetre });
     bio = body.update({ speedMps, slopeDeg: Math.min(slope, 30), lowOxygen: suit.o2Pct < 30 });
     const result = evaluateAlerts({
-      slopeAheadDeg: slope,
+      slopeAheadDeg: t < forcedSlopeUntil || steepWatch.update(slope, speedMps) ? slope : 0,   // only while walking into it
       o2Pct: suit.o2Pct,
       o2MinutesLeft: suit.minutesLeft,
       walkBackMinutes: etaMinutes(homeM ?? step.baseDistanceM, walkSpeed * slowdown(slope)),
@@ -483,10 +486,14 @@ export function createHudApp({
         const path = guide.samples.map((p) => ({ ...p, steep: planner.slopeAt(p.at) > STEEP_DEG, eye: eyeAt(p.at) }));
         hud.scene = buildScene({ world, position, heading, isVisited: nav.isVisited, target: step.target, path, plan: guide.path, eyeAt });
         hud.scan = scanView(position, heading);
+        if (terrain) hud.mapGeo = {                                // mini-map photo: where we are on Mars, facing which way
+          mars: world.toMars(position.at), heading: heading - (source.frame === 'mars' ? 0 : mission.anchor.rotation_deg ?? 0),
+          bounds: terrain.bounds, W: terrain.width_m, H: terrain.height_m, marsPerMetre: world.marsPerFrameMetre,
+        };
         if (source.frame === 'mars' && world3d?.projectRelative) hud.project = (f, r, lift) => world3d.projectRelative(f, r, lift);   // exact 3D placement
         if (watch) {
           watch.update({ position, heading, path: guide.path, t, slopeAt: (at) => planner.slopeAt(at) });
-          hud.dangers = { ...watch.view(position, heading, eyeAt), show: dangers };
+          hud.dangers = { ...watch.view(position, heading, eyeAt), show: dangers, walking: speedMps >= walkingMps };
         }
       }
       return { background: source.getBackground(), hud };
@@ -509,6 +516,7 @@ export function createHudApp({
         suit.setSpeed(1);
         suit.setO2(mission.suit?.o2_start_pct ?? 100);
         detail.reset();
+        steepWatch.reset();
         card.close();
         nav?.resume();
         message = { text: 'Reset: everything back to normal', fromGround: false, until: clock() + MESSAGE_MS };
