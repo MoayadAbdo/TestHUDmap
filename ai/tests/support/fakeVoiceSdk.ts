@@ -5,6 +5,7 @@ import type { StartVoiceSession, VoiceSession, VoiceSessionOptions } from "../..
 export interface FakeSession extends VoiceSession {
   ended: boolean;
   contextUpdates: string[];
+  userMessages: string[];
   options: VoiceSessionOptions;
 }
 
@@ -31,9 +32,13 @@ export function fakeVoiceSdk() {
       id: `conv-${sessions.length + 1}`,
       ended: false,
       contextUpdates: [],
+      userMessages: [],
       options,
       sendContextualUpdate(text) {
         this.contextUpdates.push(text);
+      },
+      sendUserMessage(text) {
+        this.userMessages.push(text);
       },
       async endSession() {
         this.ended = true;

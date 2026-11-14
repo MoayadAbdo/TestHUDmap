@@ -6,6 +6,7 @@
  *   onAgentText(callback)    the agent's words + short visor error lines
  *   onUserText(callback)     the astronaut's transcribed words
  *   isListening()            true while connected
+ *   askQuestion(text)        a question in words, sent the moment the agent connects
  *   getVoiceState()          'disconnected' | 'connecting' | 'connected'
  *
  * Live status comes from `window.hud.getStatus()`; location facts (`get_location_info`, which also
@@ -50,4 +51,5 @@ export const getConversation = () => bridge.getConversation();
 export const onAgentText = (callback: (text: string) => void) => bridge.onAgentText(callback);
 export const onUserText = (callback: (text: string) => void) => bridge.onUserText(callback);
 export const isListening = () => bridge.isListening();
+export const askQuestion = (text: string) => bridge.askQuestion(text);
 export const getVoiceState = () => bridge.getVoiceState();

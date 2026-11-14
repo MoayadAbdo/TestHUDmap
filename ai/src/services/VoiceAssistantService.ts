@@ -68,6 +68,8 @@ export class VoiceAssistantService {
   private pendingStart: { generation: number; promise: Promise<boolean> } | null = null;
   private generation = 0;
   private readonly context: MissionContextMemory;
+  /** A question asked before the session was open: sent the moment it connects. */
+  private pendingQuestion: string | null = null;
   private readonly listeners = new Set<VoiceAssistantListener>();
 
   constructor(private readonly deps: VoiceAssistantDependencies) {
@@ -105,6 +107,7 @@ export class VoiceAssistantService {
   async stop(): Promise<void> {
     const generation = ++this.generation; // invalidates pending starts and old-session callbacks
     this.pendingStart = null;
+    this.pendingQuestion = null;
     const session = this.session;
     this.session = null;
 
@@ -130,6 +133,17 @@ export class VoiceAssistantService {
   updateMissionContext(text: string): void {
     this.context.remember(text);
     if (this.session) this.sendContext(this.session, text);
+  }
+
+  /**
+   * Ask the agent a question in words (e.g. what the astronaut said right after "Hey suit").
+   * Sent now when connected, otherwise the moment the next connection opens.
+   */
+  ask(text: string): void {
+    const question = text.trim();
+    if (!question) return;
+    if (this.session) this.sendQuestion(this.session, question);
+    else this.pendingQuestion = question;
   }
 
   private async connect(generation: number): Promise<boolean> {
@@ -178,6 +192,9 @@ export class VoiceAssistantService {
     this.setState("connected");
     const earlier = this.context.forNewSession();
     if (earlier) this.sendContext(session, earlier);
+    const question = this.pendingQuestion;
+    this.pendingQuestion = null;
+    if (question) this.sendQuestion(session, question);
     return true;
   }
 
@@ -226,6 +243,14 @@ export class VoiceAssistantService {
       this.emit({ type: "context-sent", text });
     } catch (error) {
       this.emitError("connection", `Could not send mission context: ${errorMessage(error)}`);
+    }
+  }
+
+  private sendQuestion(session: VoiceSession, text: string): void {
+    try {
+      session.sendUserMessage(text);
+    } catch (error) {
+      this.emitError("connection", `Could not send the question: ${errorMessage(error)}`);
     }
   }
 

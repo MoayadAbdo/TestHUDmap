@@ -47,18 +47,27 @@ test('while talking to the AI only dangers speak; muted means silent', () => {
   assert.equal(tones.length, 2);
 });
 
-test('every line the phone can say has a recording, in one voice', async () => {
+test('every line the phone can say is in the script', async () => {
   const fs = await import('node:fs');
-  const { clipTexts } = await import('../tools/make-voice-clips.mjs');
+  const { clipTexts } = await import('../tools/clip-texts.mjs');
   const { ALL_CLIPS, clipFor } = await import('../js/voice-clips.js');
   const mission = JSON.parse(fs.readFileSync(new URL('../../mission/mission.json', import.meta.url)));
-  const made = JSON.parse(fs.readFileSync(new URL('../sounds/clips.json', import.meta.url)));
   const ids = Object.keys(clipTexts(mission));
   for (const id of [...ALL_CLIPS, 'arrive_1', 'arrive_5', 'sample_1', 'sample_5', clipFor('RETURN_TO_BASE', 'Solar storm: radiation rising')]) {
     assert.ok(ids.includes(id), `${id} is in the script`);
-    assert.ok(fs.existsSync(new URL(`../sounds/${id}.${made.ext ?? 'm4a'}`, import.meta.url)), `${id} was recorded`);
   }
-  assert.equal(typeof made.voice, 'string');
+});
+
+test('alerts are recorded in the voice agent\'s voice (once the clips are made)', async (t) => {
+  const fs = await import('node:fs');
+  const { clipTexts } = await import('../tools/clip-texts.mjs');
+  const made = JSON.parse(fs.readFileSync(new URL('../sounds/clips.json', import.meta.url)));
+  if (!made.voice) { t.skip('not recorded yet: run tools/make-voice-clips-elevenlabs.mjs'); return; }
+  assert.match(made.voice, /^elevenlabs:/, 'ElevenLabs voice, not a computer voice');
+  const mission = JSON.parse(fs.readFileSync(new URL('../../mission/mission.json', import.meta.url)));
+  for (const id of Object.keys(clipTexts(mission))) {
+    assert.ok(fs.existsSync(new URL(`../sounds/${id}.${made.ext}`, import.meta.url)), `${id} was recorded`);
+  }
 });
 
 test('the same line asked for twice plays once', async () => {

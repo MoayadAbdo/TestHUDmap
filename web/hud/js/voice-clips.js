@@ -1,12 +1,12 @@
 import { RETURN_REASONS } from './core/alerts.js';
 
 /**
- * Plays the recorded alert lines (sounds/*.m4a, one voice for everyone; see tools/make-voice-clips.mjs).
+ * Plays the recorded alert lines (sounds/*.mp3 in the voice agent's voice; see tools/make-voice-clips-elevenlabs.mjs).
  * One line at a time; an urgent line cuts the one playing. Missing clips are skipped (the visor still shows it).
  */
 export const SAME_LINE_MS = 8000;    // the same line asked for twice (two alert systems, a flicker) plays once
 
-export function createClipPlayer({ ctx, base, ext = 'm4a', fetchFn = (u) => fetch(u), clock = () => performance.now() }) {
+export function createClipPlayer({ ctx, base, ext = 'mp3', fetchFn = (u) => fetch(u), clock = () => performance.now() }) {
   const buffers = new Map();
   const lastAsked = new Map();
   const queue = [];

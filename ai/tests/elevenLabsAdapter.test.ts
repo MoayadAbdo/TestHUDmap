@@ -6,6 +6,7 @@ const sdk = vi.hoisted(() => {
   const conversation = {
     getId: vi.fn(() => "conv_abc"),
     sendContextualUpdate: vi.fn(),
+    sendUserMessage: vi.fn(),
     endSession: vi.fn(async () => undefined),
   };
   return { conversation, startSession: vi.fn(async (_options: Record<string, any>) => conversation) };
@@ -68,8 +69,10 @@ describe("ElevenLabs SDK adapter", () => {
   it("delegates contextual updates and endSession to the SDK conversation", async () => {
     const session = await startElevenLabsVoiceSession({ agentId: "a", clientTools: {}, callbacks: callbacks() });
     session.sendContextualUpdate("Arrived at stop 3");
+    session.sendUserMessage("What's here?");
     await session.endSession();
     expect(sdk.conversation.sendContextualUpdate).toHaveBeenCalledWith("Arrived at stop 3");
+    expect(sdk.conversation.sendUserMessage).toHaveBeenCalledWith("What's here?");
     expect(sdk.conversation.endSession).toHaveBeenCalledOnce();
   });
 

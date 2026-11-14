@@ -43,6 +43,7 @@ export const startElevenLabsVoiceSession: StartVoiceSession = async ({
   const session: VoiceSession = {
     id: conversation.getId(),
     sendContextualUpdate: (text) => conversation.sendContextualUpdate(text),
+    sendUserMessage: (text) => conversation.sendUserMessage(text),
     endSession: () => conversation.endSession(),
   };
   return session;

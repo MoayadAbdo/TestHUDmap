@@ -6,7 +6,7 @@ export type HudVoiceState = "disconnected" | "connecting" | "connected";
 
 export type HudVoiceAssistant = Pick<
   VoiceAssistantService,
-  "getState" | "start" | "stop" | "isConnected" | "updateMissionContext" | "subscribe"
+  "getState" | "start" | "stop" | "isConnected" | "updateMissionContext" | "subscribe" | "ask"
 >;
 
 type TextCallback = (text: string) => void;
@@ -27,6 +27,11 @@ export class HudVoiceBridge {
     const state = this.assistant.getState();
     if (state === "disconnected") await this.assistant.start();
     else if (state === "connected") await this.assistant.stop();
+  }
+
+  /** A question in words (said right after "Hey suit"): sent as soon as the agent is connected. */
+  askQuestion(text: string): void {
+    this.assistant.ask(text);
   }
 
   getConversation(): { sendContextualUpdate(text: string): void } {

@@ -1,13 +1,22 @@
 /**
  * Hands-free voice: say "Hey suit" to talk to the AI (the phone is inside the VR box, so no buttons).
  * The phone's speech recognition listens only for the wake word; then the voice agent opens.
+ * Say it in one go ("Hey suit, what's here?"): the words after "Hey suit" are sent to the agent the moment it
+ * connects, so there's no need to wait and ask again.
  * It closes itself after `idleMs` with nobody talking, and the wake word listens again (saves credits).
  * The Bluetooth clicker still works at any time.
  */
 // "hey" is required: on stage we say "suit" all the time
-const MIC_HANDOFF_MS = 600;   // wait after stopping the wake-word listener before the AI takes the mic
+const MIC_HANDOFF_MS = 300;   // wait after stopping the wake-word listener before the AI takes the mic (Android)
 const WAKE = /\b(hey|hi|ok|okay)[\s,]+(suit|suits|soot|sweet|suite)\b/i;
 export const isWakePhrase = (text) => WAKE.test(text);
+/** The words said after "Hey suit" ("" when there are none). */
+export function afterWake(text) {
+  const m = WAKE.exec(text);
+  return m ? text.slice(m.index + m[0].length).replace(/^[\s,.!?]+/, '').trim() : '';
+}
+const QUIET_MS = 700;         // after "Hey suit": this long with no new words = the question is finished
+const QUESTION_MAX_MS = 6000; // never keep listening for the question longer than this
 
 const RESTART_MS = 300;                       // phones stop listening after silence: start again
 const OFFLINE_RETRY_MS = [2000, 5000, 10000, 30000];
@@ -26,6 +35,9 @@ export function createWakeWord({ voice, notify = () => {}, SR, timers = globalTh
   let wokeAt = 0;
   let offlineTries = 0;
   let loop = null;
+  let question = '';
+  let settle = null;
+  let handedOff = false;
   const state = () => voice.state ?? (voice.listening ? 'connected' : 'disconnected');
   const active = () => { lastActivity = clock(); };
   voice.onText?.(active);
@@ -46,7 +58,10 @@ export function createWakeWord({ voice, notify = () => {}, SR, timers = globalTh
     r.onresult = (e) => {
       if (offlineTries) { offlineTries = 0; notify('Voice back online'); }
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (isWakePhrase(e.results[i][0].transcript)) { wake(); return; }
+        const text = e.results[i][0].transcript;
+        const final = Boolean(e.results[i].isFinal);
+        if (mode === 'idle' && isWakePhrase(text)) wake();
+        if (mode === 'waking' && !handedOff && isWakePhrase(text)) heard(afterWake(text), final);
       }
     };
     r.onerror = (e) => {
@@ -60,6 +75,7 @@ export function createWakeWord({ voice, notify = () => {}, SR, timers = globalTh
     };
     r.onend = () => {
       if (rec === r) rec = null;
+      if (mode === 'waking' && !handedOff) { handOff(); return; }   // the phone stopped listening: question done
       if (stopped || mode !== 'idle') return;
       const wait = offlineTries ? OFFLINE_RETRY_MS[Math.min(offlineTries, OFFLINE_RETRY_MS.length) - 1] : RESTART_MS;
       timers.setTimeout(listen, wait);
@@ -71,16 +87,37 @@ export function createWakeWord({ voice, notify = () => {}, SR, timers = globalTh
     if (mode !== 'idle') return;
     mode = 'waking';
     wokeAt = clock();
+    question = '';
+    handedOff = false;
     active();
-    quiet();
     chime(880);
     notify('Listening… ask your question');
+    timers.setTimeout(handOff, QUESTION_MAX_MS);
+  }
+
+  /** More words after "Hey suit": wait until they stop (or the phone says the sentence is done). */
+  function heard(words, final) {
+    if (words) question = words;
+    timers.clearTimeout?.(settle);
+    if (final) handOff();
+    else settle = timers.setTimeout(handOff, QUIET_MS);
+  }
+
+  /** Give the microphone to the AI and send it the question said with "Hey suit" (if any). */
+  function handOff() {
+    if (mode !== 'waking' || handedOff) return;
+    handedOff = true;
+    wokeAt = clock();                       // the connect wait starts now
+    timers.clearTimeout?.(settle);
+    quiet();
+    if (question && voice.ask) { voice.ask(question); notify(`"${question}"`); }
     // Android needs a moment to release the microphone from the wake-word listener before the AI opens it
     timers.setTimeout(() => { if (mode === 'waking') voice.toggle(); }, MIC_HANDOFF_MS);
   }
 
   function backToIdle(delayMs) {
     mode = 'idle';
+    handedOff = false;
     timers.setTimeout(listen, delayMs);
   }
 
@@ -91,6 +128,7 @@ export function createWakeWord({ voice, notify = () => {}, SR, timers = globalTh
     if (mode === 'idle') {
       if (s !== 'disconnected') { mode = 'talking'; active(); quiet(); }   // opened with the clicker
     } else if (mode === 'waking') {
+      if (!handedOff) return;                 // still hearing the question
       if (s === 'connected') { mode = 'talking'; active(); }
       else if (s === 'disconnected' && t - wokeAt > CONNECT_WAIT_MS) backToIdle(0);
       else if (t - wokeAt > CONNECT_GIVE_UP_MS) { notify('AI not answering: say "Hey suit" again'); backToIdle(0); }
