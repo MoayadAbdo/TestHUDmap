@@ -172,11 +172,17 @@ export function drawLayer(ctx, right, y, u, layer) {
   say(ctx, `${layer.instrument} · ${layer.resolution_m} m`, right, y + 6.2 * u, 1.9 * u, { align: 'right', color: AMBER_SOFT });
   const legend = (layer.legend ?? []).filter((l) => l.color !== '#000000');
   const items = layer.showAll || legend.length <= 3 ? legend : [legend[0], legend[legend.length - 1]];   // long ramps: ends only
+  // more than 3 rows: two columns, so the key fits in the panel instead of running off the bottom
+  const cols = items.length > 3 ? 2 : 1;
+  const rows = Math.ceil(items.length / cols);
+  const colW = 15 * u;
   items.forEach((item, i) => {
-    const ry = y + (9 + i * 2.8) * u;
+    const col = Math.floor(i / rows);
+    const r = right - (cols - 1 - col) * colW;
+    const ry = y + (9 + (i % rows) * 2.8) * u;
     ctx.fillStyle = item.color;
-    ctx.fillRect(right - 2 * u, ry - 0.9 * u, 2 * u, 1.8 * u);
-    say(ctx, legendText(item.label), right - 2.8 * u, ry, 1.9 * u, { align: 'right', color: AMBER_SOFT, weight: 500 });
+    ctx.fillRect(r - 1.6 * u, ry - 0.9 * u, 1.6 * u, 1.6 * u);
+    say(ctx, legendText(item.label), r - 2.4 * u, ry, 1.75 * u, { align: 'right', color: AMBER_SOFT, weight: 500 });
   });
 }
 
