@@ -1,12 +1,12 @@
 /**
  * When to show every suit panel: not on head moves, but when it's useful. Walking: only what you need to walk.
  * Standing still for a few seconds (at a stop, looking around, resting): the full suit display fades in.
- * Start walking again and it fades out. "full" (the default) keeps every panel on; I key / Ground Control switch to "auto".
+ * Start walking again and it fades out. "auto" is the default; "full" pins every panel on (I key / Ground Control).
  */
 export const STILL_MS = 3000;          // stand still this long before the panels come in
 const FADE_MS = 450;
 
-export function createDetailAuto({ stillMs = STILL_MS, moveMps = 0.35, start = 'full' } = {}) {
+export function createDetailAuto({ stillMs = STILL_MS, moveMps = 0.35, start = 'auto' } = {}) {
   let mode = start;
   let stillSince = null;
   let level = 0;

@@ -2,7 +2,7 @@ import { bearingDeg, distanceM, wrap180 } from './geo.js';
 import { pointAlong } from './path.js';
 
 /**
- * Dangers from the real 1 m height map: steep ground (12° careful, 20° no-go: NASA's EVA limit) and rough ground
+ * Dangers from the real 1 m height map: steep ground (12° careful, 20° no-go: our team's safety limits, not an official NASA number) and rough ground
  * (cells that stick out of their neighbours: ridge walls, blocks). Four ways to show them, each optional:
  * zones painted on the ground, warning signs in the world, a profile of the path ahead, and edge glow + sound.
  */

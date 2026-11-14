@@ -71,7 +71,7 @@ export async function addMapLayers({ map, L, base = "../mission/layers/", onShow
     if (!l) return;
     const group = groups.find((g) => g.ids.includes(l.id)) ?? { name: "Photo", ids: [] };
     const title = document.createElement("b");
-    title.textContent = `${group.name} · ${l.instrument} ${l.resolution_m} m`;
+    title.textContent = `${group.name} · ${l.detail ?? `${l.instrument} ${l.resolution_m} m`}`;
     keyEl.append(title);
     const visorId = group.name === "Minerals" ? "minerals_frt0000b6f1" : l.id;   // the 3D sim paints this scene
     if (VISOR_IDS.has(visorId) && onShowOnVisor) {
@@ -122,7 +122,7 @@ async function zonesLayer(base, bounds) {
     const grid = createTerrainGrid({ ...meta, heights: new Float32Array(buf) });
     const canvas = await zonesCanvas(grid, new URL("layers.json", new URL(base, location.href)).href);
     return { ...ZONES_KEY, kind: "safety", mission: "MRO + Odyssey", bounds: bounds ?? meta.bounds, url: canvas.toDataURL(),
-      credit: "Slope and rough ground: HiRISE 1 m DEM (NASA/JPL/UArizona) · looser ground: THEMIS (NASA/JPL/ASU) · sulfates: CRISM (NASA/JPL/JHUAPL)" };
+      credit: "Slope and rough ground: HiRISE 1 m DEM on a 2.5 m grid (NASA/JPL/UArizona) · looser ground: THEMIS, 100 m pixels (NASA/JPL/ASU) · possible sulfates: CRISM, 18 m pixels (NASA/JPL/JHUAPL)" };
   } catch (error) {
     console.warn("[map] zones not available:", error?.message ?? error);
     return null;

@@ -53,7 +53,7 @@ const hirise = mission.layers.find((l) => l.id === "hirise")?.tiles;
 const map = L.map("map", { crs: L.CRS.EPSG4326, zoomControl: true, attributionControl: true, minZoom: 2, maxBounds: [[-90, -180], [90, 180]] })
   .setView(mission.anchor.mars, 16);
 addBasemap(L, map, hirise);
-// the route coloured by slope: green easy, amber careful (> 12°), red no-go (> 20°, NASA's EVA limit)
+// the route coloured by slope: green easy, amber careful (> 12°), red no-go (> 20°, our team's safety limit)
 const slopeColor = (deg) => (deg > 20 ? "#ef4444" : deg > 12 ? "#f59e0b" : "#4ade80");
 const pts = mission.route.map((p) => ({ at: p.mars ?? [p.lat, p.lon], slope: p.slope_deg ?? 0 }));
 for (let i = 1; i < pts.length; i++) {
@@ -65,7 +65,7 @@ const routeKey = L.control({ position: "bottomleft" });
 routeKey.onAdd = () => {
   const el = L.DomUtil.create("div", "route-key");
   el.innerHTML = 'Route <i style="background:#4ade80"></i>&lt;12° <i style="background:#f59e0b"></i>12–20° <i style="background:#ef4444"></i>&gt;20° no-go';
-  el.title = "Route slope; 20° is NASA's EVA limit";
+  el.title = "Route slope; 20° is our team's no-go limit";
   return el;
 };
 routeKey.addTo(map);

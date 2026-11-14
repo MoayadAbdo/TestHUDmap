@@ -50,3 +50,11 @@ test('planner: steep wall on the straight line → longer, safer path; falls bac
   assert.ok(length > distanceM(from, to, R) * 1.3, `goes around: ${length.toFixed(1)} m vs ${distanceM(from, to, R).toFixed(1)} m`);
   assert.equal(planner.plan([1, 1], to)[0], 'fallback', 'outside the map');
 });
+
+test('one no-go number: the safe path blocks exactly where the visor says NO-GO', async () => {
+  const { NO_GO_DEG } = await import('../js/core/hazards.js');
+  const { LIMITS } = await import('../js/core/alerts.js');
+  assert.equal(BLOCKED_DEG, NO_GO_DEG);
+  assert.equal(LIMITS.slopeNoGoDeg, NO_GO_DEG);
+  assert.equal(slopeCost(NO_GO_DEG + 0.1), Infinity);
+});

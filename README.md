@@ -9,7 +9,7 @@ A low-cost helmet display that guides an astronaut on a Marswalk through the box
 |---|---|
 | A layered view of one location / route | One walk, ~700 m, 5 science stops on Curiosity's real boxwork route |
 | At least 3 kinds of data from several missions | Optical (HiRISE, MRO), topographic (HiRISE 1 m DEM → slope), spectral (CRISM minerals), thermal (THEMIS thermal inertia), atmospheric (REMS, Curiosity), radiation (RAD, Curiosity), ground photos (Navcam, Curiosity) |
-| Safety first | Safest path (A*) on the 1 m slope map; caution > 12°, **no-go > 20° (NASA's Artemis EVA limit)**; oxygen reserve with the walk home measured along the route; solar storm / O₂ leak send the astronaut home at once |
+| Safety first | Safest path (A*) on the HiRISE 1 m DEM, used on a 2.5 m grid; caution > 12°, **no-go > 20° (our team's safety limit, not an official NASA number)**; oxygen reserve with the walk home measured along the route; solar storm / O₂ leak send the astronaut home at once |
 | Route map avoiding obstacles | Arrows on the ground follow the planned path, coloured where it gets steep; Ground Control map shows the route coloured by slope |
 | What the astronaut will see | Stop cards with real Curiosity Navcam photos, the task, the hazard and the science |
 | Current conditions / space weather | Oxygen time, radiation now + dose this walk, temperature, daylight left, Earth delay |

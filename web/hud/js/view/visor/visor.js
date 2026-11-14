@@ -78,8 +78,8 @@ export function drawVisorHud(ctx, w, h, s, images) {
   const mapR = mix(11 * u, 10.5 * u);
   if (!cardUp) drawMiniMap(ctx, mix(right - 12 * u, right - 12 * u), mix(16 * row + 11 * u, 37 * row), mapR, u, s);
 
-  if (s.card) drawStopCard(ctx, slot, u, s.card, images.get(s.card.photo), { sample: s.cardSample });
-  else if (s.info) drawInfoCard(ctx, slot, u, s.info);
+  if (s.card) drawStopCard(ctx, slot, u, s.card, images.get(s.card.photo), { sample: s.cardSample, vr: s.view === 'vr' });
+  else if (s.info) drawInfoCard(ctx, slot, s.view === 'vr' ? u * 1.3 : u, s.info);
   if (s.waiting) drawWaiting(ctx, cx, h / 2, u, s.waiting);
   else drawNextStop(ctx, cx, 74 * row, u, s);
   const profile = Boolean(s.dangers?.show?.profile && !s.waiting);

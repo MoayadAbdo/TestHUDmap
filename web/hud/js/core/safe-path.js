@@ -1,4 +1,5 @@
 import { distanceM } from './geo.js';
+import { NO_GO_DEG } from './hazards.js';
 import { createTerrainGrid, slopeGrid } from './terrain-grid.js';
 
 export { slopeGrid };
@@ -8,7 +9,7 @@ export { slopeGrid };
  * A* over the grid, where steep cells cost more and very steep ones can't be walked.
  * Same shape as the route planner: plan(from, target) → [[lat, lon], ...] in the walk's frame.
  */
-export const BLOCKED_DEG = 25;       // steeper than this: don't send an astronaut in a suit there
+export const BLOCKED_DEG = NO_GO_DEG;   // the same number as the NO-GO alert: the path never leads onto ground the visor calls NO-GO
 const EASY_DEG = 6;                  // gentle slopes cost (almost) nothing extra
 const REPLAN_MS = 4000;
 const OFF_PATH_M = 6;                // walked this far off the planned path: plan again

@@ -6,8 +6,9 @@ import { ACCENT, ACCENT_SOFT, CAUTION, FONT, GLASS, INK, NAV, brackets, plate, s
  * it's open), so it never covers the arrow, the path or the oxygen. Top to bottom: name, photo, TASK, HAZARD, SCIENCE.
  * The text is fitted to the card: lines that don't fit end with "…" instead of running off the edge.
  */
-export function drawStopCard(ctx, slot, u, card, photo, { sample = null } = {}) {
-  const U = u * 0.78;                                   // everything inside a bit smaller than the visor text
+export function drawStopCard(ctx, slot, u, card, photo, { sample = null, vr = false } = {}) {
+  // VR: bigger text and less of it, so it reads through the lenses; hand-held: a bit smaller than the visor text
+  const U = u * (vr ? 1.05 : 0.78);
   const { x, y, w: cw } = slot;
   const pad = 2.4 * U;
   const tw = cw - 2 * pad;
@@ -26,7 +27,7 @@ export function drawStopCard(ctx, slot, u, card, photo, { sample = null } = {}) 
 
   let ty = y + pad + 7.2 * U;
   if (photo?.complete && photo.naturalWidth) {
-    const ph = Math.min(slot.h * 0.3, tw * 0.62);
+    const ph = Math.min(slot.h * (vr ? 0.22 : 0.3), tw * 0.62);
     const top = ty;
     ops.push(() => {
       const scale = Math.max(tw / photo.naturalWidth, ph / photo.naturalHeight);
@@ -53,7 +54,9 @@ export function drawStopCard(ctx, slot, u, card, photo, { sample = null } = {}) 
 
   // TASK first and largest (what to do now), then the hazard in caution colour, then science in what room is left
   const bottom = y + slot.h - 3.4 * U;
-  const sections = [['TASK', card.task, 2.4, INK, 3], ['HAZARD', card.hazard, 2.2, CAUTION, 2], ['SCIENCE', card.science, 2.05, INK, 8]];
+  const sections = vr
+    ? [['TASK', card.task, 2.4, INK, 3], ['HAZARD', card.hazard, 2.2, CAUTION, 2], ['SCIENCE', card.science, 2.05, INK, 3]]
+    : [['TASK', card.task, 2.4, INK, 3], ['HAZARD', card.hazard, 2.2, CAUTION, 2], ['SCIENCE', card.science, 2.05, INK, 8]];
   for (const [label, value, size, color, maxLines] of sections) {
     if (!value) continue;
     const lineH = size * 1.22 * U;

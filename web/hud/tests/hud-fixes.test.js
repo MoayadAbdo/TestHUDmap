@@ -147,11 +147,18 @@ test('oxygen time left reads steady when effort changes step to step', async () 
   assert.ok(suit.minutesLeft < before * 0.6, 'after minutes of hard walking it does come down');
 });
 
-test('all suit panels are on by default, even while walking; I switches to automatic', async () => {
+test('the calm focus view is the default; I pins every panel on', async () => {
   const { createDetailAuto } = await import('../js/core/detail-auto.js');
   const d = createDetailAuto();
-  assert.equal(d.mode, 'full');
-  d.update(0, { speedMps: 1 }); assert.equal(d.update(1000, { speedMps: 1 }), 1);
-  assert.equal(d.toggle(), 'auto');
-  d.reset(); assert.equal(d.mode, 'full');
+  assert.equal(d.mode, 'auto');
+  d.update(0, { speedMps: 1 }); assert.equal(d.update(1000, { speedMps: 1 }), 0);
+  assert.equal(d.toggle(), 'full');
+  d.reset(); assert.equal(d.mode, 'auto');
 });
+
+test('alerts: no-go ground first, then the way home (it names its cause), then the rest', async () => {
+  const { evaluateAlerts } = await import('../js/core/alerts.js');
+  const r = evaluateAlerts({ slopeAheadDeg: 25, o2Pct: 20, o2MinutesLeft: 30, walkBackMinutes: 5, alreadyReturning: false, hazard: 'solar' });
+  assert.deepEqual(r.alerts, ['SLOPE_NO_GO', 'RETURN_TO_BASE', 'SOLAR_STORM', 'LOW_O2']);
+});
+

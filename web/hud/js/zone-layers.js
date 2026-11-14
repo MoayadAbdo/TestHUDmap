@@ -1,18 +1,19 @@
 import { zonePixels } from './core/hazards.js';
 
 /**
- * Zones from several layers, on the same grid as the height map: slope + rough ground (1 m DEM), looser ground
+ * Zones from several layers, on the same grid as the height map: slope + rough ground (1 m DEM, used on a 2.5 m grid), looser ground
  * (lowest THEMIS thermal inertia here) and the strongest CRISM sulfate signal (science spots, not dangers).
  * Browser only (reads the layer images through a canvas).
  */
 export const ZONES_KEY = {
-  id: 'zones', name: 'Zones', instrument: 'HiRISE DEM · THEMIS · CRISM', resolution_m: 1, showAll: true,
+  id: 'zones', name: 'Zones', instrument: 'HiRISE DEM · THEMIS · CRISM', resolution_m: 2.5, showAll: true,
+  detail: 'DEM 2.5 m grid · THEMIS 100 m · CRISM 18 m',   // each layer's real pixel size, not one "1 m" for all
   legend: [
     { color: '#ff4040', label: 'no-go slope (over 20°)' },
     { color: '#ffbe3c', label: 'careful (12–20°)' },
     { color: '#ffecaa', label: 'rough ground' },
-    { color: '#c8c8c8', label: 'looser ground (THEMIS)' },
-    { color: '#d36bff', label: 'sulfates (CRISM)' },
+    { color: '#c8c8c8', label: 'looser ground (THEMIS, 100 m)' },
+    { color: '#d36bff', label: 'possible sulfates (CRISM)' },
   ],
 };
 

@@ -28,7 +28,7 @@ export function sideReadouts({ wallMs, mission, conditionStop, suit, bio, link, 
       'Life support': mustReturn || suit.o2Pct < 30 ? 'danger' : 'ok',
       Torso: 'ok',
       Arms: 'ok',
-      Legs: slopeDeg > 20 ? 'danger' : slopeDeg > 12 ? 'warn' : 'ok',
+      'Leg load': slopeDeg > 20 ? 'danger' : slopeDeg > 12 ? 'warn' : 'ok',   // effort on steep ground, not a suit fault
     },
   };
 }

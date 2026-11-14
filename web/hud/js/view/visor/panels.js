@@ -2,6 +2,8 @@ import { ACCENT, ACCENT_FAINT, ACCENT_SOFT, CAUTION, INK, RED, bar, brackets, hm
 
 const STATUS_COLOR = { ok: INK, warn: CAUTION, danger: RED };
 const STATUS_WORD = { ok: 'OK', warn: 'CHECK', danger: 'ALERT' };
+// rows whose state is about the ground, not a broken part, say so ("Leg load HIGH", never "Legs ALERT")
+const ROW_WORD = { 'Leg load': { warn: 'HIGH', danger: 'TOO HIGH' } };
 /** Side panels are about this wide (in u, from the panel's x); the visor keeps its guide out of them. */
 export const PANEL_W_U = 27;
 
@@ -174,7 +176,7 @@ export function drawIntegrity(ctx, right, y, u, s) {
     ctx.beginPath();
     ctx.arc(right - 8 * u, ry, 0.65 * u, 0, Math.PI * 2);
     ctx.fill();
-    say(ctx, STATUS_WORD[state] ?? '--', right, ry, 2.1 * u, { align: 'right', color, weight: 600 });
+    say(ctx, ROW_WORD[part]?.[state] ?? STATUS_WORD[state] ?? '--', right, ry, 2.1 * u, { align: 'right', color, weight: 600 });
   });
 }
 
@@ -187,7 +189,7 @@ export function drawLayer(ctx, right, y, u, layer, { compact = false } = {}) {
   if (!layer) return;
   header(ctx, 'LAYER', right, y, u, 'right');
   say(ctx, layer.name.split(' (')[0], right, y + 3.4 * u, 2.4 * u, { align: 'right' });
-  if (!compact) say(ctx, `${layer.instrument} · ${layer.resolution_m} m`, right, y + 6.2 * u, 1.9 * u, { align: 'right', color: ACCENT_SOFT });
+  if (!compact) say(ctx, layer.detail ?? `${layer.instrument} · ${layer.resolution_m} m`, right, y + 6.2 * u, 1.9 * u, { align: 'right', color: ACCENT_SOFT });
   const top = compact ? 6.4 : 9;            // full panels: no instrument line, so the key fits inside
   const legend = (layer.legend ?? []).filter((l) => l.color !== '#000000');
   const items = layer.showAll || legend.length <= 3 ? legend : [legend[0], legend[legend.length - 1]];   // long ramps: ends only

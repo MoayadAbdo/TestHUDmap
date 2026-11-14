@@ -6,7 +6,7 @@ const ALERTS = {
   SOLAR_STORM: () => ['SOLAR STORM', 'Radiation many times normal · head home now', RED],
   O2_LEAK: () => ['O₂ LEAK', 'Head home now · stay calm, breathe slowly', RED],
   LOW_O2: () => ['OXYGEN LOW', 'Head home along the route', RED],
-  SLOPE_NO_GO: () => ['NO-GO SLOPE', 'Over 20° (NASA EVA limit) · follow the arrows around it', RED],
+  SLOPE_NO_GO: () => ['NO-GO SLOPE', 'Over 20° (team safety limit) · follow the arrows around it', RED],
   SLOPE_AHEAD: () => ['STEEP GROUND AHEAD', 'Slow down · short steps', CAUTION],
 };
 const CHIP = { RETURN_TO_BASE: 'RETURN', SOLAR_STORM: 'SOLAR STORM', O2_LEAK: 'O₂ LEAK', LOW_O2: 'O₂ LOW', SLOPE_NO_GO: 'NO-GO SLOPE', SLOPE_AHEAD: 'STEEP' };
