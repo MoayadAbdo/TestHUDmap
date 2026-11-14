@@ -113,7 +113,7 @@ function ne(e) {
 // src/services/VoiceAssistantService.ts
 var re = class {
 	constructor(e) {
-		f(this, "deps", void 0), f(this, "state", "disconnected"), f(this, "session", null), f(this, "pendingStart", null), f(this, "generation", 0), f(this, "context", void 0), f(this, "listeners", /* @__PURE__ */ new Set()), this.deps = e, this.context = new te(e.clock ?? Date.now, e.contextMaxAgeMs);
+		f(this, "deps", void 0), f(this, "state", "disconnected"), f(this, "session", null), f(this, "pendingStart", null), f(this, "generation", 0), f(this, "context", void 0), f(this, "pendingQuestion", null), f(this, "listeners", /* @__PURE__ */ new Set()), this.deps = e, this.context = new te(e.clock ?? Date.now, e.contextMaxAgeMs);
 	}
 	getState() {
 		return this.state;
@@ -137,7 +137,7 @@ var re = class {
 	}
 	async stop() {
 		let t = ++this.generation;
-		this.pendingStart = null;
+		this.pendingStart = null, this.pendingQuestion = null;
 		let n = this.session;
 		if (this.session = null, !n) this.setState("disconnected");
 		else {
@@ -153,6 +153,10 @@ var re = class {
 	}
 	updateMissionContext(e) {
 		this.context.remember(e), this.session && this.sendContext(this.session, e);
+	}
+	ask(e) {
+		let t = e.trim();
+		t && (this.session ? this.sendQuestion(this.session, t) : this.pendingQuestion = t);
 	}
 	async connect(n) {
 		let r = this.deps.agentId?.trim();
@@ -181,7 +185,9 @@ var re = class {
 		if (!this.isCurrent(n)) return await i.endSession().catch(() => void 0), !1;
 		this.session = i, this.setState("connected");
 		let a = this.context.forNewSession();
-		return a && this.sendContext(i, a), !0;
+		a && this.sendContext(i, a);
+		let o = this.pendingQuestion;
+		return this.pendingQuestion = null, o && this.sendQuestion(i, o), !0;
 	}
 	createStatusTool() {
 		return i(this.deps.statusProvider, {
@@ -229,6 +235,13 @@ var re = class {
 			});
 		} catch (t) {
 			this.emitError("connection", `Could not send mission context: ${e(t)}`);
+		}
+	}
+	sendQuestion(t, n) {
+		try {
+			t.sendUserMessage(n);
+		} catch (t) {
+			this.emitError("connection", `Could not send the question: ${e(t)}`);
 		}
 	}
 	isCurrent(e) {
@@ -21853,6 +21866,7 @@ var $g = async ({ agentId: e, clientTools: t, callbacks: n }) => {
 	return {
 		id: i.getId(),
 		sendContextualUpdate: (e) => i.sendContextualUpdate(e),
+		sendUserMessage: (e) => i.sendUserMessage(e),
 		endSession: () => i.endSession()
 	};
 };
@@ -21918,6 +21932,9 @@ var c_ = class {
 	async toggleVoice() {
 		let e = this.assistant.getState();
 		e === "disconnected" ? await this.assistant.start() : e === "connected" && await this.assistant.stop();
+	}
+	askQuestion(e) {
+		this.assistant.ask(e);
 	}
 	getConversation() {
 		return { sendContextualUpdate: (e) => this.assistant.updateMissionContext(e) };
@@ -22003,5 +22020,5 @@ var g_ = window, __ = new c_(new re({
 	requestMicrophoneAccess: () => e_(),
 	clock: Date.now,
 	extraTools: { [u_]: p_(() => g_.hud?.placeInfo?.() ?? null) }
-}), console), v_ = () => __.toggleVoice(), y_ = () => __.getConversation(), b_ = (e) => __.onAgentText(e), x_ = (e) => __.onUserText(e), S_ = () => __.isListening(), C_ = () => __.getVoiceState();
-export { y_ as getConversation, C_ as getVoiceState, S_ as isListening, b_ as onAgentText, x_ as onUserText, v_ as toggleVoice };
+}), console), v_ = () => __.toggleVoice(), y_ = () => __.getConversation(), b_ = (e) => __.onAgentText(e), x_ = (e) => __.onUserText(e), S_ = () => __.isListening(), C_ = (e) => __.askQuestion(e), w_ = () => __.getVoiceState();
+export { C_ as askQuestion, y_ as getConversation, w_ as getVoiceState, S_ as isListening, b_ as onAgentText, x_ as onUserText, v_ as toggleVoice };

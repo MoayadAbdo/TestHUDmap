@@ -71,6 +71,33 @@ describe("HudVoiceBridge toggle and state", () => {
   });
 });
 
+describe("HudVoiceBridge question after 'Hey suit'", () => {
+  it("a question asked before connecting is sent the moment the agent connects", async () => {
+    const { sdk, bridge } = setup();
+    bridge.askQuestion("  what's here  ");
+    await bridge.toggleVoice();
+    expect(sdk.last().userMessages).toEqual(["what's here"]);
+  });
+
+  it("a question asked while connected is sent at once; empty ones are ignored", async () => {
+    const { sdk, bridge } = setup();
+    await bridge.toggleVoice();
+    bridge.askQuestion("how much oxygen");
+    bridge.askQuestion("   ");
+    expect(sdk.last().userMessages).toEqual(["how much oxygen"]);
+  });
+
+  it("a question is sent once, not again on the next connection", async () => {
+    const { sdk, bridge } = setup();
+    bridge.askQuestion("what's here");
+    await bridge.toggleVoice();
+    await bridge.toggleVoice();
+    await bridge.toggleVoice();
+    expect(sdk.sessions[0].userMessages).toEqual(["what's here"]);
+    expect(sdk.last().userMessages).toEqual([]);
+  });
+});
+
 describe("HudVoiceBridge text", () => {
   it("sends user words to onUserText and agent words to onAgentText", async () => {
     const { sdk, bridge, agentTexts, userTexts } = setup();

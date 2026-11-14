@@ -15,7 +15,8 @@ export const visorText = (text) => String(text ?? '').replace(/\[[^\]\n]{1,24}\]
 
 /**
  * T1.2 exposes toggleVoice() and a conversation with sendContextualUpdate().
- * Optional: onUserText(cb) (the astronaut's words) and getVoiceState() ('disconnected' | 'connecting' | 'connected').
+ * Optional: onUserText(cb) (the astronaut's words), getVoiceState() ('disconnected' | 'connecting' | 'connected')
+ * and askQuestion(text) (a question in words, sent the moment the agent connects).
  */
 export function asVoice(mod) {
   if (typeof mod.toggleVoice !== 'function') return null;
@@ -24,6 +25,7 @@ export function asVoice(mod) {
   return {
     toggle: () => mod.toggleVoice(),
     sendContext: (text) => conversation()?.sendContextualUpdate?.(text),
+    ask: typeof mod.askQuestion === 'function' ? (text) => mod.askQuestion(text) : undefined,
     onText: (callback) => (mod.onAgentText ?? mod.onText)?.((text) => callback(visorText(text))),
     onUserText: (callback) => mod.onUserText?.(callback),
     get listening() {

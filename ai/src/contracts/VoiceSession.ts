@@ -34,6 +34,8 @@ export interface VoiceSessionOptions {
 export interface VoiceSession {
   readonly id: string;
   sendContextualUpdate(text: string): void;
+  /** Send a question as if the astronaut had said it (the words said right after "Hey suit"). */
+  sendUserMessage(text: string): void;
   endSession(): Promise<void>;
 }
 

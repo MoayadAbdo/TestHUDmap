@@ -162,11 +162,11 @@ async function start(mode, view, motionAsked) {
   if (dangers.zones && grid && world3d?.setGroundOverlay) {        // zones from several layers on the 3D ground
     zonesCanvas(grid, new URL('layers/layers.json', assetsBase).href).then((c) => world3d.setGroundOverlay(c));
   }
-  // sound: tones + recorded lines in one voice for everyone (sounds/*.m4a), on the one audio channel
+  // sound: tones + recorded lines in the voice agent's voice (sounds/*.mp3), on the one audio channel
   const muted = params.get('sound') === '0';
   const soundsBase = new URL('./sounds/', document.baseURI).href;
   const clipInfo = await fetch(`${soundsBase}clips.json`).then((r) => r.json()).catch(() => ({}));   // which voice / file type
-  const clips = createClipPlayer({ ctx: audioContext, base: soundsBase, ext: clipInfo.ext ?? 'm4a' });
+  const clips = createClipPlayer({ ctx: audioContext, base: soundsBase, ext: clipInfo.ext ?? 'mp3' });
   if (!muted) {
     const stopIds = mission.stops.filter((s) => !s.is_base).map((s) => s.id);
     clips.preload([...ALL_CLIPS, ...stopIds.map((id) => `arrive_${id}`), ...stopIds.map((_, i) => `sample_${i + 1}`)]);
@@ -246,7 +246,7 @@ async function start(mode, view, motionAsked) {
   if (sim3d) app.notify(moveInput ? 'Walk in place to move · tap to talk · double tap to auto-walk' : 'Double tap to start walking');
   if (source.world3d) app.notify('Walk for real: GPS moves you on Mars');
   // hands-free voice: "Hey suit" (only with the real voice agent, and unless ?wake=0)
-  if (voice.real && params.get('wake') !== '0') setTimeout(() => startWakeWord({ voice: voice.part, notify: app.notify }), 4000);
+  if (voice.real && params.get('wake') !== '0') setTimeout(() => startWakeWord({ voice: voice.part, notify: app.notify }), 1000);
   renderer.start();
   startScreen.hidden = true;
 }
