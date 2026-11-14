@@ -5,27 +5,28 @@
  *   NAV      where to go: arrow, path, pin, next stop (green: never used for data)
  *   CAUTION  be careful (steep ground)
  *   RED      act now (return to base, oxygen, radiation)
- * Text is a clean technical face with a thin dark edge (no glow, no heavy outline),
+ * Text is a crisp technical face (IBM Plex Sans Condensed) with a hairline dark edge and a soft shadow,
  * and every group sits on a dark plate, so it stays readable over the bright Mars sky.
  */
-export const INK = '#f3f6ff';
-export const ACCENT = '#8fb3ff';
-export const ACCENT_SOFT = 'rgba(143, 179, 255, 0.85)';
-export const ACCENT_FAINT = 'rgba(143, 179, 255, 0.26)';
-export const NAV = '#5fe08f';
-export const CAUTION = '#ffd24a';
-export const RED = '#ff4d4d';
+export const INK = '#eef2f8';
+export const ACCENT = '#9db8e0';                        // steel blue
+export const ACCENT_SOFT = 'rgba(157, 184, 224, 0.85)';
+export const ACCENT_FAINT = 'rgba(157, 184, 224, 0.26)';
+export const NAV = '#3ddc97';
+export const NAV_EDGE = 'rgba(61, 220, 151, 0.45)';
+export const CAUTION = '#f2c94c';
+export const RED = '#ff4f4f';
 export const PANEL = 'rgba(5, 11, 26, 0.62)';           // deep navy
 export const PANEL_SOLID = 'rgba(5, 11, 26, 0.94)';
 export const EDGE = 'rgba(2, 5, 14, 0.75)';             // the thin dark edge on text
-export const FONT = "'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif";
+export const FONT = "'IBM Plex Sans Condensed', 'Arial Narrow', system-ui, sans-serif";
 
 export function say(ctx, text, x, y, size, { color = INK, weight = 500, align = 'left', baseline = 'middle', glow = false } = {}) {
   ctx.font = `${weight} ${size}px ${FONT}`;
   ctx.textAlign = align;
   ctx.textBaseline = baseline;
-  ctx.lineJoin = 'round';
-  ctx.lineWidth = Math.max(1.2, size * 0.12);          // thin edge: readable on bright sky, not cartoon-like
+  ctx.lineJoin = 'miter';
+  ctx.lineWidth = Math.max(1, size * 0.06);            // hairline edge: readable on bright sky, sharp letters
   ctx.strokeStyle = EDGE;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
   ctx.shadowBlur = size * 0.15;
@@ -78,7 +79,7 @@ export function bar(ctx, x, y, w, h, fraction, { segments = 22, color = ACCENT }
   const sw = (w - gap * (segments - 1)) / segments;
   const lit = Math.round(Math.max(0, Math.min(1, fraction)) * segments);
   for (let i = 0; i < segments; i++) {
-    ctx.fillStyle = i < lit ? color : 'rgba(143, 179, 255, 0.16)';
+    ctx.fillStyle = i < lit ? color : 'rgba(157, 184, 224, 0.16)';
     ctx.fillRect(x + i * (sw + gap), y, sw, h);
   }
 }

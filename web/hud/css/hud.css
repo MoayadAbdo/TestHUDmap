@@ -1,6 +1,6 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
-body { font-family: 'Barlow Semi Condensed', system-ui, Roboto, sans-serif; color: #f3f7f7; touch-action: manipulation; user-select: none; }
+body { font-family: 'IBM Plex Sans Condensed', system-ui, Roboto, sans-serif; color: #f3f7f7; touch-action: manipulation; user-select: none; }
 
 #hud { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
 

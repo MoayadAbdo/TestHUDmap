@@ -1,5 +1,5 @@
 import { creditLine } from '../../core/mission-info.js';
-import { ACCENT, ACCENT_SOFT, CAUTION, INK, NAV, brackets, plate, say, wrap } from './style.js';
+import { ACCENT, ACCENT_SOFT, CAUTION, FONT, INK, NAV, brackets, plate, say, wrap } from './style.js';
 
 /**
  * Stop card, like a wrist tablet, in the bottom-left corner: photo on the left, then TASK, HAZARD, SCIENCE.
@@ -46,7 +46,7 @@ export function drawStopCard(ctx, w, h, u, card, photo, { sample = null } = {}) 
     ctx.strokeRect(x + pad, top, pw, ph);
     const credit = creditLine(card.photo_credit);   // under the photo, never over it
     if (credit) {
-      ctx.font = `500 ${1.45 * U}px 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif`;
+      ctx.font = `500 ${1.45 * U}px ${FONT}`;
       const [line] = wrap(ctx, credit, pw, 1);
       say(ctx, line, x + pad, top + ph + 1.3 * U, 1.45 * U, { color: ACCENT_SOFT, weight: 500 });
     }
@@ -64,7 +64,7 @@ export function drawStopCard(ctx, w, h, u, card, photo, { sample = null } = {}) 
     if (roomLines < 1) break;
     say(ctx, label, textX, ty, 1.8 * U, { color: ACCENT_SOFT, weight: 600 });
     ty += 2.8 * U;
-    ctx.font = `600 ${size * U}px 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif`;
+    ctx.font = `600 ${size * U}px ${FONT}`;
     for (const line of wrap(ctx, value, tw, Math.min(maxLines, roomLines))) {
       say(ctx, line, textX, ty, size * U, { color, weight: 600 });
       ty += lineH;

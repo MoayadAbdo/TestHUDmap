@@ -1,4 +1,4 @@
-import { ACCENT, ACCENT_SOFT, CAUTION, INK, NAV, brackets, plate, say, wrap } from './style.js';
+import { ACCENT, ACCENT_SOFT, CAUTION, FONT, INK, NAV, brackets, plate, say, wrap } from './style.js';
 
 /**
  * "What's here?" card (from the voice agent or the H key): the most important facts about this spot,
@@ -14,7 +14,7 @@ export function drawInfoCard(ctx, w, h, u0, info) {
   const tw = cw - 2 * pad - 4 * u;
 
   // lay the facts out first, so the card is only as tall as they need
-  ctx.font = `600 ${size * u}px 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif`;
+  ctx.font = `600 ${size * u}px ${FONT}`;
   const rows = info.lines.map((line) => ({ line, parts: wrap(ctx, line.text, tw, 2) }));
   const head = 8 * u, foot = 5.4 * u;
   const body = rows.reduce((sum, r) => sum + r.parts.length * lineH + 0.6 * u, 0);
@@ -41,7 +41,7 @@ export function drawInfoCard(ctx, w, h, u0, info) {
     ty += 0.6 * u;
   }
 
-  ctx.font = `500 ${1.5 * u}px 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif`;
+  ctx.font = `500 ${1.5 * u}px ${FONT}`;
   const [src] = wrap(ctx, info.sources.join(' · '), cw - 2 * pad, 1);
   say(ctx, src, x + pad, y + ch - 3.6 * u, 1.5 * u, { color: ACCENT_SOFT, weight: 500 });
   say(ctx, 'TAP / C TO CLOSE  ·  CLOSES BY ITSELF', x + cw / 2, y + ch - 1.4 * u, 1.6 * u, { align: 'center', color: ACCENT_SOFT, weight: 600 });

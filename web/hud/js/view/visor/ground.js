@@ -18,7 +18,7 @@ export function guideSide(target, view, clear, coneDeg = GUIDE_CONE_DEG) {
   return at && at.x >= clear.minX && at.x <= clear.maxX ? 'guide' : turn;
 }
 
-const STEEP = '#ffb02e';        // steep part of the path (caution), set apart from the cyan path
+const STEEP = '#f2c94c';        // steep part of the path (caution), set apart from the cyan path
 
 /** Path point d metres ahead (scene.path has a point every 0.5 m). */
 const along = (path, d) => path[Math.min(path.length - 1, Math.max(0, Math.round(d / 0.5)))];
@@ -53,15 +53,18 @@ export function drawGroundGuide(ctx, w, h, u, s, clear = { minX: 0, maxX: w }, p
       forward: here.forward + dir.forward * ahead + left.forward * across,
       right: here.right + dir.right * ahead + left.right * across,
     }, onGround, 0.05);
-    const corners = [at(0.7, 0), at(-0.45, 0.55), at(-0.1, 0), at(-0.45, -0.55)];
+    const corners = [at(-0.45, 0.6), at(0.45, 0), at(-0.45, -0.6)];   // an open V lying on the ground, pointing ahead
     if (corners.some((c) => !inside(c, clear))) continue;   // never over the side panels
-    ctx.fillStyle = here.steep ? STEEP : color;
-    ctx.globalAlpha = Math.max(0.12, 0.9 - d / FARTHEST_M);
-    ctx.shadowBlur = 1.2 * u;
+    const near = Math.max(0, 1 - d / FARTHEST_M);
+    ctx.strokeStyle = here.steep ? STEEP : color;
+    ctx.globalAlpha = Math.max(0.15, 0.95 * near);
+    ctx.lineWidth = Math.max(1.2, (0.25 + 0.55 * near) * u);   // thinner further away, like real perspective
+    ctx.lineJoin = 'miter';
+    ctx.lineCap = 'butt';
+    ctx.shadowBlur = 0.8 * u;
     ctx.beginPath();
     corners.forEach((c, i) => (i ? ctx.lineTo(c.x, c.y) : ctx.moveTo(c.x, c.y)));
-    ctx.closePath();
-    ctx.fill();
+    ctx.stroke();
   }
   ctx.globalAlpha = 1;
   ctx.shadowBlur = 0;

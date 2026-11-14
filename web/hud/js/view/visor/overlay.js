@@ -1,4 +1,4 @@
-import { ACCENT, ACCENT_SOFT, CAUTION, INK, NAV, PANEL, RED, brackets, plate, say, wrap } from './style.js';
+import { ACCENT, ACCENT_SOFT, CAUTION, FONT, INK, NAV, NAV_EDGE, PANEL, RED, brackets, plate, say, wrap } from './style.js';
 
 /** title, what to do, colour. One alert is shown big; the others become small chips under it. */
 const ALERTS = {
@@ -31,7 +31,7 @@ export function drawAlerts(ctx, cx, y, u, s) {
 
 export function drawMessage(ctx, cx, y, u, w, text) {
   if (!text) return;
-  ctx.font = `600 ${2.5 * u}px 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif`;
+  ctx.font = `600 ${2.5 * u}px ${FONT}`;
   const lines = wrap(ctx, text, w * 0.42, 2);
   const width = Math.max(...lines.map((l) => ctx.measureText(l).width)) + 3 * u;
   plate(ctx, cx - width / 2, y - 1.8 * u, width, lines.length * 3 * u + 0.8 * u, { radius: 0.8 * u });
@@ -47,9 +47,9 @@ export function drawNextStop(ctx, cx, y, u, s) {
   const top = home ? 'RETURN TO' : `NEXT · ${s.stopLabel.toUpperCase()}`;
   const name = s.targetName.toUpperCase();
   const dist = `${s.distanceLabel} · ${s.etaMin} MIN`;
-  ctx.font = `600 ${3.4 * u}px 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif`;
+  ctx.font = `600 ${3.4 * u}px ${FONT}`;
   const w = Math.max(ctx.measureText(name).width, 24 * u) + 6 * u;
-  plate(ctx, cx - w / 2, y - 2.2 * u, w, 10.2 * u, { radius: 1 * u, edge: home ? RED : 'rgba(95, 224, 143, 0.45)' });
+  plate(ctx, cx - w / 2, y - 2.2 * u, w, 10.2 * u, { radius: 1 * u, edge: home ? RED : NAV_EDGE });
   say(ctx, top, cx, y, 1.9 * u, { align: 'center', color: ACCENT_SOFT, weight: 600 });
   say(ctx, name, cx, y + 3.4 * u, 3.4 * u, { align: 'center', color, weight: 600 });
   say(ctx, dist, cx, y + 6.6 * u, 2.3 * u, { align: 'center', color: INK, weight: 600 });
@@ -61,7 +61,7 @@ export function drawVoice(ctx, cx, y, u, w, s) {
     if (s.listening) { dot(cx - 5.4 * u, y); say(ctx, 'LISTENING', cx - 3.8 * u, y, 1.9 * u, { color: INK }); }
     return;
   }
-  ctx.font = `600 ${2.4 * u}px 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif`;
+  ctx.font = `600 ${2.4 * u}px ${FONT}`;
   const lines = wrap(ctx, s.aiText, w * 0.44, 2);
   const boxW = w * 0.5;
   const boxH = lines.length * 3 * u + 2 * u;
@@ -72,7 +72,7 @@ export function drawVoice(ctx, cx, y, u, w, s) {
 }
 
 export function drawWaiting(ctx, cx, cy, u, text) {
-  ctx.font = `600 ${3 * u}px 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif`;
+  ctx.font = `600 ${3 * u}px ${FONT}`;
   const w = ctx.measureText(text).width + 6 * u;
   plate(ctx, cx - w / 2, cy - 3 * u, w, 6 * u, { radius: 1 * u });
   say(ctx, text, cx, cy, 3 * u, { align: 'center', weight: 600 });
@@ -85,19 +85,22 @@ export function drawDirectionArrow(ctx, cx, cy, u, deg, color = NAV, { label = t
   ctx.save();
   ctx.translate(cx, cy);
   ctx.rotate((deg * Math.PI) / 180);
-  ctx.fillStyle = color;
-  ctx.strokeStyle = 'rgba(2, 5, 14, 0.9)';
-  ctx.lineWidth = 0.5 * u;
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-  ctx.shadowBlur = 1.2 * u;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';                 // a thin HUD chevron: outline + light fill, not a sticker
+  ctx.shadowBlur = 0.8 * u;
+  ctx.lineJoin = 'miter';
   ctx.beginPath();
   ctx.moveTo(0, -r);
-  ctx.lineTo(r * 0.75, r * 0.7);
-  ctx.lineTo(0, r * 0.25);
-  ctx.lineTo(-r * 0.75, r * 0.7);
+  ctx.lineTo(r * 0.7, r * 0.7);
+  ctx.lineTo(0, r * 0.3);
+  ctx.lineTo(-r * 0.7, r * 0.7);
   ctx.closePath();
-  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.globalAlpha = 0.28;
   ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(1.5, 0.45 * u);
+  ctx.stroke();
   ctx.restore();
   ctx.shadowBlur = 0;
   const turn = label ? turnWord(deg) : '';
