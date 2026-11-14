@@ -5,7 +5,7 @@ Walk on Mars at the Mount Sharp boxwork site, in 3D:
 - **Walk where you look:** hold the clicker (or the screen, in the test page).
 - **Glowing beacons** at the 6 stops: walk into the next one to "arrive".
 - **Scan rocks:** look at the rock with the cyan outline for 2 s to collect a sample.
-- **Curiosity rover** parked at the main site, distant Mount Sharp, Mars sky, dust storms.
+- **Rocks from the real height map** (only where HiRISE shows broken or steep ground), distant Mount Sharp, Mars sky, dust storms.
 - **VR box mode** (two eyes, real 3D depth) or **flat screen** mode.
 
 ## Files
