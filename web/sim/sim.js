@@ -22,6 +22,7 @@
 
 import * as THREE from "three";
 import { createHeadPose } from "../hud/js/core/head-pose.js";
+import { rockSpots } from "./rock-spots.js";
 
 const DEG = Math.PI / 180;
 const EYE_H = 1.7;                 // astronaut eye height (m)
@@ -294,24 +295,20 @@ function addRocks(route) {
   const r = rng(42);
   const mat = new THREE.MeshStandardMaterial({ color: "#ffffff", map: S.detail, roughness: 0.92, metalness: 0 });
   const shapes = [rockGeometry(3, 0.6), rockGeometry(11, 0.45), rockGeometry(29, 0.3)];   // round, low, slab
-  const per = 380, m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), c = new THREE.Color();
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), c = new THREE.Color();
   const tones = ["#8f6a50", "#7a5a45", "#a27d5f", "#6b4e3c", "#b08a6a"];
+  const spots = rockSpots(S.T, { route, rand: r });          // the real rough and steep spots of the height map
   shapes.forEach((geo, k) => {
-    const mesh = new THREE.InstancedMesh(geo, mat, per);
-    let n = 0;
-    for (let tries = 0; n < per && tries < per * 12; tries++) {
-      const a = route[Math.floor(r() * route.length)];
-      const spread = r() < 0.7 ? 40 : 160;                       // denser near the route
-      const x = a.x + (r() - 0.5) * spread, z = a.z + (r() - 0.5) * spread;
-      if (route.some((p) => Math.hypot(p.x - x, p.z - z) < 2.2)) continue;   // keep the walking lane clear
-      const s = 0.06 + Math.pow(r(), 3.2) * (k === 2 ? 1.3 : 0.9);
+    const mine = spots.filter((p) => p.shape === k);
+    if (!mine.length) return;
+    const mesh = new THREE.InstancedMesh(geo, mat, mine.length);
+    mine.forEach(({ x, z, size: s }, n) => {
       e.set((r() - 0.5) * 0.6, r() * 6.3, (r() - 0.5) * 0.6); q.setFromEuler(e);
       m.compose(new THREE.Vector3(x, heightAt(x, z) + s * 0.12, z), q, new THREE.Vector3(s * (0.8 + r() * 0.6), s, s * (0.8 + r() * 0.6)));
       mesh.setMatrixAt(n, m);
       mesh.setColorAt(n, c.set(tones[Math.floor(r() * tones.length)]).multiplyScalar(0.85 + r() * 0.3));
-      n++;
-    }
-    mesh.count = n; mesh.castShadow = true; mesh.receiveShadow = true;
+    });
+    mesh.castShadow = true; mesh.receiveShadow = true;
     S.scene.add(mesh);
   });
   // ambient dust drifting in the air
@@ -320,39 +317,6 @@ function addRocks(route) {
   const dg = new THREE.BufferGeometry(); dg.setAttribute("position", new THREE.BufferAttribute(dpos, 3));
   S.motes = new THREE.Points(dg, new THREE.PointsMaterial({ color: "#f0d2b0", size: 0.035, transparent: true, opacity: 0.55, depthWrite: false }));
   S.scene.add(S.motes);
-}
-
-function addRover(at) {
-  const g = new THREE.Group();
-  const M = (c, r = 0.6, m = 0.1) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
-  const white = M("#e4dfd6", 0.55, 0.15), dark = M("#2f2b28", 0.8), gold = M("#c9a24a", 0.35, 0.7), grey = M("#8c8a86", 0.5, 0.4);
-  const add = (geo, mat, x, y, z, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); o.castShadow = true; o.receiveShadow = true; g.add(o); return o; };
-  add(new THREE.BoxGeometry(1.5, 0.6, 2.2), white, 0, 1.05, 0);                  // body
-  add(new THREE.BoxGeometry(1.6, 0.06, 2.35), grey, 0, 1.38, 0);                 // deck
-  add(new THREE.BoxGeometry(0.5, 0.25, 0.5), gold, -0.35, 1.53, 0.4);            // instruments on deck
-  add(new THREE.BoxGeometry(0.4, 0.2, 0.6), white, 0.35, 1.5, 0.5);
-  for (const sx of [-1, 1]) {
-    add(new THREE.BoxGeometry(0.07, 0.07, 2.0), grey, sx * 0.95, 0.75, 0, 0.18);   // rocker-bogie
-    for (const sz of [-0.95, 0, 0.95]) {
-      const w = add(new THREE.CylinderGeometry(0.26, 0.26, 0.4, 24), dark, sx * 0.98, 0.26, sz, 0, 0, Math.PI / 2);
-      add(new THREE.CylinderGeometry(0.1, 0.1, 0.42, 12), grey, sx * 0.98, 0.26, sz, 0, 0, Math.PI / 2);
-      add(new THREE.BoxGeometry(0.07, 0.5, 0.07), grey, sx * 0.95, 0.55, sz);
-    }
-  }
-  add(new THREE.CylinderGeometry(0.06, 0.07, 1.05, 12), white, 0.5, 1.9, -0.85);  // mast
-  const head = new THREE.Group(); head.position.set(0.5, 2.48, -0.85); g.add(head);
-  const hb = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.24, 0.3), white); hb.castShadow = true; head.add(hb);
-  for (const ex of [-0.12, 0.12]) { const eye = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.08, 12), dark); eye.rotation.x = Math.PI / 2; eye.position.set(ex, 0, -0.18); head.add(eye); }
-  add(new THREE.CylinderGeometry(0.35, 0.35, 0.05, 28), grey, -0.45, 1.75, -0.2, 0.9, 0, 0);   // high-gain antenna dish
-  add(new THREE.CylinderGeometry(0.24, 0.24, 0.75, 16), dark, 0, 1.3, 1.35, 1.1);             // RTG power source
-  for (let k = 0; k < 6; k++) add(new THREE.BoxGeometry(0.02, 0.5, 0.18), dark, Math.cos(k) * 0.26, 1.3 + Math.sin(k) * 0.05, 1.35 + Math.sin(k) * 0.26, 1.1);
-  add(new THREE.BoxGeometry(0.07, 0.07, 1.0), white, -0.45, 1.0, -1.45, 0.25);                // robotic arm
-  add(new THREE.BoxGeometry(0.28, 0.28, 0.28), gold, -0.45, 0.85, -1.95);                     // arm turret
-  g.position.set(at.x, heightAt(at.x, at.z), at.z);
-  g.rotation.y = 0.6;
-  S.rover = { group: g, head };
-  S.scene.add(g);
-  const label = makeLabel("Curiosity rover", "#ffffff"); label.position.set(0, 3.4, 0); label.visible = !S.opts.hud; g.add(label);
 }
 
 function addStops(mission) {
@@ -556,8 +520,6 @@ function update(dt, now) {
   S.progress.geometry.dispose();
   S.progress.geometry = new THREE.RingGeometry(0.03, 0.045, 48, 1, Math.PI / 2, Math.max(0.001, (S.scanT / SCAN_SECONDS) * Math.PI * 2));
 
-  // rover idles: mast head looks around
-  if (S.rover) S.rover.head.rotation.y = Math.sin(t * 0.4) * 0.8;
 
   // dust storm
   const dusty = now < S.dustUntil ? 1 : 0;
@@ -620,8 +582,6 @@ export const sim = {
     S.routePts = route;
     addRocks(route);
     addStops(mission);
-    const mainStop = S.stops[Math.min(4, S.stops.length - 1)].pos;
-    addRover({ x: mainStop.x + 7, z: mainStop.z - 4 });
     addReticle();
     addDust();
 
