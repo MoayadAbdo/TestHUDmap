@@ -1,6 +1,7 @@
 // Ground Control (T1.5): watch the astronaut live, follow them on the Mars map, send messages and events.
 // Listens on both links at once: the laptop's local link (when server/server.mjs serves this page) and
 // PeerJS with the room code. If both bring phone data, the local link wins (link-choice.js).
+import { addBasemap } from "./basemap.js";
 import { createDelayedView } from "./delayed-view.js";
 import { createDrive } from "./drive.js";
 import { createLinkChoice } from "./link-choice.js";
@@ -36,9 +37,9 @@ const later = (fn) => { const d = delayMs(); d ? setTimeout(fn, d) : fn(); };
 // ---------- map ----------
 const mission = await (await fetch("../mission/mission.json")).json();
 const hirise = mission.layers.find((l) => l.id === "hirise")?.tiles;
-const map = L.map("map", { crs: L.CRS.EPSG4326, zoomControl: true, attributionControl: true })
+const map = L.map("map", { crs: L.CRS.EPSG4326, zoomControl: true, attributionControl: true, minZoom: 2, maxBounds: [[-90, -180], [90, 180]] })
   .setView(mission.anchor.mars, 16);
-L.tileLayer(hirise, { maxNativeZoom: 16, maxZoom: 18, attribution: "NASA/JPL/UArizona HiRISE · Mars Trek" }).addTo(map);
+addBasemap(L, map, hirise);
 // the route coloured by slope: green easy, amber careful (> 12°), red no-go (> 20°, NASA's EVA limit)
 const slopeColor = (deg) => (deg > 20 ? "#ef4444" : deg > 12 ? "#f59e0b" : "#4ade80");
 const pts = mission.route.map((p) => ({ at: p.mars ?? [p.lat, p.lon], slope: p.slope_deg ?? 0 }));
