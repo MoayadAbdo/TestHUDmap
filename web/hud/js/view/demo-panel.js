@@ -22,7 +22,7 @@ export function createDemoPanel({ element, app, renderer, live, layers }) {
     ['Eyes bigger', tune('size', 0.02)],
     ['Eyes closer', tune('spacing', -0.02)],
     ['Eyes apart', tune('spacing', 0.02)],
-    ['Hide', () => { element.hidden = true; }],
+    ['Hide (M)', () => { element.hidden = true; }],
   ];
   element.replaceChildren(...actions.map(([label, run]) => {
     const button = document.createElement('button');

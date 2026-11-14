@@ -199,7 +199,7 @@ async function start(mode, view, motionAsked) {
   };
   // tap: close an open stop card, else talk to the AI (the Cardboard button is a tap); double tap: auto-walk (sim)
   const tap = () => app.dismissCard() || app.onTap();
-  bindInput({ canvas, onTap: tap, onDoubleTap: sim3d ? toggleWalk : undefined, onLongPress: demo.toggle, onClicker: app.onTap, onCard: app.toggleCard, onLayer: layerSwitch.next, onDetail: app.demo.toggleDetail,
+  bindInput({ canvas, onTap: tap, onDoubleTap: sim3d ? toggleWalk : undefined, onLongPress: demo.toggle, onClicker: app.onTap, onCard: app.toggleCard, onLayer: layerSwitch.next, onDetail: app.demo.toggleDetail, onTools: demo.toggle,
     clickerKeys: sim3d ? SIM_CLICKER_KEYS : undefined });
   // Sim mode: move without walking for real (WASD, gamepad, or Ground Control driving)
   // ...and with only the phone: each step you take (in place or around the room) walks you forward where you look
@@ -243,7 +243,7 @@ async function start(mode, view, motionAsked) {
   console.info('[hud] mission', url, 'live', live.real ? 'real' : 'stand-in', 'voice', voice.real ? 'real' : 'stand-in');
   await Promise.race([document.fonts?.load?.("500 20px 'Barlow Semi Condensed'"), new Promise((resolve) => setTimeout(resolve, 1500))]);
   app.start();
-  if (params.get('hud') === 'full') app.demo.toggleDetail();   // ?hud=full starts with every panel
+  if (params.get('hud') === 'auto') app.demo.toggleDetail();   // every panel is on by default; ?hud=auto starts in the focus view
   if (sim3d) app.notify(moveInput ? 'Walk in place to move · tap to talk · double tap to auto-walk' : 'Double tap to start walking');
   if (source.world3d) app.notify('Walk for real: GPS moves you on Mars');
   // hands-free voice: "Hey suit" (only with the real voice agent, and unless ?wake=0)
