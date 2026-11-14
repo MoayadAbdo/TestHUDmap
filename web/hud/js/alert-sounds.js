@@ -2,7 +2,7 @@ import { clipFor } from './voice-clips.js';
 
 /**
  * Alerts you can hear, for the VR box where reading is hard: a tone for each kind of event and a recorded line in
- * one voice for everyone (sounds/*.m4a). Real dangers always speak; the rest waits while you're talking to the AI.
+ * the voice agent's voice (sounds/*.mp3, recorded once by tools/make-voice-clips-elevenlabs.mjs). Real dangers always speak; the rest waits while you're talking to the AI.
  * Everything is passed in, so it can be tested without speakers. say(clipId, { urgent }) plays a recorded line.
  */
 const DANGER = new Set(['RETURN_TO_BASE', 'SOLAR_STORM', 'O2_LEAK', 'LOW_O2', 'SLOPE_NO_GO']);
