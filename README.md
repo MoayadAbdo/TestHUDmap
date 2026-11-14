@@ -13,6 +13,7 @@ A low-cost helmet display that guides an astronaut on a Marswalk through the box
 | Route map avoiding obstacles | Arrows on the ground follow the planned path, coloured where it gets steep; Ground Control map shows the route coloured by slope |
 | What the astronaut will see | Stop cards with real Curiosity Navcam photos, the task, the hazard and the science |
 | Current conditions / space weather | Oxygen time, radiation now + dose this walk, temperature, daylight left, Earth delay |
+| Our own metric | **MarStep** prices every step in joules from slope, THEMIS loose ground and DEM roughness, turns it into oxygen, and asks "can you still get home?" (×n margin). From that one number: turn-back clock, reach left, effort zone, GO / SKIP for the next stop, and O₂ / CO₂ / cooling water used. [docs/marstep.md](docs/marstep.md) |
 | HUD / tablet / habitat format | Helmet visor (phone in VR box), with a calm **focus view** and an **all-panels view** (I key / pad Select / Ground Control) |
 
 **The Mars delay scene:** turn on "Mars delay" in Ground Control and press "Solar storm". The suit turns the astronaut home in a second; Ground Control's warning arrives minutes later. On Mars, help from Earth is minutes away — the suit has to decide by itself.
@@ -21,6 +22,7 @@ Data credits: NASA/JPL/University of Arizona (HiRISE image and Gale DEM, via JPL
 
 ## For the team
 - System design: [docs/system-design.md](docs/system-design.md)
+- MarStep (our energy metric), explained simply: [docs/marstep.md](docs/marstep.md)
 
 ## Folders and owners
 

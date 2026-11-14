@@ -117,6 +117,8 @@ export function createEnergyModel({ grid = null, heights = null, baseMars = null
   let thermal = null;
   const pctPerJoule = o2PctPerMin / (k.P0 * 60);         // calibrated: the suit's rate = flat firm walking at v0
   let effort = k.P0;                                     // smoothed watts
+  let spentJ = 0;                                        // energy the body has used this walk (MarStep consumables)
+  let etaNow = 1;                                        // η under the feet at the last update
 
   function build() {
     if (!grid || !heights) return;
@@ -142,11 +144,30 @@ export function createEnergyModel({ grid = null, heights = null, baseMars = null
     },
     /** Update the effort from the walk: speed (m/s) and grade (sinθ, + uphill). Returns smoothed watts. */
     update({ speedMps, sinT = 0, mars }, dtMs = 250) {
-      const target = powerW(speedMps, sinT, this.etaAt(mars), k);
+      etaNow = this.etaAt(mars);
+      const target = powerW(speedMps, sinT, etaNow, k);
       effort += (1 - Math.exp(-dtMs / 4000)) * (target - effort);     // ~4 s smoothing: breathing, not footsteps
+      if (dtMs > 0 && dtMs < 5000) spentJ += (effort * dtMs) / 1000;  // a paused tab is not work
       return effort;
     },
     get effortW() { return effort; },
+    /** Joules used so far this walk. */
+    get spentJ() { return spentJ; },
+    /** % of the tank per joule (the suit's calibration). */
+    get pctPerJoule() { return pctPerJoule; },
+    /** Joules per metre to walk on flat ground like the ground here (MarStep reach). */
+    get joulesPerM() { return powerW(k.V0, 0, etaNow, k) / k.V0; },
+    /**
+     * Joules for a walk of lengthM (Mars metres) from one point to another (MarStep next stop):
+     * average ground (η ≈ 1.25) along the way + lifting the body for any net climb. An estimate, not a route search.
+     */
+    tripJoules(fromMars, toMars, lengthM) {
+      const flat = (powerW(k.V0, 0, 1.25, k) * Math.max(0, lengthM)) / k.V0;
+      const a = cellOf(fromMars);
+      const b = cellOf(toMars);
+      const climb = a != null && b != null && heights ? Math.max(0, heights[b] - heights[a]) : 0;
+      return flat + (k.MASS * k.G * climb) / k.EFF_UP;
+    },
     /** How many times the suit's nominal rate the astronaut is burning oxygen now. */
     get effortFactor() { return effort / k.P0; },
     /** Joules to walk home from here; fallbackM = walk home in Mars metres when off the map. */
@@ -166,6 +187,7 @@ export function createEnergyModel({ grid = null, heights = null, baseMars = null
       const homePct = homeJ * pctPerJoule;
       return {
         effortW: Math.round(effort),
+        homeJ,
         homeKJ: Math.round(homeJ / 1000),
         homeO2L: Math.round(litresO2(homeJ, k) * 10) / 10,
         homePct,
