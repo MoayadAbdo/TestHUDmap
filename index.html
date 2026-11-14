@@ -1,10 +1,50 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Mars Walk HUD</title>
-<style>body{font-family:system-ui,sans-serif;background:#140b04;color:#ffb547;display:grid;place-content:center;min-height:100vh;margin:0;text-align:center}a{display:block;margin:1rem;padding:1rem 2rem;border:1px solid #ffb547;border-radius:8px;color:#ffb547;text-decoration:none;font-size:1.2rem}</style></head>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mars Walk HUD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --cyan: #66fcf1; --soft: rgba(102, 252, 241, 0.5); --faint: rgba(102, 252, 241, 0.15); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+    font-family: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif; color: #fff;
+    background:
+      linear-gradient(rgba(102, 252, 241, 0.05) 1px, transparent 1px) 0 0 / 40px 40px,
+      linear-gradient(90deg, rgba(102, 252, 241, 0.05) 1px, transparent 1px) 0 0 / 40px 40px,
+      radial-gradient(110% 80% at 50% 30%, #0b1a24 0%, #050b10 65%, #020406 100%);
+  }
+  main { position: relative; width: min(640px, 100%); padding: 34px 38px 28px; background: rgba(4, 14, 20, 0.45); border: 1px solid var(--faint); }
+  main::before, main::after { content: ''; position: absolute; width: 22px; height: 22px; border: 1px solid var(--cyan); filter: drop-shadow(0 0 3px var(--cyan)); }
+  main::before { top: -6px; left: -6px; border-right: 0; border-bottom: 0; }
+  main::after { bottom: -6px; right: -6px; border-left: 0; border-top: 0; }
+  .kicker { margin: 0; font-size: 12px; letter-spacing: 0.28em; color: var(--soft); }
+  h1 { margin: 4px 0 6px; font-size: 40px; font-weight: 600; letter-spacing: 0.12em; text-shadow: 0 0 10px rgba(102, 252, 241, 0.45); }
+  .sub { margin: 0 0 22px; color: rgba(255, 255, 255, 0.72); }
+  nav { display: grid; gap: 12px; }
+  a { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 18px; border: 1px solid var(--faint);
+      color: #fff; text-decoration: none; transition: border-color 0.15s, background 0.15s; }
+  a:hover, a:focus-visible { border-color: var(--cyan); background: rgba(102, 252, 241, 0.08); outline: none; }
+  a b { display: block; font-size: 20px; font-weight: 600; letter-spacing: 0.06em; color: var(--cyan); text-shadow: 0 0 6px var(--soft); }
+  a span { font-size: 14px; color: rgba(255, 255, 255, 0.6); }
+  a i { font-style: normal; font-size: 12px; letter-spacing: 0.22em; color: var(--soft); white-space: nowrap; }
+  .credit { margin: 20px 0 0; font-size: 12px; color: rgba(255, 255, 255, 0.4); }
+</style>
+</head>
 <body>
-<h1>Mars Walk HUD</h1>
-<a href="web/hud/">Phone: helmet HUD</a>
-<a href="web/gc/">Laptop: Ground Control</a>
+<main>
+  <p class="kicker">GALE CRATER · MOUNT SHARP BOXWORK</p>
+  <h1>MARS WALK HUD</h1>
+  <p class="sub">Curiosity's boxwork route on Mount Sharp, walked on Earth.</p>
+  <nav>
+    <a href="web/hud/"><div><b>HELMET HUD</b><span>on the phone, in a VR box or hand-held</span></div><i>PHONE ›</i></a>
+    <a href="web/gc/"><div><b>GROUND CONTROL</b><span>watch the astronaut live, with the Earth–Mars delay</span></div><i>LAPTOP ›</i></a>
+  </nav>
+  <p class="credit">Data: NASA/JPL/UArizona HiRISE via Mars Trek · NASA Space Apps 2026 team project</p>
+</main>
 </body>
 </html>
