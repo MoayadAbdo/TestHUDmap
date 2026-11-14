@@ -147,7 +147,8 @@ test('oxygen time left reads steady when effort changes step to step', async () 
   assert.ok(suit.minutesLeft < before * 0.6, 'after minutes of hard walking it does come down');
 });
 
-test('all suit panels are on by default, even while walking; I switches to automatic', () => {
+test('all suit panels are on by default, even while walking; I switches to automatic', async () => {
+  const { createDetailAuto } = await import('../js/core/detail-auto.js');
   const d = createDetailAuto();
   assert.equal(d.mode, 'full');
   d.update(0, { speedMps: 1 }); assert.equal(d.update(1000, { speedMps: 1 }), 1);
