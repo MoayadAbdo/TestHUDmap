@@ -1,4 +1,4 @@
-import { ACCENT, ACCENT_SOFT, CAUTION, FONT, INK, NAV, NAV_EDGE, PANEL, RED, brackets, plate, say, wrap } from './style.js';
+import { ACCENT, ACCENT_SOFT, CAUTION, FONT, GLASS, INK, NAV, NAV_EDGE, PANEL, RED, brackets, plate, say, wrap } from './style.js';
 
 /** title, what to do, colour. One alert is shown big; the others become small chips under it. */
 const ALERTS = {
@@ -12,18 +12,64 @@ const ALERTS = {
 const CHIP = { RETURN_TO_BASE: 'RETURN', SOLAR_STORM: 'SOLAR STORM', O2_LEAK: 'O₂ LEAK', LOW_O2: 'O₂ LOW', SLOPE_NO_GO: 'NO-GO SLOPE', SLOPE_AHEAD: 'STEEP' };
 
 /** Draws the alert banner; returns its height in u (0 when calm), so the message can go under it. */
+/** '#ffb300' → 'rgba(255, 179, 0, a)' */
+function tint(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${n >> 16}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+}
+
+/** Outline warning triangle with an "!" (vector, not a text glyph). */
+function warnSign(ctx, cx, cy, r, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(1.2, r * 0.18);
+  ctx.lineJoin = 'miter';
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - r);
+  ctx.lineTo(cx + r * 1.15, cy + r * 0.85);
+  ctx.lineTo(cx - r * 1.15, cy + r * 0.85);
+  ctx.closePath();
+  ctx.moveTo(cx, cy - r * 0.35);
+  ctx.lineTo(cx, cy + r * 0.3);
+  ctx.moveTo(cx, cy + r * 0.5);
+  ctx.lineTo(cx, cy + r * 0.62);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+}
+
+/** A short column of thin diagonal stripes, like caution tape drawn in lines. */
+function hazardTicks(ctx, x, y, h, u, color) {
+  ctx.strokeStyle = color;
+  ctx.globalAlpha = 0.55;
+  ctx.lineWidth = Math.max(1, 0.25 * u);
+  ctx.beginPath();
+  for (let t = 0; t < h; t += 1.4 * u) { ctx.moveTo(x, y + t + 1.2 * u); ctx.lineTo(x + 2 * u, y + t); }
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
 export function drawAlerts(ctx, cx, y, u, s) {
   const known = s.alerts.filter((a) => ALERTS[a]);
   if (!known.length) return 0;
   const [title, action, color] = ALERTS[known[0]](s);
-  const flash = color === RED ? 0.8 + 0.2 * Math.sin(s.timeMs / 160) : 1;
-  const w = 56 * u;
+  const flash = color === RED ? 0.75 + 0.25 * Math.sin(s.timeMs / 160) : 1;
+  ctx.font = `600 ${3.4 * u}px ${FONT}`;
+  const titleW = ctx.measureText(title).width;
+  ctx.font = `500 ${2.2 * u}px ${FONT}`;
+  const w = Math.max(titleW + 16 * u, ctx.measureText(action ?? '').width + 10 * u, 44 * u);
   const h = 9.4 * u;
-  plate(ctx, cx - w / 2, y, w, h, { fill: color === RED ? 'rgba(70, 6, 4, 0.82)' : 'rgba(60, 40, 0, 0.8)', edge: color, radius: 1.2 * u });
+  const x0 = cx - w / 2;
+  plate(ctx, x0, y, w, h, { fill: GLASS, radius: 0.4 * u });                  // see-through glass, then a light tint of the alert colour
+  plate(ctx, x0, y, w, h, { fill: tint(color, 0.16), radius: 0.4 * u });
+  brackets(ctx, x0, y, w, h, 2.4 * u, color, 1.2);
+  hazardTicks(ctx, x0 + 1.2 * u, y + 1.4 * u, h - 2.8 * u, u, color);          // thin caution stripes at both ends
+  hazardTicks(ctx, x0 + w - 3.2 * u, y + 1.4 * u, h - 2.8 * u, u, color);
   ctx.globalAlpha = flash;
-  say(ctx, `▲ ${title} ▲`, cx, y + 3.2 * u, 3.4 * u, { align: 'center', color, weight: 600, glow: true });
+  warnSign(ctx, cx - titleW / 2 - 2.4 * u, y + 3.2 * u, 1.5 * u, color);
+  say(ctx, title, cx + 1.2 * u, y + 3.2 * u, 3.4 * u, { align: 'center', color, weight: 600 });
   ctx.globalAlpha = 1;
-  if (action) say(ctx, action, cx, y + 7 * u, 2.2 * u, { align: 'center', color: INK, weight: 600 });
+  if (action) say(ctx, action, cx, y + 7 * u, 2.2 * u, { align: 'center', color: INK, weight: 500 });
   const rest = known.slice(1).filter((a) => !(known[0] === 'RETURN_TO_BASE' && ['SOLAR_STORM', 'O2_LEAK', 'LOW_O2'].includes(a) && s.returnReason));
   if (rest.length) say(ctx, rest.map((a) => CHIP[a]).join('  ·  '), cx, y + h + 1.8 * u, 1.9 * u, { align: 'center', color: ACCENT_SOFT, weight: 600 });
   return h / u + (rest.length ? 3.2 : 0.8);
