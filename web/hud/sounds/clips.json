@@ -1,6 +1,32 @@
 {
- "voice": null,
+ "voice": "elevenlabs:l4Coq6695JDX9xtLqXDE",
+ "source": "voice agent",
+ "model": "eleven_v4_turbo",
  "ext": "mp3",
- "note": "Not recorded yet. Run web/hud/tools/make-voice-clips-elevenlabs.mjs (see web/hud/README.md) to record the alerts in the voice agent's voice.",
- "clips": {}
+ "clips": {
+  "return_reserve": "Return to base. Oxygen reserve reached.",
+  "return_low_o2": "Return to base. Oxygen low.",
+  "return_solar": "Return to base. Solar storm, radiation rising.",
+  "return_o2leak": "Return to base. Suit oxygen leak.",
+  "return_ground": "Return to base. Ground Control ordered return.",
+  "return_generic": "Return to base.",
+  "solar": "Solar storm. Radiation rising.",
+  "o2leak": "Suit oxygen leak.",
+  "low_o2": "Oxygen low.",
+  "slope_nogo": "No-go slope ahead. Do not go on.",
+  "slope_ahead": "Steep ground ahead. Slow down.",
+  "slope_close": "No-go slope close by. Watch your step.",
+  "gc_message": "Message from Ground Control.",
+  "all_done": "All stops done. Walk back to base.",
+  "arrive_1": "Stop one reached. First ridges.",
+  "arrive_2": "Stop two reached. Steep ridge.",
+  "arrive_3": "Stop three reached. Hollow.",
+  "arrive_4": "Stop four reached. Main site.",
+  "arrive_5": "Stop five reached. Exit.",
+  "sample_1": "Sample logged. one of five.",
+  "sample_2": "Sample logged. two of five.",
+  "sample_3": "Sample logged. three of five.",
+  "sample_4": "Sample logged. four of five.",
+  "sample_5": "Sample logged. five of five."
+ }
 }
