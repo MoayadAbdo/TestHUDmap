@@ -1,9 +1,9 @@
-import { AMBER_FAINT } from './style.js';
+import { ACCENT_FAINT } from './style.js';
 
 /** Helmet rim at the top and bottom, a dark vignette, and a faint amber tint over the view. */
 export function drawVisorFrame(ctx, w, h, { vr = false } = {}) {
   if (vr) {                       // VR box: lenses already frame the view; keep only the faint amber tint
-    ctx.fillStyle = 'rgba(255, 140, 50, 0.06)';
+    ctx.fillStyle = 'rgba(120, 160, 255, 0.05)';
     ctx.fillRect(0, 0, w, h);
     return;
   }
@@ -12,10 +12,10 @@ export function drawVisorFrame(ctx, w, h, { vr = false } = {}) {
   vignette.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
   ctx.fillStyle = vignette;
   ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = 'rgba(255, 140, 50, 0.06)';
+  ctx.fillStyle = 'rgba(120, 160, 255, 0.05)';
   ctx.fillRect(0, 0, w, h);
 
-  ctx.fillStyle = '#060302';
+  ctx.fillStyle = '#02050d';
   ctx.beginPath();
   ctx.moveTo(0, 0);
   ctx.lineTo(w, 0);
@@ -29,7 +29,7 @@ export function drawVisorFrame(ctx, w, h, { vr = false } = {}) {
   ctx.quadraticCurveTo(w / 2, h * 1.04, 0, h * 0.9);
   ctx.fill();
 
-  ctx.strokeStyle = AMBER_FAINT;
+  ctx.strokeStyle = ACCENT_FAINT;
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(w, h * 0.13);

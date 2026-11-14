@@ -1,4 +1,4 @@
-import { AMBER, AMBER_FAINT, AMBER_SOFT, NAV, PANEL, RED, say } from './style.js';
+import { ACCENT, ACCENT_FAINT, ACCENT_SOFT, NAV, PANEL, RED, say } from './style.js';
 
 const RANGE_M = 80;
 
@@ -16,7 +16,7 @@ export function drawMiniMap(ctx, cx, cy, radius, u, s) {
   ctx.clip();
   drawPhoto(ctx, cx, cy, radius, s);
 
-  ctx.strokeStyle = AMBER_FAINT;
+  ctx.strokeStyle = ACCENT_FAINT;
   ctx.lineWidth = 1;
   for (const ring of [25, 50]) {
     ctx.beginPath();
@@ -25,7 +25,7 @@ export function drawMiniMap(ctx, cx, cy, radius, u, s) {
   }
 
   if (scene) {
-    ctx.strokeStyle = AMBER_SOFT;
+    ctx.strokeStyle = ACCENT_SOFT;
     ctx.lineWidth = Math.max(1.5, 0.45 * u);
     ctx.setLineDash([0.9 * u, 0.7 * u]);
     ctx.beginPath();
@@ -46,7 +46,7 @@ export function drawMiniMap(ctx, cx, cy, radius, u, s) {
     }
 
     const [bx, by] = xy(scene.base);
-    ctx.strokeStyle = scene.base.isTarget ? RED : AMBER_SOFT;
+    ctx.strokeStyle = scene.base.isTarget ? RED : ACCENT_SOFT;
     ctx.lineWidth = 2;
     ctx.strokeRect(bx - 1.1 * u, by - 1.1 * u, 2.2 * u, 2.2 * u);
 
@@ -59,7 +59,7 @@ export function drawMiniMap(ctx, cx, cy, radius, u, s) {
         ctx.arc(x, y, pulse, 0, Math.PI * 2);
         ctx.stroke();
       }
-      ctx.fillStyle = stop.visited ? AMBER_FAINT : stop.isTarget ? NAV : AMBER_SOFT;
+      ctx.fillStyle = stop.visited ? ACCENT_FAINT : stop.isTarget ? NAV : ACCENT_SOFT;
       ctx.beginPath();
       ctx.arc(x, y, (stop.isTarget ? 1.0 : 0.7) * u, 0, Math.PI * 2);
       ctx.fill();
@@ -67,7 +67,7 @@ export function drawMiniMap(ctx, cx, cy, radius, u, s) {
   }
   ctx.restore();
 
-  ctx.strokeStyle = AMBER_SOFT;
+  ctx.strokeStyle = ACCENT_SOFT;
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
@@ -76,8 +76,8 @@ export function drawMiniMap(ctx, cx, cy, radius, u, s) {
   const north = (-(s.heading ?? 0) * Math.PI) / 180;
   say(ctx, 'N', cx + Math.sin(north) * (radius - 2.2 * u), cy - Math.cos(north) * (radius - 2.2 * u), 2.2 * u, { align: 'center', weight: 600 });
 
-  ctx.fillStyle = AMBER;
-  ctx.shadowColor = AMBER;
+  ctx.fillStyle = ACCENT;
+  ctx.shadowColor = ACCENT;
   ctx.shadowBlur = u;
   ctx.beginPath();
   ctx.moveTo(cx, cy - 1.6 * u);
@@ -86,7 +86,7 @@ export function drawMiniMap(ctx, cx, cy, radius, u, s) {
   ctx.lineTo(cx - 1.1 * u, cy + 1.2 * u);
   ctx.fill();
   ctx.shadowBlur = 0;
-  say(ctx, `MAP ${RANGE_M} M`, cx, cy + radius + 2.2 * u, 1.7 * u, { align: 'center', color: AMBER_SOFT, weight: 600 });
+  say(ctx, `MAP ${RANGE_M} M`, cx, cy + radius + 2.2 * u, 1.7 * u, { align: 'center', color: ACCENT_SOFT, weight: 600 });
 }
 
 /**
@@ -107,6 +107,6 @@ function drawPhoto(ctx, cx, cy, radius, s) {
   ctx.globalAlpha *= 0.75;
   ctx.drawImage(img, -ex * k, -ny * k, g.W * k, g.H * k);
   ctx.restore();
-  ctx.fillStyle = 'rgba(10, 5, 2, 0.35)';                           // keeps the lines and pins readable
+  ctx.fillStyle = 'rgba(5, 11, 26, 0.35)';                           // keeps the lines and pins readable
   ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
 }

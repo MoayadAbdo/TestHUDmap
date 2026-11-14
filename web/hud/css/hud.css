@@ -29,12 +29,12 @@ body { font-family: 'Barlow Semi Condensed', system-ui, Roboto, sans-serif; colo
 .demo {
   position: fixed; left: 10px; bottom: 10px; z-index: 3;
   display: flex; flex-wrap: wrap; gap: 6px; max-width: 70vw;
-  padding: 8px; border-radius: 10px; background: rgba(5, 8, 9, 0.8);
+  padding: 8px; border-radius: 10px; background: rgba(5, 11, 26, 0.85); border: 1px solid #1f3a73;
 }
 .demo button {
   font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 7px;
-  border: 1px solid #3c4a4c; background: #142022; color: #e6f0f0;
+  border: 1px solid #2a4a8a; background: #0b1a3a; color: #e8eeff; letter-spacing: 0.02em;
 }
 .demo[hidden] { display: none; }
 
-:focus-visible { outline: 2px solid #ffb547; outline-offset: 2px; }
+:focus-visible { outline: 2px solid #8fb3ff; outline-offset: 2px; }

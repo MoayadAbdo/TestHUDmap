@@ -11,7 +11,7 @@ import {
   PANEL_W_U, drawBiosigns, drawComms, drawDelayTag, drawIntegrity, drawLayer, drawLocation,
   drawRadiation, drawSuit, drawVitals,
 } from './panels.js';
-import { AMBER, NAV, PANEL, RED, plate } from './style.js';
+import { ACCENT, NAV, PANEL, RED, plate } from './style.js';
 
 
 /**
@@ -89,4 +89,4 @@ export function drawVisorHud(ctx, w, h, s, images) {
   if (s.view !== 'vr' && !s.waiting && !side) drawFooter(ctx, left, 88 * row, u, s);
 }
 
-export { AMBER };
+export { ACCENT };

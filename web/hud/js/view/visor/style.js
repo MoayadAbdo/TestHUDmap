@@ -1,21 +1,23 @@
 /*
  * Visor colours have one meaning each, so the astronaut reads the colour before the words:
- *   INK      numbers and names to read (warm white: readable on bright sky and dark ground)
- *   AMBER    labels and frames (the suit's own look)
+ *   INK      numbers and names to read (cool white: readable on bright sky and dark ground)
+ *   ACCENT   labels and frames (mission-control blue: never used for data or danger)
  *   NAV      where to go: arrow, path, pin, next stop (green: never used for data)
  *   CAUTION  be careful (steep ground)
  *   RED      act now (return to base, oxygen, radiation)
  * Text is a clean technical face with a thin dark edge (no glow, no heavy outline),
  * and every group sits on a dark plate, so it stays readable over the bright Mars sky.
  */
-export const INK = '#fff4e2';
-export const AMBER = '#ffb547';
-export const AMBER_SOFT = 'rgba(255, 196, 120, 0.9)';
-export const AMBER_FAINT = 'rgba(255, 181, 71, 0.28)';
+export const INK = '#f3f6ff';
+export const ACCENT = '#8fb3ff';
+export const ACCENT_SOFT = 'rgba(143, 179, 255, 0.85)';
+export const ACCENT_FAINT = 'rgba(143, 179, 255, 0.26)';
 export const NAV = '#5fe08f';
 export const CAUTION = '#ffd24a';
 export const RED = '#ff4d4d';
-export const PANEL = 'rgba(10, 5, 2, 0.58)';
+export const PANEL = 'rgba(5, 11, 26, 0.62)';           // deep navy
+export const PANEL_SOLID = 'rgba(5, 11, 26, 0.94)';
+export const EDGE = 'rgba(2, 5, 14, 0.75)';             // the thin dark edge on text
 export const FONT = "'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif";
 
 export function say(ctx, text, x, y, size, { color = INK, weight = 500, align = 'left', baseline = 'middle', glow = false } = {}) {
@@ -24,7 +26,7 @@ export function say(ctx, text, x, y, size, { color = INK, weight = 500, align = 
   ctx.textBaseline = baseline;
   ctx.lineJoin = 'round';
   ctx.lineWidth = Math.max(1.2, size * 0.12);          // thin edge: readable on bright sky, not cartoon-like
-  ctx.strokeStyle = 'rgba(10, 4, 0, 0.7)';
+  ctx.strokeStyle = EDGE;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
   ctx.shadowBlur = size * 0.15;
   ctx.strokeText(text, x, y);
@@ -58,7 +60,7 @@ export function plate(ctx, x, y, w, h, { fill = PANEL, edge = null, radius } = {
 }
 
 /** Thin L-shaped corners around a box, the HUD's main framing device. */
-export function brackets(ctx, x, y, w, h, len, color = AMBER_SOFT, lineWidth = 1.5) {
+export function brackets(ctx, x, y, w, h, len, color = ACCENT_SOFT, lineWidth = 1.5) {
   ctx.strokeStyle = color;
   ctx.lineWidth = lineWidth;
   ctx.beginPath();
@@ -71,12 +73,12 @@ export function brackets(ctx, x, y, w, h, len, color = AMBER_SOFT, lineWidth = 1
 }
 
 /** Segmented bar, like the suit gauges. */
-export function bar(ctx, x, y, w, h, fraction, { segments = 22, color = AMBER } = {}) {
+export function bar(ctx, x, y, w, h, fraction, { segments = 22, color = ACCENT } = {}) {
   const gap = Math.max(1, w / segments / 5);
   const sw = (w - gap * (segments - 1)) / segments;
   const lit = Math.round(Math.max(0, Math.min(1, fraction)) * segments);
   for (let i = 0; i < segments; i++) {
-    ctx.fillStyle = i < lit ? color : 'rgba(255, 181, 71, 0.18)';
+    ctx.fillStyle = i < lit ? color : 'rgba(143, 179, 255, 0.16)';
     ctx.fillRect(x + i * (sw + gap), y, sw, h);
   }
 }

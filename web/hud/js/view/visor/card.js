@@ -1,5 +1,5 @@
 import { creditLine } from '../../core/mission-info.js';
-import { AMBER, AMBER_SOFT, CAUTION, INK, NAV, brackets, plate, say, wrap } from './style.js';
+import { ACCENT, ACCENT_SOFT, CAUTION, INK, NAV, brackets, plate, say, wrap } from './style.js';
 
 /**
  * Stop card, like a wrist tablet, in the bottom-left corner: photo on the left, then TASK, HAZARD, SCIENCE.
@@ -12,11 +12,11 @@ export function drawStopCard(ctx, w, h, u, card, photo, { sample = null } = {}) 
   const ch = Math.min(h * 0.4, 33 * u);
   const x = Math.max(4 * u, w * 0.05);
   const y = h * 0.9 - ch;
-  plate(ctx, x, y, cw, ch, { fill: 'rgba(12, 7, 3, 0.94)', edge: 'rgba(255, 181, 71, 0.45)', radius: 1.2 * U });
-  brackets(ctx, x - U, y - U, cw + 2 * U, ch + 2 * U, 2.2 * U, AMBER);
+  plate(ctx, x, y, cw, ch, { fill: 'rgba(5, 11, 26, 0.94)', edge: 'rgba(143, 179, 255, 0.45)', radius: 1.2 * U });
+  brackets(ctx, x - U, y - U, cw + 2 * U, ch + 2 * U, 2.2 * U, ACCENT);
 
   const pad = 2.4 * U;
-  say(ctx, `STOP ${card.id}`, x + pad, y + pad + 0.4 * U, 1.9 * U, { color: AMBER_SOFT, weight: 600 });
+  say(ctx, `STOP ${card.id}`, x + pad, y + pad + 0.4 * U, 1.9 * U, { color: ACCENT_SOFT, weight: 600 });
   // science sample for this stop: done, or how to take it
   if (sample) {
     const done = sample.done;
@@ -41,14 +41,14 @@ export function drawStopCard(ctx, w, h, u, card, photo, { sample = null } = {}) 
     ctx.drawImage(photo, x + pad + (pw - photo.naturalWidth * scale) / 2, top + (ph - photo.naturalHeight * scale) / 2,
       photo.naturalWidth * scale, photo.naturalHeight * scale);
     ctx.restore();
-    ctx.strokeStyle = 'rgba(255, 181, 71, 0.45)';
+    ctx.strokeStyle = 'rgba(143, 179, 255, 0.45)';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(x + pad, top, pw, ph);
     const credit = creditLine(card.photo_credit);   // under the photo, never over it
     if (credit) {
       ctx.font = `500 ${1.45 * U}px 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif`;
       const [line] = wrap(ctx, credit, pw, 1);
-      say(ctx, line, x + pad, top + ph + 1.3 * U, 1.45 * U, { color: AMBER_SOFT, weight: 500 });
+      say(ctx, line, x + pad, top + ph + 1.3 * U, 1.45 * U, { color: ACCENT_SOFT, weight: 500 });
     }
     textX = x + pad * 2 + pw;
   }
@@ -62,7 +62,7 @@ export function drawStopCard(ctx, w, h, u, card, photo, { sample = null } = {}) 
     const lineH = size * 1.22 * U;
     const roomLines = Math.floor((bottom - (ty + 2.8 * U)) / lineH);
     if (roomLines < 1) break;
-    say(ctx, label, textX, ty, 1.8 * U, { color: AMBER_SOFT, weight: 600 });
+    say(ctx, label, textX, ty, 1.8 * U, { color: ACCENT_SOFT, weight: 600 });
     ty += 2.8 * U;
     ctx.font = `600 ${size * U}px 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif`;
     for (const line of wrap(ctx, value, tw, Math.min(maxLines, roomLines))) {
@@ -72,5 +72,5 @@ export function drawStopCard(ctx, w, h, u, card, photo, { sample = null } = {}) 
     ty += 1 * U;
   }
 
-  say(ctx, 'TAP / C TO CLOSE  ·  CLOSES BY ITSELF', x + cw / 2, y + ch - 1.5 * U, 1.6 * U, { align: 'center', color: AMBER_SOFT, weight: 600 });
+  say(ctx, 'TAP / C TO CLOSE  ·  CLOSES BY ITSELF', x + cw / 2, y + ch - 1.5 * U, 1.6 * U, { align: 'center', color: ACCENT_SOFT, weight: 600 });
 }

@@ -1,4 +1,4 @@
-import { AMBER, AMBER_SOFT, CAUTION, INK, NAV, PANEL, RED, brackets, plate, say, wrap } from './style.js';
+import { ACCENT, ACCENT_SOFT, CAUTION, INK, NAV, PANEL, RED, brackets, plate, say, wrap } from './style.js';
 
 /** title, what to do, colour. One alert is shown big; the others become small chips under it. */
 const ALERTS = {
@@ -25,7 +25,7 @@ export function drawAlerts(ctx, cx, y, u, s) {
   ctx.globalAlpha = 1;
   if (action) say(ctx, action, cx, y + 7 * u, 2.2 * u, { align: 'center', color: INK, weight: 600 });
   const rest = known.slice(1).filter((a) => !(known[0] === 'RETURN_TO_BASE' && ['SOLAR_STORM', 'O2_LEAK', 'LOW_O2'].includes(a) && s.returnReason));
-  if (rest.length) say(ctx, rest.map((a) => CHIP[a]).join('  ·  '), cx, y + h + 1.8 * u, 1.9 * u, { align: 'center', color: AMBER_SOFT, weight: 600 });
+  if (rest.length) say(ctx, rest.map((a) => CHIP[a]).join('  ·  '), cx, y + h + 1.8 * u, 1.9 * u, { align: 'center', color: ACCENT_SOFT, weight: 600 });
   return h / u + (rest.length ? 3.2 : 0.8);
 }
 
@@ -50,7 +50,7 @@ export function drawNextStop(ctx, cx, y, u, s) {
   ctx.font = `600 ${3.4 * u}px 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif`;
   const w = Math.max(ctx.measureText(name).width, 24 * u) + 6 * u;
   plate(ctx, cx - w / 2, y - 2.2 * u, w, 10.2 * u, { radius: 1 * u, edge: home ? RED : 'rgba(95, 224, 143, 0.45)' });
-  say(ctx, top, cx, y, 1.9 * u, { align: 'center', color: AMBER_SOFT, weight: 600 });
+  say(ctx, top, cx, y, 1.9 * u, { align: 'center', color: ACCENT_SOFT, weight: 600 });
   say(ctx, name, cx, y + 3.4 * u, 3.4 * u, { align: 'center', color, weight: 600 });
   say(ctx, dist, cx, y + 6.6 * u, 2.3 * u, { align: 'center', color: INK, weight: 600 });
 }
@@ -86,7 +86,7 @@ export function drawDirectionArrow(ctx, cx, cy, u, deg, color = NAV, { label = t
   ctx.translate(cx, cy);
   ctx.rotate((deg * Math.PI) / 180);
   ctx.fillStyle = color;
-  ctx.strokeStyle = 'rgba(10, 4, 0, 0.9)';
+  ctx.strokeStyle = 'rgba(2, 5, 14, 0.9)';
   ctx.lineWidth = 0.5 * u;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
   ctx.shadowBlur = 1.2 * u;
@@ -115,7 +115,7 @@ export function turnWord(deg) {
 /** Small key hint at the bottom (hand-held only: a VR box has no keyboard). */
 export function drawFooter(ctx, x, y, u, s) {
   const text = s.detail === 'full' ? 'I · FOCUS VIEW' : 'I · ALL PANELS';
-  say(ctx, text, x, y, 1.7 * u, { color: AMBER_SOFT, weight: 600 });
+  say(ctx, text, x, y, 1.7 * u, { color: ACCENT_SOFT, weight: 600 });
 }
 
-export { AMBER };
+export { ACCENT };
