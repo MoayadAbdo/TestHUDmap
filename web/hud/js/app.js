@@ -213,8 +213,9 @@ export function createHudApp({
     gpsHealth(position, t);
 
     if (lastSpot) {
-      const moved = distanceM(lastSpot.at, position.at, world.r) / Math.max(0.001, (t - lastSpot.t) / 1000);
-      speedMps += 0.3 * (Math.min(moved, 3) - speedMps);
+      const jumpM = distanceM(lastSpot.at, position.at, world.r);
+      const moved = jumpM / Math.max(0.001, (t - lastSpot.t) / 1000);
+      speedMps = jumpM > 8 ? 0 : speedMps + 0.3 * (Math.min(moved, 3) - speedMps);   // a jump to a stop is not walking
     }
     lastSpot = { at: position.at, t };
 

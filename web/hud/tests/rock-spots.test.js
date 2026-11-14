@@ -22,3 +22,10 @@ test('rocks sit only on the bumpy cells of the height map, off the walking lane'
   for (const p of spots) assert.ok(Math.abs(p.x - blockX) < 4 && Math.abs(p.z) < 4, `rock at ${p.x},${p.z}`);
   assert.equal(rockSpots(box(flat(gw, gh), gw, gh), { route: [{ x: 0, z: 0 }], rand }).length, 0);
 });
+
+test('photo boulders keep their real spot and size, except in the walking lane', async () => {
+  const { boulderSpots } = await import('../../sim/rock-spots.js');
+  const toLocal = (lat, lon) => ({ x: lon, z: -lat });
+  const spots = boulderSpots([[0, 10, 2], [0, 0.5, 1]], toLocal, { route: [{ x: 0, z: 0 }] });
+  assert.deepEqual(spots, [{ x: 10, z: -0, size: 1, shape: 0 }]);
+});

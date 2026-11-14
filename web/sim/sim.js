@@ -22,7 +22,7 @@
 
 import * as THREE from "three";
 import { createHeadPose } from "../hud/js/core/head-pose.js";
-import { rockSpots } from "./rock-spots.js";
+import { boulderSpots, rockSpots } from "./rock-spots.js";
 
 const DEG = Math.PI / 180;
 const EYE_H = 1.7;                 // astronaut eye height (m)
@@ -291,13 +291,13 @@ function rockGeometry(seed, flat = 0.6) {
   return g;
 }
 
-function addRocks(route) {
+function addRocks(route, boulders) {
   const r = rng(42);
   const mat = new THREE.MeshStandardMaterial({ color: "#ffffff", map: S.detail, roughness: 0.92, metalness: 0 });
   const shapes = [rockGeometry(3, 0.6), rockGeometry(11, 0.45), rockGeometry(29, 0.3)];   // round, low, slab
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), c = new THREE.Color();
   const tones = ["#8f6a50", "#7a5a45", "#a27d5f", "#6b4e3c", "#b08a6a"];
-  const spots = rockSpots(S.T, { route, rand: r });          // the real rough and steep spots of the height map
+  const spots = [...boulderSpots(boulders, S.toLocal, { route }), ...rockSpots(S.T, { route, rand: r })];   // photo + height map
   shapes.forEach((geo, k) => {
     const mine = spots.filter((p) => p.shape === k);
     if (!mine.length) return;
@@ -580,7 +580,8 @@ export const sim = {
     addSky();
     const route = mission.route.map((p) => S.toLocal(p.lat ?? p[0], p.lon ?? p[1]));
     S.routePts = route;
-    addRocks(route);
+    const boulders = await fetch(S.opts.assetsBase + "terrain/boulders.json").then((x) => (x.ok ? x.json() : null)).catch(() => null);
+    addRocks(route, boulders?.boulders);
     addStops(mission);
     addReticle();
     addDust();
