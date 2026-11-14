@@ -186,7 +186,7 @@ async function start(mode, view, motionAsked) {
   };
   const renderer = createRenderer({ canvas, getFrame, view });
   const demo = createDemoPanel({ element: document.getElementById('demo'), app, renderer, live: live.part, layers: layerSwitch });
-  if (params.get('demo') === '1') demo.show();
+  if (params.get('demo') === '1') demo.show();               // test buttons: only with ?demo=1 or the M key
   renderer.preload(mission.stops.map((s) => s.photo).filter(Boolean));
 
   // Sim mode: a tap (or the Cardboard button) starts / stops walking; the Bluetooth clicker talks to the AI.
@@ -199,7 +199,7 @@ async function start(mode, view, motionAsked) {
   };
   // tap: close an open stop card, else talk to the AI (the Cardboard button is a tap); double tap: auto-walk (sim)
   const tap = () => app.dismissCard() || app.onTap();
-  bindInput({ canvas, onTap: tap, onDoubleTap: sim3d ? toggleWalk : undefined, onLongPress: demo.toggle, onClicker: app.onTap, onCard: app.toggleCard, onLayer: layerSwitch.next, onDetail: app.demo.toggleDetail, onTools: demo.toggle,
+  bindInput({ canvas, onTap: tap, onDoubleTap: sim3d ? toggleWalk : undefined, onClicker: app.onTap, onCard: app.toggleCard, onLayer: layerSwitch.next, onDetail: app.demo.toggleDetail, onTools: demo.toggle,
     clickerKeys: sim3d ? SIM_CLICKER_KEYS : undefined });
   // Sim mode: move without walking for real (WASD, gamepad, or Ground Control driving)
   // ...and with only the phone: each step you take (in place or around the room) walks you forward where you look

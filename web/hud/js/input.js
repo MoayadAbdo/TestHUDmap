@@ -19,7 +19,7 @@ export function bindInput({ canvas, win = window, clock = () => performance.now(
   // a double tap (only when there's a double-tap action) waits a moment to tell it from a single tap
   let tapTimer = null;
   canvas.addEventListener('pointerup', () => {
-    if (clock() - pressStart >= LONG_PRESS_MS) { onLongPress(); return; }
+    if (clock() - pressStart >= LONG_PRESS_MS) { onLongPress?.(); return; }   // a hold (or a drag to look) is not a tap
     if (!onDoubleTap) { onTap(); return; }
     if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; onDoubleTap(); return; }
     tapTimer = setTimeout(() => { tapTimer = null; onTap(); }, DOUBLE_TAP_MS);
