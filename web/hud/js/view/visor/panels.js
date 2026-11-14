@@ -187,7 +187,7 @@ export function drawLayer(ctx, right, y, u, layer, { compact = false } = {}) {
 }
 
 /** Battery colour from the Return Energy Margin (core/energy.js): plenty / getting close / turn back. */
-export const BATTERY_GOOD = '#ffd24a';   // fine: yellow (orange = getting close, red = turn back)
+export const BATTERY_GOOD = ACCENT;   // fine: the HUD's ice cyan (orange = getting close, red = turn back)
 export function batteryState(s) {
   const m = s.energy?.margin;
   if (s.mustReturn || s.o2Pct < 30 || (Number.isFinite(m) && m < 1)) return { color: RED, word: 'HEAD HOME', pulse: true };
