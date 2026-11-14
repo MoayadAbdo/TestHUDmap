@@ -25,13 +25,24 @@ export function drawVitals(ctx, x, y, u, s) {
   // the same panel in the hand-held view and the VR box. Oxygen: time left + a segmented gauge, yellow while fine,
   // orange when getting close to what the walk home needs (Rama's energy model), red when it's time to turn back
   const st = batteryState(s);
-  plate(ctx, x - 1.6 * u, y - 2.6 * u, w + 3.2 * u, 22 * u, { radius: 1 * u, edge: s.level === 'danger' ? RED : null });
+  plate(ctx, x - 1.6 * u, y - 2.6 * u, w + 3.2 * u, 22 * u + VITALS_EXTRA_U * u, { radius: 1 * u, edge: s.level === 'danger' ? RED : null });
   header(ctx, 'OXYGEN', x, y, u);
-  const tag = st.word ?? (s.energy ? `${marginText(s.energy.margin)} walks home` : `${Math.round(s.o2Pct)}%`);
+  const tag = st.word ?? (s.energy ? `MarStep ${marginText(s.energy.margin)}` : `${Math.round(s.o2Pct)}%`);
   say(ctx, tag, x + w, y, 1.9 * u, { align: 'right', color: st.word ? st.color : ACCENT_SOFT, weight: 600 });
   say(ctx, `${hm(s.o2MinutesLeft)} left`, x, y + 3.9 * u, 3.3 * u, { color: st.color === BATTERY_GOOD ? INK : st.color, weight: 600 });
   say(ctx, `${Math.round(s.o2Pct)}%`, x + w, y + 3.9 * u, 2.2 * u, { align: 'right', color: INK, weight: 500 });
   bar(ctx, x, y + 6.6 * u, w, 1 * u, s.o2Pct / 100, { color: st.color });
+  // MarStep: when to turn back at this effort, how much further you can still go, and how hard you're working
+  const ms = s.marstep;
+  if (ms) {
+    const line = ms.turnBackMin > 0 ? `turn back ${minText(ms.turnBackMin)}` : 'past the turn-back point';
+    say(ctx, line, x, y + 9.2 * u, 1.8 * u, { color: ms.turnBackMin > 0 ? ACCENT_SOFT : RED, weight: 600 });
+    // right side: how much further you can go and still get home (+m), unless a hard / peak effort matters more than the reach, so it takes the spot when it happens
+    const busy = ms.zone && (ms.zone.id === 'hard' || ms.zone.id === 'peak');
+    const right = busy ? ms.zone.label : ms.turnBackMin > 0 ? `+${distText(ms.reachM)}` : '';
+    if (right) say(ctx, right, x + w, y + 9.2 * u, 1.8 * u, { align: 'right', color: busy ? ZONE_COLOR[ms.zone.id] : ACCENT_SOFT, weight: busy ? 700 : 600 });
+  }
+  y += VITALS_EXTRA_U * u;
 
   const radColor = s.radHigh ? RED : INK;
   header(ctx, 'RADIATION', x, y + 10.4 * u, u);
@@ -41,6 +52,14 @@ export function drawVitals(ctx, x, y, u, s) {
   header(ctx, 'OUTSIDE', x, y + 17 * u, u);
   say(ctx, `${s.tempC ?? '--'} °C`, x + w, y + 17 * u, 2.4 * u, { align: 'right', weight: 600 });
 }
+
+/** Extra height (u) the MarStep line adds to the vitals panel; the clock plate below moves down by the same. */
+export const VITALS_EXTRA_U = 2.6;
+const ZONE_COLOR = { rest: ACCENT_SOFT, steady: INK, hard: CAUTION, peak: RED };
+/** 14 min / 1h 38m */
+const minText = (m) => (m < 60 ? `${Math.round(m)} min` : hm(m));
+/** 820 m / 1.2 km */
+export const distText = (m) => (!Number.isFinite(m) ? '--' : m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
 
 /** Earth delay and link, small under the mini-map (focus view). */
 export function drawDelayTag(ctx, cx, y, u, s) {

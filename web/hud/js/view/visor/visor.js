@@ -10,7 +10,7 @@ import { drawMiniMap } from './minimap.js';
 import { drawAlerts, drawDirectionArrow, drawFooter, drawMessage, drawNextStop, drawVoice, drawWaiting } from './overlay.js';
 import {
   PANEL_W_U, drawBiosigns, drawComms, drawDelayTag, drawIntegrity, drawLayer, drawLocation,
-  drawRadiation, drawSuit, drawVitals,
+  drawRadiation, drawSuit, drawVitals, VITALS_EXTRA_U,
 } from './panels.js';
 import { ACCENT, NAV, PANEL, RED, plate } from './style.js';
 
@@ -62,7 +62,7 @@ export function drawVisorHud(ctx, w, h, s, images) {
     ctx.globalAlpha = 1 - level;
     // one walking view for both the hand-held screen and the VR box (identical, just scaled to the eye)
     drawVitals(ctx, left, 16 * row, u, s);
-    drawClock(ctx, left, 16 * row + 23 * u, u, s);           // time on its own plate, apart from the suit
+    drawClock(ctx, left, 16 * row + (23 + VITALS_EXTRA_U) * u, u, s);           // time on its own plate, apart from the suit
     const mapR = 11 * u;
     drawDelayTag(ctx, right - mapR - 1 * u, 16 * row + 2 * mapR + 5 * u, u, s);
     if (s.layer) drawLayer(ctx, right, 16 * row + 2 * mapR + 11 * u, u, s.layer);

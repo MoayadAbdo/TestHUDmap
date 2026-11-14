@@ -11,6 +11,7 @@ import { createDetailAuto } from './core/detail-auto.js';
 import { createSafePlanner } from './core/safe-path.js';
 import { createDangerWatch } from './core/danger-watch.js';
 import { createEnergyModel } from './core/energy.js';
+import { createPeakTimer, marstepInsights } from './core/marstep.js';
 import { createScience } from './core/science.js';
 import { relativeTo } from './core/ar.js';
 import { buildScene } from './core/scene.js';
@@ -58,6 +59,10 @@ export function createHudApp({
     o2PctPerMin: mission.suit?.o2_pct_per_min ?? 0.25, reserveMin: LIMITS.reserveMinutes,
   });
   let energyNow = null;             // { effortW, homeKJ, homeO2L, homePct, reservePct, margin }
+  let marstepNow = null;            // what MarStep reads off that one number (core/marstep.js)
+  let nextTrip = null;              // { toStopPct, stopHomePct } for the next stop, re-measured with the walk home
+  const peak = createPeakTimer();   // minutes above the suit's design peak
+  const o2PctPerMin = mission.suit?.o2_pct_per_min ?? 0.25;
   let lastGrade = null;             // { mars, h } for the slope under the feet
   const baseFix = createBaseFix({ clock });
   const stopCount = mission.stops.length;
@@ -227,12 +232,19 @@ export function createHudApp({
     if (t - homeAt > HOME_PLAN_MS) {
       homeAt = t;
       homeM = pathLength(world.home.plan(position.at, world.base.at), world.r);
+      nextTrip = mustReturn || step.target.isBase ? null : nextStopTrip(position);
     }
     slopeNow = slope;
     const mars = world.toMars(position.at);
     energy.update({ speedMps, sinT: gradeUnderFeet(mars), mars }, dtMs);
     suit.setEffort(energy.effortFactor);
-    energyNow = energy.readout({ o2Pct: suit.o2Pct, mars, fallbackM: (homeM ?? step.baseDistanceM) * world.marsPerFrameMetre });
+    const routeM = (homeM ?? step.baseDistanceM) * world.marsPerFrameMetre;
+    energyNow = energy.readout({ o2Pct: suit.o2Pct, mars, fallbackM: routeM });
+    peak.update(energyNow.effortW, dtMs);
+    marstepNow = marstepInsights({
+      energy: energyNow, model: energy, o2Pct: suit.o2Pct, o2PctPerMin, routeM, peakMin: peak.minutes,
+      next: mustReturn || step.target.isBase ? null : nextTrip,
+    });
     bio = body.update({ speedMps, slopeDeg: Math.min(slope, 30), lowOxygen: suit.o2Pct < 30 });
     const result = evaluateAlerts({
       slopeAheadDeg: t < forcedSlopeUntil || steepWatch.update(slope, speedMps) ? slope : 0,   // only while walking into it
@@ -253,6 +265,18 @@ export function createHudApp({
       voice.sendContext(`${why}. The astronaut must return to base now, along the route.${ANNOUNCED}`);
     }
     alerts = result.alerts;
+  }
+
+  /** MarStep: oxygen to walk to the next stop, and to walk home from there (% of the tank). */
+  function nextStopTrip(position) {
+    const from = world.toMars(position.at);
+    const to = world.toMars(step.target.at);
+    const alongM = pathLength(planner.plan(position.at, step.target.at), world.r) * world.marsPerFrameMetre;
+    const stopToBaseM = distanceM(step.target.at, world.base.at, world.r) * world.marsPerFrameMetre;
+    return {
+      toStopPct: energy.tripJoules(from, to, alongM) * energy.pctPerJoule,
+      stopHomePct: energy.homeJoules(to, stopToBaseM * 1.2) * energy.pctPerJoule,   // off the map: straight line + 20 %
+    };
   }
 
   // 3D Mars (sim / Mars walk): how far below the eye the real ground is at a point, so arrows sit on it
@@ -306,6 +330,11 @@ export function createHudApp({
         o2_home_l: energyNow?.homeO2L ?? null,
         energy_home_kj: energyNow?.homeKJ ?? null,
         return_margin: Number.isFinite(energyNow?.margin) ? Math.round(energyNow.margin * 10) / 10 : null,
+        turn_back_min: marstepNow?.turnBackMin ?? null,
+        reach_m: marstepNow?.reachM ?? null,
+        effort_zone: marstepNow?.zone?.label ?? null,
+        next_stop_call: marstepNow?.next?.call ?? null,
+        next_stop_margin: Number.isFinite(marstepNow?.next?.margin) ? marstepNow.next.margin : null,
         hazard: hazard?.name ?? null,
         eva_min: Math.round((clock() - startedAt) / 60000),
         samples_done: science.done,
@@ -338,6 +367,11 @@ export function createHudApp({
       effort_w: s.effort_w,
       o2_home_pct: s.o2_home_pct,
       return_margin: s.return_margin,
+      marstep: marstepNow && {
+        turn_back_min: marstepNow.turnBackMin, linger_min: marstepNow.lingerMin, reach_m: marstepNow.reachM,
+        zone: marstepNow.zone?.label ?? null, terrain_tax: marstepNow.terrainTax, peak_min: marstepNow.peakMin,
+        next: marstepNow.next, used: marstepNow.used,
+      },
       eva_min: s.eva_min,
       stop_name: s.stop_name,
       science: { done: science.done, total: science.total, last: science.last?.name ?? null },
@@ -448,6 +482,7 @@ export function createHudApp({
       const hud = {
         o2Pct: suit.o2Pct,
         energy: energyNow,
+        marstep: marstepNow,
         radUsvH: Math.round(radRate(t) * 10) / 10,
         radHigh: hazard?.name === 'solar',
         level: alertLevel(alerts),

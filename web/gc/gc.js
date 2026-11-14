@@ -1,6 +1,7 @@
 // Ground Control (T1.5): watch the astronaut live, follow them on the Mars map, send messages and events.
 // Listens on both links at once: the laptop's local link (when server/server.mjs serves this page) and
 // PeerJS with the room code. If both bring phone data, the local link wins (link-choice.js).
+import { marstepTiles } from "./marstep-readout.js";
 import { addBasemap } from "./basemap.js";
 import { createDelayedView } from "./delayed-view.js";
 import { createDrive } from "./drive.js";
@@ -130,6 +131,7 @@ function onTelemetry(t) {
   set("eva", t.eva_min != null ? `${t.eva_min} min` : "—");
   set("heading", t.heading != null ? `${t.heading}°` : "—");
   science.update(t);
+  for (const [id, tile] of Object.entries(marstepTiles(t))) { set(id, tile.text, tile.cls); $(`${id}Note`).textContent = tile.note; }
   $("viewMode").textContent = { field: "· camera", sim: "· 3D simulation" }[t.mode] ?? "";
   const alerts = t.alerts ?? [];
   const state = $("evaState");

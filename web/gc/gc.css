@@ -157,3 +157,6 @@ details.tools .row + .row { margin-top: 8px; }
 
 /* small credit under everything */
 .credit { padding: 0 14px 6px; font-size: 10px; letter-spacing: 0.08em; color: var(--dim); text-align: right; }
+
+/* MarStep tiles (energy model): a thin Mars-orange rule marks them as derived from one metric */
+.tile.ms { border-top: 2px solid rgba(255, 154, 60, 0.45); }

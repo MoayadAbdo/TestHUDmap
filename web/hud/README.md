@@ -43,7 +43,12 @@ Use Android Chrome.
   astronaut works on THIS ground: P = P_stand + η·(P0 − P_stand)·v/v0 + m·g·v·sinθ/ε (P0 272 W, Apollo EVA average;
   η from DEM roughness and THEMIS loose ground; uphill ε 0.25). The white notch is the oxygen it takes to walk home
   (cheapest energy path on the 1 m DEM, over 20° blocked, 1 L O₂ ≈ 20.1 kJ) plus a 10 min reserve; ×n is the
-  Return Energy Margin. Under 1 the HUD sends you home (red, HEAD HOME); under 1.5 it turns yellow. Code: `js/core/energy.js`.
+  **MarStep margin**. Under 1 the HUD sends you home (red, HEAD HOME); under 1.5 it turns orange. Code: `js/core/energy.js`.
+- **MarStep insights** (`js/core/marstep.js`, explained in `docs/marstep.md`): read off the same numbers. Under the oxygen bar:
+  the turn-back clock at the current effort and how much further you can go and still get home (+m), or HARD / PEAK when
+  the effort passes the NASA suit's design rates (293 W / 469 W). The next-stop plate shows the margin you'll have there
+  (×n THERE) or SKIP when the oxygen won't cover it. Ground Control also gets linger time, terrain tax, time over peak and
+  O₂ / CO₂ / kcal / cooling water used.
 - **Safest path**: the ground arrows, the direction arrow and the mini-map's solid line follow a path planned on the
   real 1 m height map (A*: steep ground costs more, over 25° is never used). On the real route it cuts the walking
   over 15° from up to 28 m per leg to 0–6 m. Without the map (`?safe=0`) the arrows follow Curiosity's route.
