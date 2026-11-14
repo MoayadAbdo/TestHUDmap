@@ -2,7 +2,7 @@
 // Curiosity's route, the numbered stops and the astronaut live. Drag to orbit, scroll / pinch to zoom.
 // Same terrain files and the same 3D engine as the phone's sim (mission/terrain, sim/vendor/three).
 import * as THREE from "three";
-import { addContext } from "./map3d-context.js";
+import { addContext, sideWalls } from "./map3d-context.js";
 
 const DEG = Math.PI / 180;
 const LIFT = 1.2;                 // route and markers float a little above the ground so they never sink into it
@@ -49,11 +49,12 @@ export async function createMap3d({ container, base = "../mission/", mission, ex
   ground.position.set(-bx, 0, -bz);
   scene.add(ground);
 
-  // the land around it (flat photos), at the height map's edge level so the block sits in it
-  const edge = [];
-  for (let i = 0; i < gw; i++) edge.push(heights[i], heights[(gh - 1) * gw + i]);
-  for (let j = 0; j < gh; j++) edge.push(heights[j * gw], heights[j * gw + gw - 1]);
-  const groundY = (edge.reduce((a, b) => a + b, 0) / edge.length) * exaggerate;
+  // the land around it (flat photos), just under the lowest point of the height map so it never covers the route;
+  // the height map stands on it like a terrain model, with side walls down to it
+  let low = Infinity;
+  for (const h of heights) low = Math.min(low, h);
+  const groundY = low * exaggerate - 2;
+  scene.add(sideWalls(THREE, { heights, gw, gh, W, H, exaggerate, floorY: groundY, at: [-bx, -bz] }));
   addContext(THREE, scene, { center: [meta.base.lat, meta.base.lon], toLocal, groundY }).catch(() => {});
 
   // route + stops

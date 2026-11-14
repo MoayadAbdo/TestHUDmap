@@ -59,3 +59,28 @@ export async function addContext(THREE, scene, { center, toLocal, groundY }) {
     scene.add(plane);
   }
 }
+
+/** Walls from the height map's four edges down to floorY, so the raised map reads as a solid block, not a sheet. */
+export function sideWalls(THREE, { heights, gw, gh, W, H, exaggerate, floorY, at: [ox, oz] }) {
+  const pos = [];
+  const x = (i) => (i / (gw - 1)) * W - W / 2 + ox;
+  const z = (j) => (j / (gh - 1)) * H - H / 2 + oz;
+  const top = (i, j) => heights[j * gw + i] * exaggerate;
+  const edges = [
+    [...Array(gw).keys()].map((i) => [i, 0]),
+    [...Array(gh).keys()].map((j) => [gw - 1, j]),
+    [...Array(gw).keys()].reverse().map((i) => [i, gh - 1]),
+    [...Array(gh).keys()].reverse().map((j) => [0, j]),
+  ];
+  for (const line of edges) {
+    for (let k = 1; k < line.length; k++) {
+      const [i0, j0] = line[k - 1], [i1, j1] = line[k];
+      const a = [x(i0), top(i0, j0), z(j0)], b = [x(i1), top(i1, j1), z(j1)];
+      const a0 = [a[0], floorY, a[2]], b0 = [b[0], floorY, b[2]];
+      pos.push(...a, ...a0, ...b, ...b, ...a0, ...b0);
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  return new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: "#2a2420", side: THREE.DoubleSide }));
+}
