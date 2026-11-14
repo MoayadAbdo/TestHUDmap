@@ -121,7 +121,7 @@ test('one word for the way to go', async () => {
 
 test('suit panels: in after standing still 3 s, out when walking, pinned with the toggle', async () => {
   const { createDetailAuto, STILL_MS } = await import('../js/core/detail-auto.js');
-  const d = createDetailAuto();
+  const d = createDetailAuto({ start: 'auto' });
   let t = 0;
   const run = (ms, speedMps, busy = false) => { for (let end = t + ms; t < end; t += 100) d.update(t, { speedMps, busy }); return d.level; };
   assert.equal(run(2000, 1), 0, 'walking: light view');
@@ -145,4 +145,12 @@ test('oxygen time left reads steady when effort changes step to step', async () 
   assert.ok(suit.minutesLeft > before * 0.95, `${Math.round(suit.minutesLeft)} vs ${Math.round(before)}: no jump`);
   for (let t = 2000; t <= 600000; t += 1000) suit.update(t);
   assert.ok(suit.minutesLeft < before * 0.6, 'after minutes of hard walking it does come down');
+});
+
+test('all suit panels are on by default, even while walking; I switches to automatic', () => {
+  const d = createDetailAuto();
+  assert.equal(d.mode, 'full');
+  d.update(0, { speedMps: 1 }); assert.equal(d.update(1000, { speedMps: 1 }), 1);
+  assert.equal(d.toggle(), 'auto');
+  d.reset(); assert.equal(d.mode, 'full');
 });
