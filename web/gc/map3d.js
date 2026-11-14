@@ -2,6 +2,7 @@
 // Curiosity's route, the numbered stops and the astronaut live. Drag to orbit, scroll / pinch to zoom.
 // Same terrain files and the same 3D engine as the phone's sim (mission/terrain, sim/vendor/three).
 import * as THREE from "three";
+import { addContext } from "./map3d-context.js";
 
 const DEG = Math.PI / 180;
 const LIFT = 1.2;                 // route and markers float a little above the ground so they never sink into it
@@ -22,13 +23,13 @@ export async function createMap3d({ container, base = "../mission/", mission, ex
   }
   const at = ([lat, lon], lift = LIFT) => { const p = toLocal(lat, lon); return new THREE.Vector3(p.x, heightAt(p.x, p.z) + lift, p.z); };
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true })   // 1 m detail and 600 km land in one view;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.domElement.style.cssText = "position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:12px";
   container.appendChild(renderer.domElement);
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#14100c");
-  const camera = new THREE.PerspectiveCamera(45, 1, 1, 8000);
+  const camera = new THREE.PerspectiveCamera(45, 1, 1, 2e6);
   scene.add(new THREE.HemisphereLight("#fff3e2", "#3a2a1e", 1.6));
   const sun = new THREE.DirectionalLight("#ffffff", 1.8);
   sun.position.set(-500, 700, -400);
@@ -47,6 +48,13 @@ export async function createMap3d({ container, base = "../mission/", mission, ex
   const ground = new THREE.Mesh(geo, mat);
   ground.position.set(-bx, 0, -bz);
   scene.add(ground);
+
+  // the land around it (flat photos), at the height map's edge level so the block sits in it
+  const edge = [];
+  for (let i = 0; i < gw; i++) edge.push(heights[i], heights[(gh - 1) * gw + i]);
+  for (let j = 0; j < gh; j++) edge.push(heights[j * gw], heights[j * gw + gw - 1]);
+  const groundY = (edge.reduce((a, b) => a + b, 0) / edge.length) * exaggerate;
+  addContext(THREE, scene, { center: [meta.base.lat, meta.base.lon], toLocal, groundY }).catch(() => {});
 
   // route + stops
   const routePts = mission.route.map((p) => at(p.mars ?? [p.lat, p.lon], 0.8));
@@ -102,7 +110,7 @@ export async function createMap3d({ container, base = "../mission/", mission, ex
   });
   addEventListener("pointerup", () => { drag = null; });
   renderer.domElement.addEventListener("contextmenu", (e) => e.preventDefault());
-  renderer.domElement.addEventListener("wheel", (e) => { e.preventDefault(); view.dist = Math.max(80, Math.min(2500, view.dist * (1 + Math.sign(e.deltaY) * 0.12))); }, { passive: false });
+  renderer.domElement.addEventListener("wheel", (e) => { e.preventDefault(); view.dist = Math.max(80, Math.min(400000, view.dist * (1 + Math.sign(e.deltaY) * 0.12))); }, { passive: false });
 
   function resize() {
     const w = container.clientWidth, h = container.clientHeight;
