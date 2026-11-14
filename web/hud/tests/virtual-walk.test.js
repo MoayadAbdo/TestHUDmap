@@ -21,7 +21,7 @@ test('Q / E turn the view, and "Next stop" puts you on the stop', () => {
   const w = createVirtualWalk(field([10, 20], 0), { clock: () => t });
   w.getPosition();
   w.setMoveInput({ turn: 1 });
-  t = 1000; w.getPosition();
+  for (t = 0; t <= 1000; t += 100) w.getPosition();
   assert.ok(Math.abs(w.getPosition().heading - 90) < 1);
   w.jumpTo([10.001, 20.001]);
   const p = w.getPosition();
