@@ -16,18 +16,18 @@ body {
 }
 
 /* header: one mission strip, a thin blue rule with a red tick under it */
-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; gap: 12px; flex-wrap: wrap;
+header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; gap: 12px; flex-wrap: nowrap;
   background: #050812; border-bottom: 1px solid var(--line); position: relative; }
 header::after { content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 2px;
   background: linear-gradient(90deg, var(--red) 0 72px, var(--blue) 72px 100%); }
-.brand { display: flex; align-items: baseline; gap: 10px; font-weight: 700; letter-spacing: 0.22em; font-size: 14px; text-transform: uppercase; }
+.brand { display: flex; align-items: baseline; min-width: 0; overflow: hidden; white-space: nowrap; gap: 10px; font-weight: 700; letter-spacing: 0.22em; font-size: 14px; text-transform: uppercase; }
 .brand b { color: #fff; font-weight: 800; }
 .brand i { width: 1px; height: 14px; background: var(--line2); align-self: center; }
 .brand em { font-style: normal; color: var(--mute); font-weight: 600; }
-.brand span { color: var(--dim); font-weight: 500; letter-spacing: 0.08em; font-size: 12px; }
-.clock { font: 500 13px var(--mono); color: var(--mute); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
+.brand span { overflow: hidden; text-overflow: ellipsis; color: var(--dim); font-weight: 500; letter-spacing: 0.08em; font-size: 12px; }
+.clock { flex: none; font: 500 13px var(--mono); color: var(--mute); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
 .clock b { color: var(--txt); font-weight: 600; }
-form#join { display: flex; gap: 8px; align-items: center; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mute); }
+form#join { display: flex; flex: none; gap: 8px; white-space: nowrap; align-items: center; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mute); }
 
 input, select, button { font: inherit; font-size: 13px; letter-spacing: normal; text-transform: none; border-radius: 3px;
   border: 1px solid var(--line2); background: var(--card); color: var(--txt); padding: 6px 10px; }
@@ -40,7 +40,8 @@ button:hover { border-color: var(--blue-hi); background: #16233f; }
 button.danger { border-color: #8a2214; color: #ffd2c9; background: #2a0f0b; }
 button.danger:hover { background: var(--red); border-color: var(--red); color: #fff; }
 
-.pill { padding: 4px 10px; border-radius: 2px; font: 600 11px var(--mono); letter-spacing: 0.08em; text-transform: uppercase;
+.pill { box-sizing: border-box; width: 196px; flex: none; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;   /* fixed width: a longer status never pushes the header onto two lines */
+  padding: 4px 10px; border-radius: 2px; font: 600 11px var(--mono); letter-spacing: 0.08em; text-transform: uppercase;
   background: #121a2c; border: 1px solid var(--line2); }
 .pill::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: currentColor; margin-right: 7px; vertical-align: 0; }
 .pill.on { color: var(--green); border-color: #1e5a3c; }

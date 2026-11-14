@@ -9,7 +9,7 @@ export function createStatusPill(el, { current }) {
     const why = state.link ?? state.local ?? { text: "not connected", kind: "off" };
     show(why.text, why.kind);
   }
-  function show(text, kind) { el.textContent = text; el.className = `pill ${kind}`; }
+  function show(text, kind) { el.textContent = text; el.title = text; el.className = `pill ${kind}`; }   // title: the full text when it is cut
   return {
     /** id: "link" (room code) or "local" (laptop server). */
     set(id, text, kind) { state[id] = { text, kind }; render(); },
