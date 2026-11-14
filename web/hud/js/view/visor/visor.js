@@ -5,23 +5,26 @@ import { drawDangerSigns, drawEdgeGlow, drawPathProfile } from './dangers.js';
 import { drawScanProgress, drawScanTarget } from './science.js';
 import { drawVisorFrame } from './frame.js';
 import { drawGroundGuide } from './ground.js';
-import { drawClock } from './clock.js';
+import { drawMarStepBar, drawExceptionChips } from './marstep-bar.js';
 import { drawMiniMap } from './minimap.js';
 import { drawAlerts, drawDirectionArrow, drawFooter, drawMessage, drawNextStop, drawVoice, drawWaiting } from './overlay.js';
 import {
-  PANEL_W_U, drawBiosigns, drawComms, drawDelayTag, drawIntegrity, drawLayer, drawLocation,
-  drawRadiation, drawSuit, drawVitals, VITALS_EXTRA_U,
+  PANEL_W_U, drawBiosigns, drawComms, drawIntegrity, drawLayer, drawLocation, drawRadiation,
 } from './panels.js';
-import { ACCENT, NAV, PANEL, RED, plate } from './style.js';
+import { ACCENT, NAV, RED } from './style.js';
 
 
 /**
  * One eye of the helmet visor. Sizes follow the eye's short side; rows follow its height.
  *
- * Two levels of detail, so the astronaut isn't flooded with numbers while walking:
- *   focus (default) — compass, where to go (arrow, path, next stop), oxygen time, radiation, temperature,
- *                     mini-map. Alerts appear as one big banner with what to do.
- *   full            — every panel (location, suit, comms, body, suit integrity, map layer). I key / pad X / Ground Control.
+ * Same drawing for every way of looking at it: hand-held screen or VR box (two eyes), 3D sim or camera.
+ *
+ * Two levels of detail, so the astronaut isn't flooded with numbers (AR rule: show what you decide with,
+ * keep the centre clear for the ground, and show the rest only when it needs a decision):
+ *   focus (default) — compass, where to go (arrow, path, next stop + MarStep there), the MarStep bar, mini-map,
+ *                     and exception lines only when something needs attention. Alerts: one big banner with what to do.
+ *   full            — adds the details (place and time, radiation dose, body, comms, suit integrity, map layer).
+ *                     I key / pad X / Ground Control. Oxygen and power numbers are not shown: MarStep says what they mean.
  */
 export function drawVisorHud(ctx, w, h, s, images) {
   const u = Math.min(w, h) / 100;
@@ -49,28 +52,26 @@ export function drawVisorHud(ctx, w, h, s, images) {
 
   drawCompass(ctx, cx, 15 * row, Math.min(w * 0.46, 64 * u), u, s.heading ?? 0, s.targetBearing, navColor);
 
-  if (level > 0) {                         // every panel, fading in / out
+  // always, in every view: the MarStep bar top left (where the oxygen was), and under it only what needs a decision
+  const compact = w < h;                   // narrow eyes (VR box): a narrower bar, so the centre stays clear
+  const barY = 17 * row;
+  const barH = drawMarStepBar(ctx, left, barY, u, s, { compact });
+  const chipsU = drawExceptionChips(ctx, left, barY + (barH + 2.4) * u, u, s, { compact });
+  if (level > 0) {                         // the details, fading in / out
     ctx.globalAlpha = level;
-    plate(ctx, left - 2 * u, 13 * row, 30 * u, 74 * row, { fill: PANEL, radius: 1.2 * u });
-    if (!cardUp) plate(ctx, right - 28 * u, 11 * row, 30 * u, 78 * row, { fill: PANEL, radius: 1.2 * u });
-    drawLocation(ctx, left, 17 * row, u, s);
-    drawSuit(ctx, left, 40 * row, u, s);
-    drawRadiation(ctx, left, 58 * row, u, s);
-    drawBiosigns(ctx, left, 66 * row, u, s);
+    const locY = barY + (barH + 4.4 + chipsU) * u;
+    drawLocation(ctx, left, locY, u, s);
+    drawRadiation(ctx, left, locY + 22 * u, u, s);
+    drawBiosigns(ctx, left, locY + 29 * u, u, s);
     if (!cardUp) {
       drawComms(ctx, right, 14 * row, u, s);
       drawIntegrity(ctx, right, 55 * row, u, s);
       drawLayer(ctx, right, 75.5 * row, u, s.layer, { compact: true });
     }
   }
-  if (level < 1) {                         // while walking: the light view
+  if (level < 1 && s.layer && !cardUp) {   // focus view: the key for the colours painted on the ground, under the map
     ctx.globalAlpha = 1 - level;
-    // one walking view for both the hand-held screen and the VR box (identical, just scaled to the eye)
-    drawVitals(ctx, left, 16 * row, u, s);
-    drawClock(ctx, left, 16 * row + (23 + VITALS_EXTRA_U) * u, u, s);           // time on its own plate, apart from the suit
-    const mapR = 11 * u;
-    if (!cardUp) drawDelayTag(ctx, right - mapR - 1 * u, 16 * row + 2 * mapR + 5 * u, u, s);
-    if (s.layer && !cardUp) drawLayer(ctx, right, 16 * row + 2 * mapR + 11 * u, u, s.layer);
+    drawLayer(ctx, right, 16 * row + 2 * 11 * u + 6 * u, u, s.layer);
   }
   ctx.globalAlpha = 1;
   // one mini-map, gliding between its walking spot and its spot in the full panels (never two at once)

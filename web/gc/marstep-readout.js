@@ -10,8 +10,9 @@ export function marstepTiles(t) {
   const margin = t?.return_margin;
   const tiles = {
     msMargin: {
-      text: margin == null ? "—" : margin >= 10 ? "×10+" : `×${margin.toFixed(1)}`,
-      note: t?.o2_home_pct != null ? `home needs ${t.o2_home_pct}% O₂` : "",
+      // the same 0–100 score the visor shows (share of the oxygen still free to spend); ×n margin in the note
+      text: ms?.score != null ? `${ms.score} / 100` : "—",
+      note: [margin == null ? "" : margin >= 10 ? "×10+" : `×${margin.toFixed(1)}`, t?.o2_home_pct != null ? `home needs ${t.o2_home_pct}% O₂` : ""].filter(Boolean).join(" · "),
       cls: margin == null ? "" : margin < 1 ? "bad" : margin < 1.5 ? "warn" : "",
     },
     msTurn: { text: "—", note: "", cls: "" },
@@ -35,8 +36,8 @@ export function marstepTiles(t) {
   tiles.msEffort.cls = ms.zone === "PEAK" ? "bad" : ms.zone === "HARD" ? "warn" : "";
   if (ms.next) {
     tiles.msNext = {
-      text: `${ms.next.call}${ms.next.margin != null ? ` ×${ms.next.margin >= 10 ? "10+" : ms.next.margin}` : ""}`,
-      note: "margin on arrival",
+      text: `${ms.next.call}${ms.next.score != null ? ` · ${ms.next.score}` : ""}`,
+      note: "MarStep on arrival",
       cls: ms.next.call === "SKIP" ? "bad" : ms.next.call === "TIGHT" ? "warn" : "",
     };
   }

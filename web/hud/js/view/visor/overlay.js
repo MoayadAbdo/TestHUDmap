@@ -92,9 +92,9 @@ export function drawNextStop(ctx, cx, y, u, s) {
   const color = home ? RED : NAV;
   const top = home ? 'RETURN TO' : `NEXT · ${s.stopLabel.toUpperCase()}`;
   const name = s.targetName.toUpperCase();
-  // MarStep check for this stop: the margin you'll have when you get there (GO), only just (TIGHT), or not enough (SKIP)
+  // MarStep check for this stop: the score you'll have when you get there (GO), only just (TIGHT, amber), or not enough (SKIP)
   const check = home ? null : s.marstep?.next;
-  const call = !check ? '' : check.call === 'SKIP' ? ' · SKIP, O₂ SHORT' : ` · ×${check.margin >= 10 ? '10+' : check.margin.toFixed(1)} THERE`;
+  const call = !check ? '' : check.call === 'SKIP' ? ' · SKIP, O₂ SHORT' : ` · MARSTEP ${check.score ?? '--'} THERE`;
   const dist = `${s.distanceLabel} · ${s.etaMin} MIN${call}`;
   const callColor = !check || check.call === 'GO' ? INK : check.call === 'TIGHT' ? CAUTION : RED;
   ctx.font = `600 ${2.3 * u}px ${FONT}`;

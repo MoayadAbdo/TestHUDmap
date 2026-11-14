@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ENERGY, createEnergyModel } from '../js/core/energy.js';
 import {
-  MARSTEP, consumables, createPeakTimer, effortZone, marstepInsights, minutesAtRate, nextStopCheck, reachM, terrainTax,
+  MARSTEP, consumables, marstepScore, marstepState, createPeakTimer, effortZone, marstepInsights, minutesAtRate, nextStopCheck, reachM, terrainTax,
 } from '../js/core/marstep.js';
 
 const near = (a, b, eps = 1e-6) => assert.ok(Math.abs(a - b) < eps, `${a} ≉ ${b}`);
@@ -84,4 +84,22 @@ test('trip to the next stop costs more when it is uphill', () => {
   const up = model.tripJoules([0, 0], [1, 0], 100);
   const down = model.tripJoules([1, 0], [0, 0], 100);
   near(up - down, (ENERGY.MASS * ENERGY.G * 10) / ENERGY.EFF_UP);
+});
+
+test('MarStep score: share of the oxygen still free to spend', () => {
+  assert.equal(marstepScore(Infinity), 100);
+  assert.equal(marstepScore(10), 90);
+  assert.equal(marstepScore(2), 50);
+  assert.equal(marstepScore(1.5), 33);
+  assert.equal(marstepScore(1), 0);
+  assert.equal(marstepScore(0.6), 0);
+  assert.equal(marstepScore(NaN), 0);
+});
+
+test('MarStep state: go / soon / home', () => {
+  assert.equal(marstepState({ margin: 3 }), 'go');
+  assert.equal(marstepState({ margin: 1.4 }), 'soon');
+  assert.equal(marstepState({ margin: 0.9 }), 'home');
+  assert.equal(marstepState({ margin: 5, mustReturn: true }), 'home');
+  assert.equal(marstepState({ margin: 5, o2Pct: 25 }), 'home');
 });

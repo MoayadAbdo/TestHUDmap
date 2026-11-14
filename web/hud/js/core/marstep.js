@@ -7,6 +7,12 @@
  *
  *   MarStep ×n = O₂ left / (O₂ to walk home + 10 min reserve)        ×1 = turn back now
  *
+ * The visor shows it as one easy number, the MarStep score (0–100):
+ *
+ *   MarStep score = 100 × (1 − 1 / margin)  = the share of your oxygen you can still spend before you must turn back
+ *     100  a full tank, home is next door        33  (×1.5) time to head home soon
+ *      50  (×2) half of what's left is free        0  (×1) head home now
+ *
  * Everything below is read straight off the same numbers — no new sensors, no new data:
  *
  *   turn-back clock   minutes until ×1 at the effort right now       (spare O₂ ÷ burn rate now)
@@ -30,6 +36,20 @@ export const MARSTEP = {
   RQ: 0.85, KJ_PER_KCAL: 4.184, COOLING_SHARE: 0.7, SUBLIMATION_MJ_PER_KG: 2.84,
   GO_MARGIN: 1.5,             // at the next stop: ≥ ×1.5 GO, ×1–1.5 TIGHT, < ×1 SKIP (same bands as the battery)
 };
+
+/** MarStep score 0–100 from the margin: % of the oxygen left that is free to spend (0 = turn back now). */
+export function marstepScore(margin) {
+  if (margin === Infinity) return 100;
+  if (!Number.isFinite(margin) || margin <= 1) return 0;
+  return Math.min(100, Math.max(0, Math.round(100 * (1 - 1 / margin))));
+}
+
+/** go / soon / home — the same bands as the battery colours: under ×1.5 (score 33) soon, under ×1 (score 0) home. */
+export function marstepState({ margin, mustReturn = false, o2Pct = 100 }, m = MARSTEP) {
+  if (mustReturn || o2Pct < 30 || (Number.isFinite(margin) && margin < 1)) return 'home';
+  if (Number.isFinite(margin) && margin < m.GO_MARGIN) return 'soon';
+  return 'go';
+}
 
 /** Effort zone from watts, against the suit's design rates. */
 export function effortZone(watts, m = MARSTEP) {
@@ -71,7 +91,7 @@ export function nextStopCheck({ o2Pct, toStopPct, stopHomePct, reservePct }, m =
   const need = stopHomePct + reservePct;
   const margin = need > 0 ? (o2Pct - toStopPct) / need : Infinity;
   const call = margin < 1 ? 'SKIP' : margin < m.GO_MARGIN ? 'TIGHT' : 'GO';
-  return { margin, call };
+  return { margin, call, score: marstepScore(margin) };
 }
 
 /** What a walk that used `joules` has cost the suit and the body. */
@@ -117,13 +137,14 @@ export function marstepInsights({ energy, model, o2Pct, o2PctPerMin, routeM = nu
   const nextCheck = next ? nextStopCheck({ o2Pct, reservePct: energy.reservePct, ...next }) : null;
   return {
     margin: energy.margin,
+    score: marstepScore(energy.margin),
     zone: effortZone(energy.effortW),
-    turnBackMin: round(minutesAtRate(spare, o2PctPerMin, factor)),
+    turnBackMin: round(minutesAtRate(spare, o2PctPerMin, Math.max(1, factor))),   // assumes you keep walking: steady, never optimistic
     lingerMin: round(minutesAtRate(spare, o2PctPerMin, k.P_STAND / k.P0)),
     reachM: round(reachM(spareJ, model.joulesPerM), -1),
     terrainTax: round(terrainTax(energy.homeJ ?? energy.homeKJ * 1000, routeM), 2),
     peakMin: round(peakMin, 1),
-    next: nextCheck ? { margin: round(nextCheck.margin, 1), call: nextCheck.call } : null,
+    next: nextCheck ? { margin: round(nextCheck.margin, 1), call: nextCheck.call, score: nextCheck.score } : null,
     used: { o2L: round(used.o2L, 1), co2L: round(used.co2L, 1), kcal: round(used.kcal), coolingWaterL: round(used.coolingWaterL, 2) },
   };
 }

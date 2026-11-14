@@ -18,62 +18,6 @@ export function doseText(usv) {
   return d < 10 ? `${d.toFixed(1)} µSv` : `${Math.round(d)} µSv`;
 }
 
-/**
- * Focus view (default): only what the astronaut needs while walking — oxygen time, radiation, temperature,
- * Mars time and daylight. Everything else is one key / button away (full view) or shows itself when it matters.
- */
-export function drawVitals(ctx, x, y, u, s) {
-  const w = 25 * u;
-  // the same panel in the hand-held view and the VR box. Oxygen: time left + a segmented gauge, yellow while fine,
-  // orange when getting close to what the walk home needs (Rama's energy model), red when it's time to turn back
-  const st = batteryState(s);
-  plate(ctx, x - 1.6 * u, y - 2.6 * u, w + 3.2 * u, 22 * u + VITALS_EXTRA_U * u, { radius: 1 * u, edge: s.level === 'danger' ? RED : null });
-  header(ctx, 'OXYGEN', x, y, u);
-  const tag = st.word ?? (s.energy ? `MarStep ${marginText(s.energy.margin)}` : `${Math.round(s.o2Pct)}%`);
-  say(ctx, tag, x + w, y, 1.9 * u, { align: 'right', color: st.word ? st.color : ACCENT_SOFT, weight: 600 });
-  say(ctx, `${hm(s.o2MinutesLeft)} left`, x, y + 3.9 * u, 3.3 * u, { color: st.color === BATTERY_GOOD ? INK : st.color, weight: 600 });
-  say(ctx, `${Math.round(s.o2Pct)}%`, x + w, y + 3.9 * u, 2.2 * u, { align: 'right', color: INK, weight: 500 });
-  bar(ctx, x, y + 6.6 * u, w, 1 * u, s.o2Pct / 100, { color: st.color });
-  // MarStep: when to turn back at this effort, how much further you can still go, and how hard you're working
-  const ms = s.marstep;
-  if (ms) {
-    const line = ms.turnBackMin > 0 ? `turn back ${minText(ms.turnBackMin)}` : 'past the turn-back point';
-    say(ctx, line, x, y + 9.2 * u, 1.8 * u, { color: ms.turnBackMin > 0 ? ACCENT_SOFT : RED, weight: 600 });
-    // right side: how much further you can go and still get home (+m), unless a hard / peak effort matters more than the reach, so it takes the spot when it happens
-    const busy = ms.zone && (ms.zone.id === 'hard' || ms.zone.id === 'peak');
-    const right = busy ? ms.zone.label : ms.turnBackMin > 0 ? `+${distText(ms.reachM)}` : '';
-    if (right) say(ctx, right, x + w, y + 9.2 * u, 1.8 * u, { align: 'right', color: busy ? ZONE_COLOR[ms.zone.id] : ACCENT_SOFT, weight: busy ? 700 : 600 });
-  }
-  y += VITALS_EXTRA_U * u;
-
-  const radColor = s.radHigh ? RED : INK;
-  header(ctx, 'RADIATION', x, y + 10.4 * u, u);
-  say(ctx, `${s.radUsvH ?? '--'} µSv/h`, x + w, y + 10.4 * u, 2.4 * u, { align: 'right', color: radColor, weight: 600 });
-  say(ctx, `dose this walk ${doseText(s.radDoseUsv)}`, x, y + 13.3 * u, 1.9 * u, { color: ACCENT_SOFT, weight: 600 });
-
-  header(ctx, 'OUTSIDE', x, y + 17 * u, u);
-  say(ctx, `${s.tempC ?? '--'} °C`, x + w, y + 17 * u, 2.4 * u, { align: 'right', weight: 600 });
-}
-
-/** Extra height (u) the MarStep line adds to the vitals panel; the clock plate below moves down by the same. */
-export const VITALS_EXTRA_U = 2.6;
-const ZONE_COLOR = { rest: ACCENT_SOFT, steady: INK, hard: CAUTION, peak: RED };
-/** 14 min / 1h 38m */
-const minText = (m) => (m < 60 ? `${Math.round(m)} min` : hm(m));
-/** 820 m / 1.2 km */
-export const distText = (m) => (!Number.isFinite(m) ? '--' : m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
-
-/** Earth delay and link, small under the mini-map (focus view). */
-export function drawDelayTag(ctx, cx, y, u, s) {
-  const bars = s.link?.bars ?? 0;
-  say(ctx, `EARTH ${s.lightMin?.toFixed(1) ?? '--'} MIN AWAY`, cx, y, 1.8 * u, { align: 'center', color: ACCENT_SOFT, weight: 600 });
-  for (let i = 0; i < 4; i++) {
-    const bh = (0.8 + i * 0.6) * u;
-    ctx.fillStyle = i < bars ? ACCENT : ACCENT_FAINT;
-    ctx.fillRect(cx - 3 * u + i * 1.6 * u, y + 3.4 * u - bh, 1.1 * u, bh);
-  }
-}
-
 export function drawLocation(ctx, x, y, u, s) {
   header(ctx, 'LOCATION', x, y, u);
   const rows = [
@@ -90,19 +34,6 @@ export function drawLocation(ctx, x, y, u, s) {
     if (b) say(ctx, b, x + 17 * u, ry, 2.2 * u, { color: INK });
   });
   brackets(ctx, x - 1.2 * u, y - 2 * u, 27 * u, 20 * u, 1.6 * u);
-}
-
-export function drawSuit(ctx, x, y, u, s) {
-  header(ctx, 'SUIT', x, y, u);
-  const minutes = Math.max(0, Math.round(s.o2MinutesLeft ?? 0));
-  const st = batteryState(s);                                  // same colours as the light view: yellow, orange, red
-  const o2Color = st.color === BATTERY_GOOD ? INK : st.color;
-  say(ctx, 'Oxygen', x, y + 3.6 * u, 2.5 * u, { color: o2Color });
-  say(ctx, `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m left`, x + 24 * u, y + 3.6 * u, 2.3 * u, { align: 'right', color: o2Color });
-  bar(ctx, x, y + 5.6 * u, 24 * u, 1.2 * u, s.o2Pct / 100, { color: st.color });
-  say(ctx, 'Power', x, y + 9.6 * u, 2.5 * u);
-  say(ctx, `${Math.round(s.powerPct ?? 0)}%`, x + 24 * u, y + 9.6 * u, 2.3 * u, { align: 'right' });
-  bar(ctx, x, y + 11.6 * u, 24 * u, 1.2 * u, (s.powerPct ?? 0) / 100, { color: BATTERY_GOOD });
 }
 
 export function drawRadiation(ctx, x, y, u, s) {
@@ -205,86 +136,4 @@ export function drawLayer(ctx, right, y, u, layer, { compact = false } = {}) {
     ctx.fillRect(r - 1.6 * u, ry - 0.9 * u, 1.6 * u, 1.6 * u);
     say(ctx, legendText(item.label), r - 2.4 * u, ry, 1.75 * u, { align: 'right', color: ACCENT_SOFT, weight: 500 });
   });
-}
-
-/** Battery colour from the Return Energy Margin (core/energy.js): plenty / getting close / turn back. */
-export const BATTERY_GOOD = ACCENT;   // fine: the HUD's ice cyan (orange = getting close, red = turn back)
-export function batteryState(s) {
-  const m = s.energy?.margin;
-  if (s.mustReturn || s.o2Pct < 30 || (Number.isFinite(m) && m < 1)) return { color: RED, word: 'HEAD HOME', pulse: true };
-  if (Number.isFinite(m) && m < 1.5) return { color: '#ff9a3c', word: 'HOME SOON', pulse: false };
-  return { color: BATTERY_GOOD, word: null, pulse: false };
-}
-
-/** "×4.2" margin text: how many walks home the oxygen left covers (with the reserve). */
-export const marginText = (m) => (!Number.isFinite(m) ? '' : m >= 10 ? '×10+' : `×${m.toFixed(1)}`);
-
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-
-/**
- * Clean VR view, top left: oxygen as a little battery.
- *   fill + number = oxygen left; the white notch = oxygen needed to walk home + reserve (energy model);
- *   next to it: the margin (×n walks home); under it: time left at the current effort and the effort in watts.
- */
-export function drawOxygenChip(ctx, x, y, u, s) {
-  const st = batteryState(s);
-  const bw = 12.5 * u, bh = 5.2 * u, r = 1.3 * u, pad = 0.55 * u;
-  const by = y - bh / 2;
-  const pulse = st.pulse ? 0.55 + 0.45 * Math.abs(Math.sin((s.timeMs ?? 0) / 260)) : 1;
-  // body + nub
-  roundRect(ctx, x, by, bw, bh, r);
-  ctx.fillStyle = 'rgba(5, 11, 26, 0.6)';
-  ctx.fill();
-  ctx.lineWidth = Math.max(1.5, 0.45 * u);
-  ctx.strokeStyle = st.color;
-  ctx.stroke();
-  roundRect(ctx, x + bw + 0.3 * u, y - 1.2 * u, 0.9 * u, 2.4 * u, 0.4 * u);
-  ctx.fillStyle = st.color;
-  ctx.fill();
-  // fill, in 5 soft cells
-  const iw = bw - 2 * pad, ih = bh - 2 * pad;
-  const frac = Math.max(0, Math.min(1, (s.o2Pct ?? 0) / 100));
-  ctx.save();
-  roundRect(ctx, x + pad, by + pad, iw, ih, r * 0.6);
-  ctx.clip();
-  ctx.globalAlpha *= pulse;
-  ctx.fillStyle = st.color;
-  ctx.fillRect(x + pad, by + pad, iw * frac, ih);
-  ctx.globalAlpha /= pulse;
-  ctx.fillStyle = 'rgba(5, 11, 26, 0.55)';
-  for (let i = 1; i < 5; i++) ctx.fillRect(x + pad + (iw * i) / 5 - 0.15 * u, by + pad, 0.3 * u, ih);
-  // notch: oxygen it takes to get home (+ reserve)
-  const need = s.energy ? (s.energy.homePct + s.energy.reservePct) / 100 : null;
-  if (Number.isFinite(need)) {
-    const nx = x + pad + iw * Math.min(1, need);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(nx - 0.25 * u, by + pad, 0.5 * u, ih);
-  }
-  ctx.restore();
-  // the number
-  say(ctx, `${Math.round(s.o2Pct ?? 0)}%`, x + bw / 2, y + 0.1 * u, 2.6 * u, { align: 'center', color: INK, weight: 600 });
-  // beside the nub: the margin (×n walks home) or what to do; under the battery: time left now and the effort
-  const tag = st.word ?? (s.energy ? marginText(s.energy.margin) : '');
-  if (tag) say(ctx, tag, x + bw + 2.2 * u, y, 1.9 * u, { color: st.word ? st.color : ACCENT_SOFT, weight: 600 });
-  const sub = s.energy ? `${hm(s.o2MinutesLeft)}  ⚡${s.energy.effortW} W` : `${hm(s.o2MinutesLeft)} left`;
-  say(ctx, sub, x + 0.3 * u, y + bh / 2 + 2 * u, 1.9 * u, { color: st.color === BATTERY_GOOD ? INK : st.color, weight: 600 });
-}
-
-/** Clean VR view: link bars and the Earth delay in one line. */
-export function drawLinkChip(ctx, right, y, u, s) {
-  const bars = s.link?.bars ?? 0;
-  for (let i = 0; i < 4; i++) {
-    const bh = (0.8 + i * 0.6) * u;
-    ctx.fillStyle = i < bars ? ACCENT : ACCENT_FAINT;
-    ctx.fillRect(right - (4 - i) * 1.2 * u, y + 1 * u - bh, 0.8 * u, bh);
-  }
-  say(ctx, `${s.lightMin?.toFixed(0) ?? '--'} min`, right - 5.6 * u, y, 2.1 * u, { align: 'right', color: ACCENT_SOFT });
 }

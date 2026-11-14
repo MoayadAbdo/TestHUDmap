@@ -330,6 +330,7 @@ export function createHudApp({
         o2_home_l: energyNow?.homeO2L ?? null,
         energy_home_kj: energyNow?.homeKJ ?? null,
         return_margin: Number.isFinite(energyNow?.margin) ? Math.round(energyNow.margin * 10) / 10 : null,
+        marstep_score: marstepNow?.score ?? null,
         turn_back_min: marstepNow?.turnBackMin ?? null,
         reach_m: marstepNow?.reachM ?? null,
         effort_zone: marstepNow?.zone?.label ?? null,
@@ -368,7 +369,7 @@ export function createHudApp({
       o2_home_pct: s.o2_home_pct,
       return_margin: s.return_margin,
       marstep: marstepNow && {
-        turn_back_min: marstepNow.turnBackMin, linger_min: marstepNow.lingerMin, reach_m: marstepNow.reachM,
+        score: marstepNow.score, turn_back_min: marstepNow.turnBackMin, linger_min: marstepNow.lingerMin, reach_m: marstepNow.reachM,
         zone: marstepNow.zone?.label ?? null, terrain_tax: marstepNow.terrainTax, peak_min: marstepNow.peakMin,
         next: marstepNow.next, used: marstepNow.used,
       },
