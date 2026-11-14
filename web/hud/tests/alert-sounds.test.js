@@ -11,7 +11,7 @@ function setup({ talking = false } = {}) {
 }
 const base = { alerts: [], card: null, message: null, science: { done: 0, total: 5 } };
 
-test('new alerts get a tone and a spoken line, once; repeats wait 30 s', () => {
+test('every alert that starts is spoken once; only a flicker within 10 s stays quiet', () => {
   const { a, tones, said, at } = setup();
   a.update(base);
   a.update({ ...base, alerts: ['SLOPE_AHEAD'] });
@@ -19,8 +19,25 @@ test('new alerts get a tone and a spoken line, once; repeats wait 30 s', () => {
   assert.deepEqual(tones, ['warn']);
   assert.equal(said.length, 1);
   a.update(base); at(5000); a.update({ ...base, alerts: ['SLOPE_AHEAD'] });
-  assert.equal(said.length, 1, 'flickering on again within 30 s: tone only');
+  assert.equal(said.length, 1, 'flickering on again within 10 s: tone only');
   assert.deepEqual(tones, ['warn', 'warn']);
+  a.update(base); at(16000); a.update({ ...base, alerts: ['SLOPE_AHEAD'] });
+  assert.equal(said.length, 2, 'a new steep stretch later is spoken again');
+});
+
+test('several alerts at once: all spoken, most important first, none cuts the others', () => {
+  const { a, said } = setup();
+  a.update(base);
+  a.update({ ...base, alerts: ['SLOPE_NO_GO', 'RETURN_TO_BASE', 'SOLAR_STORM'], returnReason: 'Solar storm: radiation rising' });
+  assert.deepEqual(said, [['slope_nogo', true], ['return_solar', false]], 'the return line names the storm, so "solar" is not said twice');
+});
+
+test('a new emergency while already heading home is still spoken', () => {
+  const { a, said } = setup();
+  a.update(base);
+  a.update({ ...base, alerts: ['RETURN_TO_BASE'], returnReason: 'Oxygen reserve reached' });
+  a.update({ ...base, alerts: ['RETURN_TO_BASE', 'SOLAR_STORM'], returnReason: 'Oxygen reserve reached' });
+  assert.deepEqual(said.map((x) => x[0]), ['return_reserve', 'solar']);
 });
 
 test('return to base is urgent and says why; arrival, samples and Ground Control messages are heard', () => {
@@ -36,15 +53,16 @@ test('return to base is urgent and says why; arrival, samples and Ground Control
   assert.ok(said.some(([id]) => id === 'arrive_2') && said.some(([id]) => id === 'gc_message'));
 });
 
-test('while talking to the AI only dangers speak; muted means silent', () => {
+test('while talking to the AI every alert still speaks (arrivals wait); muted means silent', () => {
   const { a, said, tones } = setup({ talking: true });
   a.update(base);
   a.update({ ...base, alerts: ['SLOPE_AHEAD'] });
   a.update({ ...base, alerts: ['SLOPE_AHEAD', 'LOW_O2'] });
-  assert.deepEqual(said.map((s) => s[0]), ['low_o2']);
+  a.update({ ...base, alerts: ['SLOPE_AHEAD', 'LOW_O2'], card: { id: 1, name: 'First ridges' } });
+  assert.deepEqual(said.map((s) => s[0]), ['slope_ahead', 'low_o2'], 'no arrival line while talking');
   a.toggle();
   a.update({ ...base, alerts: ['SOLAR_STORM'] });
-  assert.equal(tones.length, 2);
+  assert.equal(tones.length, 3);
 });
 
 test('every line the phone can say is in the script', async () => {
@@ -92,4 +110,17 @@ test('a line with no recording is said by the fallback voice instead of staying 
   player.play('slope_ahead');
   await new Promise((r) => setTimeout(r, 10));
   assert.deepEqual(spoken, ['Steep ground ahead. Slow down.']);
+});
+
+test('an urgent alert cuts the line playing but keeps other alerts waiting', async () => {
+  const { createClipPlayer } = await import('../js/voice-clips.js');
+  const started = [];
+  const audio = { state: 'running', destination: {}, decodeAudioData: (b, ok) => ok({}),
+    createBufferSource: () => { const src = { connect() {}, start() { started.push(src.id); }, stop() {} }; return src; } };
+  const p = createClipPlayer({ ctx: () => audio, base: '', fetchFn: async (u) => ({ ok: true, arrayBuffer: async () => u }), clock: () => 0 });
+  p.play('arrive_1');
+  p.play('slope_ahead');
+  p.play('return_solar', { urgent: true });
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(p.play('slope_ahead'), false, 'still waiting in line, not dropped');
 });

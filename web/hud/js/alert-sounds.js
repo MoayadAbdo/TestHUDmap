@@ -6,7 +6,9 @@ import { clipFor } from './voice-clips.js';
  * Everything is passed in, so it can be tested without speakers. say(clipId, { urgent }) plays a recorded line.
  */
 const DANGER = new Set(['RETURN_TO_BASE', 'SOLAR_STORM', 'O2_LEAK', 'LOW_O2', 'SLOPE_NO_GO']);
-const REPEAT_MS = 30000;                 // the same warning at most every 30 s (no nagging when it flickers)
+const CAUSE_LINE = { SOLAR_STORM: 'return_solar', O2_LEAK: 'return_o2leak', LOW_O2: 'return_low_o2' };   // the return line that already says it
+const ALERT_REPEAT_MS = 10000;           // every alert that starts is spoken; only a flicker within 10 s stays quiet
+const OTHER_REPEAT_MS = 30000;           // arrivals, samples, messages
 
 export function createAlertSounds({ tone, speak, isTalking = () => false, clock = () => performance.now() }) {
   let alerts = new Set();
@@ -16,11 +18,12 @@ export function createAlertSounds({ tone, speak, isTalking = () => false, clock 
   let on = true;
   const lastSaid = new Map();
 
-  function say(clip, { urgent = false } = {}) {
+  /** alert: true for safety alerts — they always speak, even while you talk to the AI. */
+  function say(clip, { urgent = false, alert = false } = {}) {
     if (!clip) return;
     const t = clock();
-    if (t - (lastSaid.get(clip) ?? -Infinity) < REPEAT_MS) return;
-    if (isTalking() && !urgent) return;
+    if (t - (lastSaid.get(clip) ?? -Infinity) < (alert ? ALERT_REPEAT_MS : OTHER_REPEAT_MS)) return;
+    if (isTalking() && !alert && !urgent) return;
     lastSaid.set(clip, t);
     speak(clip, { urgent });
   }
@@ -31,11 +34,14 @@ export function createAlertSounds({ tone, speak, isTalking = () => false, clock 
       if (!s) return;
       const now = new Set(s.alerts ?? []);
       if (on) {
-        for (const a of now) {
-          if (alerts.has(a)) continue;
-          tone(DANGER.has(a) ? 'danger' : 'warn');
-          say(clipFor(a, s.returnReason), { urgent: DANGER.has(a) });
-        }
+        // every alert that starts is spoken, most important first (s.alerts comes in priority order). Only the first
+        // may cut a line already playing; the rest queue behind it instead of cutting each other off.
+        const fresh = [...now].filter((a) => !alerts.has(a));
+        if (fresh.length) tone(DANGER.has(fresh[0]) ? 'danger' : 'warn');
+        fresh.forEach((a, i) => {
+          if (fresh.includes('RETURN_TO_BASE') && CAUSE_LINE[a] === clipFor('RETURN_TO_BASE', s.returnReason)) return;   // the return line just said it
+          say(clipFor(a, s.returnReason), { urgent: i === 0 && DANGER.has(a), alert: true });
+        });
         if (s.card && s.card.id !== cardId) {
           tone('arrive');
           say(`arrive_${s.card.id}`);
