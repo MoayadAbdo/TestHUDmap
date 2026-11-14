@@ -79,3 +79,17 @@ test('the same line asked for twice plays once', async () => {
   t = 9000;
   assert.equal(p.play('slope_ahead'), true, 'later it may play again');
 });
+
+test('a line with no recording is said by the fallback voice instead of staying silent', async () => {
+  const { createClipPlayer } = await import('../js/voice-clips.js');
+  const { createSpeechFallback } = await import('../js/speech-fallback.js');
+  const { clipTexts } = await import('../js/clip-texts.js');
+  const spoken = [];
+  const synth = { speak: (u) => spoken.push(u.text), cancel: () => {} };
+  function Utterance(text) { this.text = text; }
+  const fallback = createSpeechFallback({ texts: clipTexts({ stops: [] }), synth, Utterance });
+  const player = createClipPlayer({ ctx: () => ({}), base: '', fetchFn: async () => ({ ok: false }), fallback, clock: () => 0 });
+  player.play('slope_ahead');
+  await new Promise((r) => setTimeout(r, 10));
+  assert.deepEqual(spoken, ['Steep ground ahead. Slow down.']);
+});

@@ -2,11 +2,11 @@ import { RETURN_REASONS } from './core/alerts.js';
 
 /**
  * Plays the recorded alert lines (sounds/*.mp3 in the voice agent's voice; see tools/make-voice-clips-elevenlabs.mjs).
- * One line at a time; an urgent line cuts the one playing. Missing clips are skipped (the visor still shows it).
+ * One line at a time; an urgent line cuts the one playing. A missing clip goes to fallback(id) (the phone's own voice).
  */
 export const SAME_LINE_MS = 8000;    // the same line asked for twice (two alert systems, a flicker) plays once
 
-export function createClipPlayer({ ctx, base, ext = 'mp3', fetchFn = (u) => fetch(u), clock = () => performance.now() }) {
+export function createClipPlayer({ ctx, base, ext = 'mp3', fetchFn = (u) => fetch(u), clock = () => performance.now(), fallback = null }) {
   const buffers = new Map();
   const lastAsked = new Map();
   const queue = [];
@@ -22,9 +22,9 @@ export function createClipPlayer({ ctx, base, ext = 'mp3', fetchFn = (u) => fetc
 
   async function next() {
     if (playing || !queue.length) return;
-    const id = queue.shift();
+    const { id, urgent } = queue.shift();
     const buffer = await load(id);
-    if (!buffer) { next(); return; }
+    if (!buffer) { fallback?.(id, { urgent }); next(); return; }
     const src = ctx().createBufferSource();
     src.buffer = buffer;
     src.connect(ctx().destination);
@@ -45,7 +45,7 @@ export function createClipPlayer({ ctx, base, ext = 'mp3', fetchFn = (u) => fetc
         try { playing?.stop(); } catch { /* already done */ }
         playing = null;
       }
-      queue.push(id);
+      queue.push({ id, urgent });
       next();
       return true;
     },

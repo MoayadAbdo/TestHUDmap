@@ -15,6 +15,8 @@ import { createDangerSound, makeBeep } from './danger-sound.js';
 import { createAlertSounds, makeTones } from './alert-sounds.js';
 import { audioContext, unlockAudio } from './audio.js';
 import { ALL_CLIPS, createClipPlayer } from './voice-clips.js';
+import { clipTexts } from './clip-texts.js';
+import { createSpeechFallback } from './speech-fallback.js';
 import { startWakeWord } from './wake-word.js';
 import { createDemoPanel } from './view/demo-panel.js';
 import { createRenderer } from './view/renderer.js';
@@ -166,7 +168,8 @@ async function start(mode, view, motionAsked) {
   const muted = params.get('sound') === '0';
   const soundsBase = new URL('./sounds/', document.baseURI).href;
   const clipInfo = await fetch(`${soundsBase}clips.json`).then((r) => r.json()).catch(() => ({}));   // which voice / file type
-  const clips = createClipPlayer({ ctx: audioContext, base: soundsBase, ext: clipInfo.ext ?? 'mp3' });
+  const clips = createClipPlayer({ ctx: audioContext, base: soundsBase, ext: clipInfo.ext ?? 'mp3',
+    fallback: createSpeechFallback({ texts: clipTexts(mission) }) });   // not recorded yet: the phone's own voice says it
   if (!muted) {
     const stopIds = mission.stops.filter((s) => !s.is_base).map((s) => s.id);
     clips.preload([...ALL_CLIPS, ...stopIds.map((id) => `arrive_${id}`), ...stopIds.map((_, i) => `sample_${i + 1}`)]);
@@ -260,6 +263,7 @@ document.getElementById('go').addEventListener('click', () => {
   const mode = chosen('mode');
   const motionAsked = requestMotionPermission();
   unlockAudio();                        // phones keep audio silent until a tap
+  try { speechSynthesis.speak(new SpeechSynthesisUtterance('')); } catch { /* no speech: tones and the visor still warn */ }   // unlock the phone's voice too
   // ask for the microphone inside the tap, so "Hey suit" works later without touching the phone
   navigator.mediaDevices?.getUserMedia?.({ audio: true }).then((s) => s.getTracks().forEach((t) => t.stop())).catch(() => {});
   start(mode, chosen('view'), motionAsked).catch((error) => {
