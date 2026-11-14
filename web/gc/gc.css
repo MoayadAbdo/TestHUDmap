@@ -86,7 +86,7 @@ main { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.5fr 1fr; 
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; }
 .events button { flex: 1; white-space: nowrap; letter-spacing: 0.03em; padding: 7px 8px; }
 .switch input { accent-color: var(--blue-hi); }
-.log { grid-column: 1 / 2; height: 150px; display: flex; flex-direction: column; overflow: hidden; }   /* fixed size: new lines scroll, the page never grows */
+.log { grid-column: 1 / 2; height: 96px; display: flex; flex-direction: column; overflow: hidden; }   /* fixed size: new lines scroll, the page never grows */
 #log { flex: 1; min-height: 0; overflow-y: auto; }
 #log { margin: 0; padding-left: 0; list-style: none; font: 12px/1.6 var(--mono); color: #cfd8e8; counter-reset: n; }
 #log li { border-left: 2px solid var(--line2); padding-left: 8px; }
