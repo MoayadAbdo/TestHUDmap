@@ -110,7 +110,7 @@ All of these come from the same numbers: the power right now, the energy home, a
 | **Time over peak** | minutes above 469 W; the suit's cooling is only designed for 15 min at peak | Ground Control |
 | **Next stop: GO / TIGHT / SKIP** | the margin you'll have when you arrive at the next stop (walk there + walk home from there) | next-stop plate ("MARSTEP 72 THERE" or "SKIP, O₂ SHORT"), Ground Control |
 | **Terrain tax** | how much more the way home costs than the same walk on flat firm ground (+27 %) | Ground Control |
-| **Used this walk** | O₂ litres; CO₂ made (× 0.85); kcal burned; cooling water (70 % of the heat leaves by sublimating ice, 2.84 MJ per kg) | Ground Control |
+| **Used so far** | O₂ litres; CO₂ made (× 0.85); kcal burned; cooling water (70 % of the heat leaves by sublimating ice, 2.84 MJ per kg) | Ground Control |
 
 All of them also go to Ground Control in the telemetry (`marstep` object) and in the HUD status: `marstep_score`, `turn_back_min`, `reach_m`, `effort_zone`, `next_stop_call`, `next_stop_margin`.
 

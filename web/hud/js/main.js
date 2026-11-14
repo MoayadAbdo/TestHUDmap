@@ -1,6 +1,7 @@
 import { asLive, asSim, asVoice } from './adapters.js';
 import { createHudApp } from './app.js';
 import { config } from './config.js';
+import { createVirtualWalk } from './sources/virtual-walk.js';
 import { createFieldSource, requestMotionPermission } from './sources/field-source.js';
 import { createSimSource } from './sources/sim-source.js';
 import { createMarsWalkSource } from './sources/marswalk-source.js';
@@ -130,14 +131,15 @@ async function start(mode, view, motionAsked) {
   const live = await loadPart('live', asLive, () => createFakeLive());
   const voice = await loadPart('voice', asVoice, () => createFakeVoice({ getStatus }));
   let source;
+  let walker = null;                // camera / Mars walk: drives like the sim on top of GPS
   if (mode === 'sim') {
     const sim = await loadPart('sim', asSim, () => createFakeSim({ mission, speedFactor: Number(params.get('speed') ?? 1) }));
     source = createSimSource(sim.part, mission, view, assetsBase, Number(params.get('speed') ?? 1));   // ?speed=3: walk faster for testing
-  } else if (mode === 'marswalk') {
-    const sim = await loadPart('sim', asSim, () => null);
-    source = sim.real ? createMarsWalkSource(createFieldSource(), sim.part, mission, view, assetsBase) : createFieldSource();
   } else {
-    source = createFieldSource();
+    // camera / Mars walk: GPS, plus the sim's driving (WASD, gamepad, Ground Control) on top, so both behave the same
+    walker = createVirtualWalk(createFieldSource(), { walkMps: mission.suit?.walk_speed_mps || 0.8, speed: Number(params.get('speed') ?? 1) });
+    const sim = mode === 'marswalk' ? await loadPart('sim', asSim, () => null) : null;
+    source = sim?.real ? createMarsWalkSource(walker, sim.part, mission, view, assetsBase) : walker;
   }
 
   if (params.get('autostart') !== '1') await enterFullscreen(view);
@@ -214,7 +216,8 @@ async function start(mode, view, motionAsked) {
     const a = e.accelerationIncludingGravity;
     if (a) steps.update(a.x, a.y, a.z, performance.now());
   });
-  const moveInput = sim3d?.setMoveInput ? createMoveInput({ sim: sim3d, steps, onVoice: app.onTap, onToggleWalk: toggleWalk, onCard: app.toggleCard, onLayer: layerSwitch.next, onDetail: app.demo.toggleDetail }) : null;
+  const mover = sim3d?.setMoveInput ? sim3d : walker;          // the sim, or the camera / Mars walk driver
+  const moveInput = mover ? createMoveInput({ sim: mover, steps, onVoice: app.onTap, onToggleWalk: sim3d ? toggleWalk : undefined, onCard: app.toggleCard, onLayer: layerSwitch.next, onDetail: app.demo.toggleDetail }) : null;
   // Mars walk: every frame, put the 3D Mars view where the real GPS puts you
   if (source.world3d) {
     const follow = () => {
@@ -237,6 +240,7 @@ async function start(mode, view, motionAsked) {
     move: (v) => moveInput?.remote(v),
     layer: (id) => (id ? layerSwitch.set(id) : layerSwitch.next()),   // Ground Control picks the visor's layer
     placeInfo: () => app.showPlaceInfo(),             // "What's here?" (voice tool, H key)
+    frame: () => app.frame().hud,                     // what the visor draws now (for tests and debugging)
     stepCount: () => stepCount,
     sound: () => alertSounds?.toggle(),
     notify: app.notify,

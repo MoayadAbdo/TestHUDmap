@@ -568,6 +568,7 @@ export function createHudApp({
       },
       // the sims count stops as in mission.json (base included), so find the target there by id
       nextStop: () => {
+        if (source.frame === 'field') { if (step?.target?.at) source.jumpTo?.(step.target.at); return; }   // camera / Mars walk
         const id = step?.target && !step.target.isBase ? step.target.id : mission.stops.at(-1)?.id;   // heading home: last stop
         const i = rawMission.stops.findIndex((s) => s.id === id);
         if (i >= 0) source.sim?.jumpToStop?.(i);

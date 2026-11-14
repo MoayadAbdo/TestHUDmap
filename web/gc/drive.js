@@ -1,4 +1,4 @@
-// "Drive (WASD)": the laptop keyboard moves the astronaut on the 3D Mars (sim mode), for testing in a VR box
+// "Drive (WASD)": the laptop keyboard moves the astronaut (sim, camera and Mars walk modes), for testing in a VR box
 // while sitting down. Sends about 8 times a second while a key is held; the phone stops if they stop coming.
 import { isMove, keyVector } from "../hud/js/move-input.js";
 

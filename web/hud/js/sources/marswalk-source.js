@@ -21,6 +21,7 @@ export function createMarsWalkSource(field, sim, mission, view = 'single', asset
       sim.stop?.();
     },
     getPosition: () => field.getPosition(),
+    jumpTo: (...a) => field.jumpTo?.(...a),                    // "Next stop" (camera / Mars walk driver)
     getBackground: () => sim.getBackground(),
     capturePhoto: (...a) => field.capturePhoto(...a),          // Ground Control still sees the real camera
     get gpsError() { return field.gpsError; },

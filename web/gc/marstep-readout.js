@@ -37,7 +37,7 @@ export function marstepTiles(t) {
   if (ms.next) {
     tiles.msNext = {
       text: `${ms.next.call}${ms.next.score != null ? ` · ${ms.next.score}` : ""}`,
-      note: "MarStep on arrival",
+      note: "score when you get there",
       cls: ms.next.call === "SKIP" ? "bad" : ms.next.call === "TIGHT" ? "warn" : "",
     };
   }
